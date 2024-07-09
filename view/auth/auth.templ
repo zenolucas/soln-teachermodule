@@ -1,0 +1,49 @@
+package auth 
+
+import (
+    "soln-teachermodule/view/home/layout"
+)
+
+templ Login() {
+	@layout.App(false) {
+		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+			<div class="max-w-md w-full bg-base-300 py-10 px-8 rounded-xl">
+				<h1 class="text-center text-xl font-black mb-10">Login to Sol'n Teacher Portal </h1>
+				// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
+                @LoginForm()
+			</div>
+		</div>
+	}
+}
+
+templ LoginForm() {
+	<form
+		hx-post="/login"
+		hx-swap="outerHTML"
+		class="space-y-4"
+	>
+		<div class="w-full">
+			<div class="label">
+				<span class="label-text">Email address</span>
+			</div>
+			<input type="email" name="email" autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
+			// if len(errors.Email) > 0 {
+			// 	<div class="label">
+			// 		<span class="label-text-alt text-error">{ errors.Email }</span>
+			// 	</div>
+			// }
+			<div class="label">
+				<span class="label-text">Password</span>
+			</div>
+			<input type="password" name="password" autocomplete="off" required class="input input-bordered w-full"/>
+			// if len(errors.Password) > 0 {
+			// 	<div class="label">
+			// 		<span class="label-text-alt text-error">{ errors.Password }</span>
+			// 	</div>
+			// }
+		</div>
+		<button type="submit" class="btn btn-primary w-full">login <i class="fa-solid fa-arrow-right"></i></button>
+		<div class="divider">OR</div>
+		<a href="/login/provider/google" class="btn btn-outline w-full">login with Google <i class="fa-brands fa-google"></i></a>
+	</form>
+}
