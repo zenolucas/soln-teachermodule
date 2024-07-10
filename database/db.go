@@ -25,6 +25,7 @@ func InitializeDatabase() error {
 		Net:                  "tcp",
 		Addr:                 "127.0.0.1:3306",
 		DBName:               os.Getenv("DBNAME"),
+		AllowNativePasswords: true,
 	}
 
 	// Get a database handle.
