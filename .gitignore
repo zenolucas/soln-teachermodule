@@ -1,0 +1,6 @@
+.env
+bin
+*_templ.go*
+tmp
+.air.toml
+*_templ.txt*
