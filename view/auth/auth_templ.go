@@ -33,7 +33,7 @@ func Login() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<img src=\"/images/bg/soln-portal-logo.png\" style=\"margin-top: 30px;\"><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"><div class=\"max-w-md w-full bg-neutral py-10 px-8 rounded-xl\"><h1 class=\"text-center text-xl text-white\">Sol'n Teacher Portal </h1><div class=\"divider before:bg-white after:bg-white\"></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"justify-center mt-[calc(100vh-100vh+8rem)]\"><img src=\"http://localhost:3000/public/images/bg/soln-portal-logo.png\" style=\"margin-top: 30px;\"></div><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"><div class=\"max-w-md w-full bg-neutral py-10 px-8 rounded-xl\"><h1 class=\"text-center text-xl text-white\">Sol'n Teacher Portal </h1><div class=\"divider before:bg-white after:bg-white\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
