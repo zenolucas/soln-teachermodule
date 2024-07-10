@@ -33,7 +33,7 @@ func Login() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"justify-center mt-[calc(100vh-100vh+8rem)]\"><img src=\"http://localhost:3000/public/images/bg/soln-portal-logo.png\" style=\"margin-top: 30px;\"></div><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"><div class=\"max-w-md w-full bg-neutral py-10 px-8 rounded-xl\"><h1 class=\"text-center text-xl text-white\">Sol'n Teacher Portal </h1><div class=\"divider before:bg-white after:bg-white\"></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -41,7 +41,7 @@ func Login() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -74,7 +74,7 @@ func LoginForm() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/login\" hx-swap=\"outerHTML\" class=\"space-y-4\"><div class=\"w-full\"><div class=\"label\"><span class=\"label-text text-white\">Email address</span></div><input type=\"email\" name=\"email\" autocomplete=\"off\" required placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text text-white\">Password</span></div><input type=\"password\" name=\"password\" autocomplete=\"off\" required class=\"input input-bordered w-full\"></div><button type=\"submit\" class=\"btn btn-secondary w-full text-white\">Login <i class=\"fa-solid fa-arrow-right\"></i></button><div class=\"divider text-white before:bg-white after:bg-white\">OR</div><a href=\"/login/provider/google\" class=\"btn btn-outline w-full text-white\">Login with Google <i class=\"fa-brands fa-google\"></i></a></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
