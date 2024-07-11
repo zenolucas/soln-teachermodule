@@ -1,22 +1,13 @@
 package auth 
 
 import (
-    "soln-teachermodule/view/home/layout"
+	"soln-teachermodule/view/home/layout"
 )
 
 templ Login() {
 	@layout.App(false) {
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-			<img src="http://localhost:3000/public/images/bg/soln-portal-logo.png" style="margin-top: 30px;"/>
-		</div>
-		<div class="flex justify-center">
-			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
-				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
-				<div class="divider before:bg-white after:bg-white"></div>
-				// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
-                @LoginForm()
-			</div>
-		</div>
+		// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
+		@LoginForm()
 	}
 }
 
@@ -24,30 +15,38 @@ templ LoginForm() {
 	<form
 		hx-post="/login"
 		hx-swap="outerHTML"
-		class="space-y-4"
 	>
-		<div class="w-full">
-			<div class="label">
-				<span class="label-text text-white">Email address</span>
-			</div>
-			<input type="email" name="email" autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
-			// if len(errors.Email) > 0 {
-			// 	<div class="label">
-			// 		<span class="label-text-alt text-error">{ errors.Email }</span>
-			// 	</div>
-			// }
-			<div class="label">
-				<span class="label-text text-white">Password</span>
-			</div>
-			<input type="password" name="password" autocomplete="off" required class="input input-bordered w-full"/>
-			// if len(errors.Password) > 0 {
-			// 	<div class="label">
-			// 		<span class="label-text-alt text-error">{ errors.Password }</span>
-			// 	</div>
-			// }
+		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+			<img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
 		</div>
-		<button type="submit" class="btn btn-secondary w-full text-white">Login <i class="fa-solid fa-arrow-right"></i></button>
-		<div class="divider text-white before:bg-white after:bg-white">OR</div>
-		<a href="/login/provider/google" class="btn btn-outline w-full text-white">Login with Google <i class="fa-brands fa-google"></i></a>
+		<div class="flex justify-center">
+			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
+				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
+				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
+				<div class="w-full">
+					<div class="label">
+						<span class="label-text text-white">Email address</span>
+					</div>
+					<input type="text" name="username" autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
+					// if len(errors.Email) > 0 {
+					// 	<div class="label">
+					// 		<span class="label-text-alt text-error">{ errors.Email }</span>
+					// 	</div>
+					// }
+					<div class="label">
+						<span class="label-text text-white">Password</span>
+					</div>
+					<input type="password" name="password" autocomplete="off" required class="input input-bordered w-full"/>
+					// if len(errors.Password) > 0 {
+					// 	<div class="label">
+					// 		<span class="label-text-alt text-error">{ errors.Password }</span>
+					// 	</div>
+					// }
+				</div>
+				<button type="submit" class="btn btn-secondary w-full text-white my-[10px]">Login <i class="fa-solid fa-arrow-right"></i></button>
+				<div class="divider text-white before:bg-white after:bg-white">OR</div>
+				<a href="/login/provider/google" class="btn btn-outline w-full text-white mt-[10px] ">Login with Google <i class="fa-brands fa-google"></i></a>
+			</div>
+		</div>
 	</form>
 }
