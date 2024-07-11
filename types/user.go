@@ -3,6 +3,11 @@ package types
 const UserContextKey = "user"
 
 type AuthenticatedUser struct {
-	Email string
-	LoggedIn bool 
+	Username 	string
+	LoggedIn 	bool 
+}
+
+type UserCredentials struct {
+	Username	string
+	Password	string
 }
