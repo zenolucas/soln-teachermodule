@@ -1,10 +1,12 @@
 package database
 
 import (
-	"log"
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
+	"soln-teachermodule/types"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -44,4 +46,29 @@ func InitializeDatabase() error {
 	return err
 }
 
+func AuthenticateUser(w http.ResponseWriter, r *http.Request) error {
+	userCreds := types.UserCredentials{
+		Username: r.FormValue("username"),
+		Password: r.FormValue("password"),
+	}
 
+	var storedPassword string
+	row := db.QueryRow("SELECT password FROM users WHERE username = ?", userCreds.Username)
+	if err := row.Scan(&storedPassword); err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Print("authentication Error: incorrect username or password")
+			return fmt.Errorf("authentication Error: incorrect username or password")
+		} else {
+			fmt.Print("database Error: ", err)
+			return fmt.Errorf("database Error: %v", err)
+		}
+	}
+
+	if userCreds.Password != storedPassword {
+		fmt.Print("authentication Error: incorrect username or password")
+		return fmt.Errorf("authentication Error: incorrect username or password")
+	}
+	fmt.Println("Login Success! Hello ", userCreds.Username, "!")
+	// Authentication successful
+	return nil
+}
