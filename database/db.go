@@ -46,7 +46,7 @@ func InitializeDatabase() error {
 	return err
 }
 
-func AuthenticateUser(w http.ResponseWriter, r *http.Request) error {
+func AuthenticateWebUser(w http.ResponseWriter, r *http.Request) error {
 	userCreds := types.UserCredentials{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
@@ -71,4 +71,27 @@ func AuthenticateUser(w http.ResponseWriter, r *http.Request) error {
 	fmt.Println("Login Success! Hello ", userCreds.Username, "!")
 	// Authentication successful
 	return nil
+}
+
+// PROPER ERROR HANDLING TO BE IMPLEMENTED
+func AuthenticateSolnUser(username string, password string) bool {
+
+	var storedPassword string
+	row := db.QueryRow("SELECT password FROM users WHERE username = ?", username)
+	if err := row.Scan(&storedPassword); err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Print("authentication Error: incorrect username or password")
+			return false
+		} else {
+			fmt.Print("database Error: ", err)
+			return false
+		}
+	}
+
+	if password != storedPassword {
+		fmt.Print("authentication Error: incorrect username or password")
+	}
+	fmt.Println("Login Success! Hello ", username, "!")
+	// Authentication successful
+	return true
 }
