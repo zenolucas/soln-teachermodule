@@ -20,7 +20,7 @@ func main() {
 	if err := database.InitializeDatabase(); err != nil {
 		log.Fatal(err)
 	}
-
+ 
 	router := chi.NewMux()
 	router.Use(handler.WithUser)
 
@@ -30,6 +30,7 @@ func main() {
 	// router.Get("/login", handler.Make(handler.HandleLoginIndex))
 	// to be continued!
 	router.Post("/login", handler.Make(handler.HandleLoginCreate))
+	router.Post("/soln/login", handler.Make(handler.HandleLoginGame))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
