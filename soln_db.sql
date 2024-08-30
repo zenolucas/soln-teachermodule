@@ -51,9 +51,13 @@ CREATE TABLE IF NOT EXISTS levelgames (
     FOREIGN KEY (minigame_id) REFERENCES minigames(minigame_id)
 );
 
+-- Suggestions: 
+-- Superadmin and admin
+
+
 -- Insert initial data into users table
 INSERT INTO users (username, password, usertype) VALUES
-('user1', 'password_hash1', 'teacher'),
+('user1', 'pw', 'teacher'),
 ('user2', 'password_hash2', 'teacher'),
 ('user3', 'password_hash3', 'student'),
 ('user4', 'password_hash4', 'student'),
