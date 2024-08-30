@@ -11,7 +11,7 @@ import "io"
 import "bytes"
 
 import (
-	"soln-teachermodule/view/home/layout"
+	"soln-teachermodule/view/layout"
 )
 
 func Login() templ.Component {
