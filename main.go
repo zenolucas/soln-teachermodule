@@ -27,9 +27,9 @@ func main() {
 	// handle static files
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 	router.Get("/", handler.Make(handler.HandleLoginIndex))
-	// router.Get("/login", handler.Make(handler.HandleLoginIndex))
-	// to be continued!
 	router.Post("/login", handler.Make(handler.HandleLoginCreate))
+	router.Get("/register", handler.Make(handler.HandleRegisterIndex))
+	router.Post("/register", handler.Make(handler.HandleRegisterCreate))
 	router.Post("/soln/login", handler.Make(handler.HandleLoginGame))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")

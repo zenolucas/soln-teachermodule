@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -15,16 +16,24 @@ func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return auth.Login().Render(r.Context(), w)
 }
 
+type LoginParams struct {
+	Username			string
+	Password			string
+}
+
+type LoginErrors struct {
+	Username			string
+	Password			string
+	InvalidCredentials  string
+}
+
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 	// authenticate the user
-	err := database.AuthenticateWebUser(w, r)
-	if err != nil {
-		log.Fatal(err)
+	if err := database.AuthenticateWebUser(w, r); err != nil {
+		return err
 	} else {
 		return home.Index().Render(r.Context(), w)
 	}
-
-	return auth.Login().Render(r.Context(), w)
 }
 
 func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
@@ -55,7 +64,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	type LoginResponse struct {
-    Success bool `json:"success"`
+		Success bool `json:"success"`
 	}
 
 	log.Printf("Received data: %+v", data.Password)
@@ -73,4 +82,23 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return nil
+}
+
+func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
+	return auth.Register().Render(r.Context(), w)
+}
+
+func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
+	if err := database.RegisterAccount(w, r); err != nil {
+		return err
+	} else {
+	fmt.Print("Account registered successfully!")
+	return auth.Login().Render(r.Context(), w)
+	}
+}
+
+type RegisterParams struct {
+	Username			string
+	Password			string
+	ConfirmPassword		string
 }
