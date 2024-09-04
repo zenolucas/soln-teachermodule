@@ -95,3 +95,16 @@ func AuthenticateSolnUser(username string, password string) bool {
 	// Authentication successful
 	return true
 }
+
+func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
+	userCreds := types.UserCredentials{
+		Username: r.FormValue("username"),
+		Password: r.FormValue("password"),
+	}
+
+	_, err := db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, "teacher")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
+}
