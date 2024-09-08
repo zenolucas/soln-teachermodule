@@ -11,11 +11,6 @@ import (
 	"soln-teachermodule/view/home"
 )
 
-func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
-
-	return auth.Login().Render(r.Context(), w)
-}
-
 type LoginParams struct {
 	Username			string
 	Password			string
@@ -27,12 +22,16 @@ type LoginErrors struct {
 	InvalidCredentials  string
 }
 
+func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, auth.Login())
+}
+
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 	// authenticate the user
 	if err := database.AuthenticateWebUser(w, r); err != nil {
 		return err
 	} else {
-		return home.Index().Render(r.Context(), w)
+		return render(w, r, home.Index())
 	}
 }
 
@@ -84,8 +83,15 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+
+type RegisterParams struct {
+	Username			string
+	Password			string
+	ConfirmPassword		string
+}
+
 func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
-	return auth.Register().Render(r.Context(), w)
+	return render(w, r, auth.Register())
 }
 
 func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
@@ -93,12 +99,6 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 		return err
 	} else {
 	fmt.Print("Account registered successfully!")
-	return auth.Login().Render(r.Context(), w)
+	return render(w, r, auth.RegisterForm())
 	}
-}
-
-type RegisterParams struct {
-	Username			string
-	Password			string
-	ConfirmPassword		string
 }

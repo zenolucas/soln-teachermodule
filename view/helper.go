@@ -5,7 +5,7 @@ import (
 	"soln-teachermodule/types"
 )
 
-func AuthenticatedUser(ctx context.Context) types.AuthenticatedUser {
+func GetAuthenticatedUser(ctx context.Context) types.AuthenticatedUser {
 	user, ok := ctx.Value(types.UserContextKey).(types.AuthenticatedUser)
 	if !ok {
 		return types.AuthenticatedUser{}
