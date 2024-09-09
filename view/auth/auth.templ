@@ -2,18 +2,71 @@ package auth
 
 import (
 	"soln-teachermodule/view/layout"
+	// "soln-teachermodule/types"
 )
 
 templ Login() {
 	@layout.App(false) {
 		// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
-		@LoginForm()
+		@LoginForm(LoginParams{}, LoginErrors{})
 	}
 }
 
-templ LoginForm() {
+type LoginParams struct {
+	Username			string
+	Password			string
+}
+
+type LoginErrors struct {
+	Username			string
+	Password			string
+	InvalidCredentials	string
+}
+
+templ LoginForm(credentials LoginParams, errors LoginErrors) {
 	<form
 		hx-post="/login"
+		hx-swap="outerHTML"
+	>
+		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+
+			<img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
+		</div>
+		<div class="flex justify-center">
+			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
+				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
+				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
+				<div class="w-full">
+					<div class="label">
+						<span class="label-text text-white">Username</span>
+					</div>
+					<input type="text" name="username" value={ credentials.Username } autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
+					<div class="label">
+						<span class="label-text text-white">Password</span>
+					</div>
+					<input type="password" name="password" value={ credentials.Password } autocomplete="off" required class="input input-bordered w-full"/>
+				</div>
+				if len(errors.InvalidCredentials) > 0 {
+					<div class="text-sm text-error">{errors.InvalidCredentials}</div>
+				}
+				<button type="submit" class="btn btn-secondary w-full text-white my-[10px]">Login <i class="fa-solid fa-arrow-right"></i></button>
+				<div class="divider text-white before:bg-white after:bg-white my-[5px]">OR</div>
+				<a href="/register" class="btn btn-outline w-full text-white mt-[10px] ">Register an Account </a>
+			</div>
+		</div>
+	</form>
+}
+
+templ Register() {
+	@layout.App(false) {
+		// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
+		@RegisterForm()
+	}
+}
+
+templ RegisterForm() {
+	<form
+		hx-post="/register"
 		hx-swap="outerHTML"
 	>
 		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
@@ -21,7 +74,7 @@ templ LoginForm() {
 		</div>
 		<div class="flex justify-center">
 			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
-				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
+				<h1 class="text-center text-xl text-white">Register a Teacher Account </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
 				<div class="w-full">
 					<div class="label">
@@ -35,17 +88,20 @@ templ LoginForm() {
 					// }
 					<div class="label">
 						<span class="label-text text-white">Password</span>
-					</div>
+					</div> 
 					<input type="password" name="password" autocomplete="off" required class="input input-bordered w-full"/>
 					// if len(errors.Password) > 0 {
 					// 	<div class="label">
 					// 		<span class="label-text-alt text-error">{ errors.Password }</span>
 					// 	</div>
 					// }
+					<div class="label">
+						<span class="label-text text-white">Confirm Password</span>
+					</div>
+					<input type="password" name="confirmPassword" autocomplete="off" required class="input input-bordered w-full"/>
+					// then insert error handling here 
 				</div>
-				<button type="submit" class="btn btn-secondary w-full text-white my-[10px]">Login <i class="fa-solid fa-arrow-right"></i></button>
-				<div class="divider text-white before:bg-white after:bg-white">OR</div>
-				<a href="/login/provider/google" class="btn btn-outline w-full text-white mt-[10px] ">Login with Google <i class="fa-brands fa-google"></i></a>
+				<button type="submit" class="btn btn-secondary w-full text-white mt-4">Register Account <i class="fa-solid fa-arrow-right"></i></button>
 			</div>
 		</div>
 	</form>
