@@ -11,25 +11,21 @@ import (
 	"soln-teachermodule/view/home"
 )
 
-type LoginParams struct {
-	Username			string
-	Password			string
-}
-
-type LoginErrors struct {
-	Username			string
-	Password			string
-	InvalidCredentials  string
-}
-
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, auth.Login())
 }
 
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
+	credentials := auth.LoginParams {
+		Username: r.FormValue("username"),
+		Password: r.FormValue("password"),
+	}
 	// authenticate the user
-	if err := database.AuthenticateWebUser(w, r); err != nil {
-		return err
+	if err := database.AuthenticateWebUser(credentials.Username, credentials.Password); err != nil {
+		// if an error occurs
+		return render(w, r, auth.LoginForm(credentials, auth.LoginErrors{
+			InvalidCredentials: "Invalid username or password",
+		})) 
 	} else {
 		return render(w, r, home.Index())
 	}
