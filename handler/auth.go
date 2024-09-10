@@ -37,7 +37,6 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	// Read the JSON data from the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -45,7 +44,6 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer r.Body.Close()
 
-	// Parse the JSON data into the Data struct
 	type Data struct {
 		Username string
 		Password string
@@ -63,7 +61,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	log.Printf("Received data: %+v", data.Password)
-	// next is to perform sql commands
+	// authenticate student 
 	if database.AuthenticateSolnUser(data.Username, data.Password) {
 		response := LoginResponse{Success: true}
 		w.Header().Set("Content-Type", "application/json")
@@ -91,10 +89,30 @@ func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
-	if err := database.RegisterAccount(w, r); err != nil {
-		return err
-	} else {
-	fmt.Print("Account registered successfully!")
-	return render(w, r, auth.RegisterForm())
+	credentials := auth.RegisterParams {
+		Username: 			r.FormValue("username"),
+		Password:			r.FormValue("password"),
+		ConfirmPassword:	r.FormValue("confirmPassword"),
 	}
+
+	// TODO: username is already taken error
+
+	// check if password and confirmPassword is the same
+	if credentials.Password == credentials.ConfirmPassword {
+		if err := database.RegisterAccount(w, r); err != nil {
+			return err
+		} else {
+		fmt.Print("Account registered successfully!")
+		return render(w, r, auth.LoginForm(auth.LoginParams{}, auth.LoginErrors{}))
+		}
+	} else {
+		return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{
+			RegisterErrors: "Passwords do not match, please try again.",
+		} ))
+	}
+
 }
+
+//func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
+	
+//}

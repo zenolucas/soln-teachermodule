@@ -7,7 +7,6 @@ import (
 
 templ Login() {
 	@layout.App(false) {
-		// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
 		@LoginForm(LoginParams{}, LoginErrors{})
 	}
 }
@@ -30,9 +29,9 @@ templ LoginForm(credentials LoginParams, errors LoginErrors) {
 	>
 		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
 
-			<img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
+			// <img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
 		</div>
-		<div class="flex justify-center">
+		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
 			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
 				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
@@ -57,49 +56,50 @@ templ LoginForm(credentials LoginParams, errors LoginErrors) {
 	</form>
 }
 
+type RegisterParams struct {
+	Username		string
+	Password		string
+	ConfirmPassword	string
+}
+
+type RegisterErrors struct {
+	RegisterErrors	string
+}
+
 templ Register() {
 	@layout.App(false) {
-		// @LoginForm(supabase.UserCredentials{}, LoginErrors{})
-		@RegisterForm()
+		@RegisterForm(RegisterParams{}, RegisterErrors{})
 	}
 }
 
-templ RegisterForm() {
+templ RegisterForm(credentials RegisterParams, errors RegisterErrors) {
 	<form
 		hx-post="/register"
 		hx-swap="outerHTML"
 	>
 		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-			<img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
+			// <img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
 		</div>
 		<div class="flex justify-center">
-			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
+			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl mt-[calc(100vh-100vh+8rem)]">
 				<h1 class="text-center text-xl text-white">Register a Teacher Account </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
 				<div class="w-full">
 					<div class="label">
-						<span class="label-text text-white">Email address</span>
+						<span class="label-text text-white">Username</span>
 					</div>
-					<input type="text" name="username" autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
-					// if len(errors.Email) > 0 {
-					// 	<div class="label">
-					// 		<span class="label-text-alt text-error">{ errors.Email }</span>
-					// 	</div>
-					// }
+					<input type="text" name="username" value={ credentials.Username } autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
 					<div class="label">
 						<span class="label-text text-white">Password</span>
 					</div> 
-					<input type="password" name="password" autocomplete="off" required class="input input-bordered w-full"/>
-					// if len(errors.Password) > 0 {
-					// 	<div class="label">
-					// 		<span class="label-text-alt text-error">{ errors.Password }</span>
-					// 	</div>
-					// }
+					<input type="password" name="password" value={ credentials.Password } autocomplete="off" required class="input input-bordered w-full"/>
 					<div class="label">
 						<span class="label-text text-white">Confirm Password</span>
 					</div>
-					<input type="password" name="confirmPassword" autocomplete="off" required class="input input-bordered w-full"/>
-					// then insert error handling here 
+					<input type="password" name="confirmPassword" value={ credentials.ConfirmPassword } autocomplete="off" required class="input input-bordered w-full"/>
+					if len(errors.RegisterErrors) > 0 {
+					<div class="text-sm text-error">{errors.RegisterErrors}</div>
+					}
 				</div>
 				<button type="submit" class="btn btn-secondary w-full text-white mt-4">Register Account <i class="fa-solid fa-arrow-right"></i></button>
 			</div>
