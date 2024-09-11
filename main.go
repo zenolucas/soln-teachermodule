@@ -31,6 +31,8 @@ func main() {
 	router.Get("/register", handler.Make(handler.HandleRegisterIndex))
 	router.Post("/register", handler.Make(handler.HandleRegisterCreate))
 	router.Post("/soln/login", handler.Make(handler.HandleLoginGame))
+	// to be changed into POST -> /classroom (show classrooms associated w/ teacher)
+	router.Get("/classroom", handler.Make(handler.HandleClassroomCreate))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
