@@ -5,63 +5,66 @@ import "soln-teachermodule/view/layout"
 templ Classroom() {
 @layout.App(true) {
 <div class="flex w-full h-[calc(100vh-65px)]">
-	<div class="w-1/4 bg-base-content flex justify-center"></div>
-	<div class="w-3/4 bg-neutral justify-center gap-4">
+	<div class="w-1/4 bg-neutral flex justify-center">
+	
+	</div>
+	<div class="w-3/4 bg-base-300 justify-center gap-4">
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked="true" />
 			<div role="tabpanel" class="tab-content p-10">
-				<div class="hero min-h-48 mx-1"
-					style="background-image: url(http://localhost:3000/public/images/bg/soln-banner.png);">
-					<div class="hero-overlay bg-opacity-60"></div>
-					<div class="hero-content text-neutral-content flex-col lg:flex-row items-start">
-						<div class="max-w-md">
-							<h1 class="mb-5 text-5xl font-bold">Hello there</h1>
-							<p class="mb-5">
-								Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
-								exercitationem
-								quasi. In deleniti eaque aut repudiandae et a id nisi.
-							</p>
-							<button class="btn btn-primary">Get Started</button>
-						</div>
-					</div>
-				</div>
+			overview
+				
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Levels" />
 			<div role="tabpanel" class="tab-content p-10">Levels</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Players" />
-			<div role="tabpanel" class="tab-content p-10">Players
+			<div role="tabpanel" class="tab-content p-10">
 				<div class="overflow-x-auto">
-					<table class="table table-zebra">
+					<table class="table table-zebra text-xl">
 						<!-- head -->
 						<thead>
 							<tr>
 								<th></th>
-								<th>Name</th>
-								<th>Job</th>
-								<th>Favorite Color</th>
+								<th class="text-xl">Name</th>
+								<th></th>
 							</tr>
 						</thead>
 						<tbody>
 							<!-- row 1 -->
 							<tr>
 								<th>1</th>
-								<td>Cy Ganderton</td>
-								<td>Quality Control Specialist</td>
-								<td>Blue</td>
+								<td>John Johnson</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
 							</tr>
 							<!-- row 2 -->
 							<tr>
 								<th>2</th>
-								<td>Hart Hagerty</td>
-								<td>Desktop Support Technician</td>
-								<td>Purple</td>
+								<td>Michael Reeves</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
 							</tr>
 							<!-- row 3 -->
 							<tr>
 								<th>3</th>
-								<td>Brice Swyre</td>
-								<td>Tax Accountant</td>
-								<td>Red</td>
+								<td>Aldous Huxley</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
+							</tr>
+
+							<tr>
+								<th>4</th>
+								<td>Sakuragi Hanamichi</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
+							</tr>
+
+							<tr>
+								<th>5</th>
+								<td>Jack Sparrow</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
+							</tr>
+
+							<tr>
+								<th>6</th>
+								<td>Peter Peterson</td>
+								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
 							</tr>
 						</tbody>
 					</table>

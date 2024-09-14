@@ -4,7 +4,7 @@ import "soln-teachermodule/view/ui"
 
 templ App(nav bool) {
 	<!DOCTYPE html>
-	<html lang="en" data-theme="emerald">
+	<html lang="en" data-theme="emerald" class="bg-base-300">
 		<head>
 			<title>Sol'n Teacher Portal</title>
 			// <link rel="icon" type="image/x-icon" href="/public/favicon.ico"/>
@@ -14,11 +14,6 @@ templ App(nav bool) {
 			<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.9" defer></script>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-			<style>
-				html {
-					background-image: url('/public/images/bg/paper.png');
-				}
-			</style>
 		</head>
 		<body class="antialiased">
 			if nav {
