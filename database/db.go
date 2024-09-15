@@ -103,3 +103,27 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 	}
 	return err
 }
+
+func GetStudents() ([]types.Student, error) {
+	var students []types.Student
+
+	rows, err := db.Query("SELECT username FROM users WHERE usertype = 'student'")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var student types.Student
+		if err := rows.Scan(&student.Username); err != nil {
+			return nil, fmt.Errorf("GetStudents: %v", err)
+		}
+		students = append(students, student)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUsers: %v", err)
+	}
+
+	return students, nil
+}
