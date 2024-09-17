@@ -5,18 +5,84 @@ import "soln-teachermodule/view/layout"
 templ Classroom() {
 @layout.App(true) {
 <div class="flex w-full h-[calc(100vh-65px)]">
-	<div class="w-1/4 bg-neutral flex justify-center">
-	
+	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
+		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start"><i class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</div>
+		<div class="divider"></div>
+		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
+		<div class="btn btn-wide btn-active btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
+		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 2</div>
+		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 3</div>
 	</div>
-	<div class="w-3/4 bg-base-300 justify-center gap-4">
+	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked="true" />
 			<div role="tabpanel" class="tab-content p-10">
-			overview
-				
+				overview
+
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Levels" />
-			<div role="tabpanel" class="tab-content p-10">Levels</div>
+			<div role="tabpanel" class="tab-content p-10">
+				<div class="hero bg-base-200 mb-4">
+					<div class="hero-content flex-col lg:flex-row">
+						<img src="http://localhost:3000/public/images/bg/card-image.png"
+							class="max-w-sm rounded-lg shadow-2xl" />
+						<div>
+							<h1 class="text-5xl font-bold">World 1</h1>
+							<p class="py-6">
+								Our hero wake up in World 1 which is all about addition lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
+								exercitationem
+								quasi. In deleniti eaque aut repudiandae et a id nisi.
+							</p>
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+				<div class="hero bg-base-200 mb-4">
+					<div class="hero-content flex-col lg:flex-row">
+						<img src="http://localhost:3000/public/images/bg/card-image.png"
+							class="max-w-sm rounded-lg shadow-2xl" />
+						<div>
+							<h1 class="text-5xl font-bold">World 2</h1>
+							<p class="py-6">
+								World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
+								exercitationem
+								quasi. In deleniti eaque aut repudiandae et a id nisi.
+							</p>
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+				<div class="hero bg-base-200 mb-4">
+					<div class="hero-content flex-col lg:flex-row">
+						<img src="http://localhost:3000/public/images/bg/card-image.png"
+							class="max-w-sm rounded-lg shadow-2xl" />
+						<div>
+							<h1 class="text-5xl font-bold">world 3</h1>
+							<p class="py-6">
+								world 3 which is all about multiplication lorem ipsum provident cupiditate voluptatem et in. quaerat fugiat ut assumenda excepturi
+								exercitationem
+								quasi. in deleniti eaque aut repudiandae et a id nisi.
+							</p>
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+				<div class="hero bg-base-200 mb-4">
+					<div class="hero-content flex-col lg:flex-row">
+						<img src="http://localhost:3000/public/images/bg/card-image.png"
+							class="max-w-sm rounded-lg shadow-2xl" />
+						<div>
+							<h1 class="text-5xl font-bold">world 4</h1>
+							<p class="py-6">
+								world 4 which is all about division lorem ipsum provident cupiditate voluptatem et in. quaerat fugiat ut assumenda excepturi
+								exercitationem
+								quasi. in deleniti eaque aut repudiandae et a id nisi.
+							</p>
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Players" />
 			<div role="tabpanel" class="tab-content p-10">
 				<div class="overflow-x-auto">
@@ -29,43 +95,7 @@ templ Classroom() {
 								<th></th>
 							</tr>
 						</thead>
-						<tbody>
-							<!-- row 1 -->
-							<tr>
-								<th>1</th>
-								<td>John Johnson</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
-							<!-- row 2 -->
-							<tr>
-								<th>2</th>
-								<td>Michael Reeves</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
-							<!-- row 3 -->
-							<tr>
-								<th>3</th>
-								<td>Aldous Huxley</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
-
-							<tr>
-								<th>4</th>
-								<td>Sakuragi Hanamichi</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
-
-							<tr>
-								<th>5</th>
-								<td>Jack Sparrow</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
-
-							<tr>
-								<th>6</th>
-								<td>Peter Peterson</td>
-								<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
-							</tr>
+						<tbody hx-get="/students" hx-trigger="load" hx-target="this">
 						</tbody>
 					</table>
 				</div>
