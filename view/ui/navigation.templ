@@ -3,21 +3,7 @@ package ui
 templ Navigation() {
 	<div class="navbar h-20 bg-base-content">
 		<div class="flex-none">
-			<button class="btn btn-square btn-ghost">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					class="inline-block h-5 w-5 stroke-current"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 6h16M4 12h16M4 18h16"
-					></path>
-				</svg>
-			</button>
+			<i class="fa-solid fa-bars fa-xl ml-8" style="color: #ffffff;"></i>
 		</div>
 		<div class="flex-1">
 			<a class="btn btn-ghost text-white text-xl">Sol'n Teacher Portal</a>
@@ -26,7 +12,7 @@ templ Navigation() {
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost btn-circle mr-[10px]">
 					<div class="indicator">
-						<i class="fa-solid fa-plus fa-2xl"></i>
+						<i class="fa-solid fa-plus fa-2xl" style="color:#ffffff;"></i>
 					</div>
 				</div>
 				<div
@@ -45,7 +31,7 @@ templ Navigation() {
 					<div class="w-10 rounded-full">
 						<img
 							alt="Tailwind CSS Navbar component"
-							src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg"
+							src="http://localhost:3000/public/images/bg/sample_user.png"
 						/>
 					</div>
 				</div>
@@ -56,7 +42,6 @@ templ Navigation() {
 					<li>
 						<a class="justify-between">
 							Profile
-							<span class="badge">New</span>
 						</a>
 					</li>
 					<li><a>Settings</a></li>
