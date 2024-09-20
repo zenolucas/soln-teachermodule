@@ -12,7 +12,7 @@ import "bytes"
 
 import "soln-teachermodule/view/ui"
 
-func App(nav bool) templ.Component {
+func App(nav bool, create bool) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -30,7 +30,7 @@ func App(nav bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if nav {
-			templ_7745c5c3_Err = ui.Navigation().Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ui.Navigation(create).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

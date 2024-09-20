@@ -1,6 +1,6 @@
 package ui
 
-templ Navigation() {
+templ Navigation(create bool) {
 	<div class="navbar h-20 bg-base-content">
 		<div class="flex-none">
 			<i class="fa-solid fa-bars fa-xl ml-8" style="color: #ffffff;"></i>
@@ -9,16 +9,14 @@ templ Navigation() {
 			<a class="btn btn-ghost text-white text-xl">Sol'n Teacher Portal</a>
 		</div>
 		<div class="flex-none">
+		if create {
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost btn-circle mr-[10px]">
 					<div class="indicator">
 						<i class="fa-solid fa-plus fa-2xl" style="color:#ffffff;"></i>
 					</div>
 				</div>
-				<div
-					tabindex="0"
-					class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-52 shadow"
-				>
+				<div tabindex="0" class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-52 shadow">
 					<div class="card-body">
 						<div class="card-actions">
 							<button class="btn btn-ghost btn-block">Create Class</button>
@@ -26,6 +24,7 @@ templ Navigation() {
 					</div>
 				</div>
 			</div>
+		}
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar mr-[20px]">
 					<div class="w-10 rounded-full">
