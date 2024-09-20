@@ -6,7 +6,7 @@ import (
 )
 
 templ Login() {
-	@layout.App(false) {
+	@layout.App(false, false) {
 		@LoginForm(LoginParams{}, LoginErrors{})
 	}
 }
@@ -67,7 +67,7 @@ type RegisterErrors struct {
 }
 
 templ Register() {
-	@layout.App(false) {
+	@layout.App(false, false) {
 		@RegisterForm(RegisterParams{}, RegisterErrors{})
 	}
 }

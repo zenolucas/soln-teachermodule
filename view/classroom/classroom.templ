@@ -3,15 +3,20 @@ package classroom
 import "soln-teachermodule/view/layout"
 
 templ Classroom() {
-@layout.App(true) {
+@layout.App(true, false) {
 <div class="flex w-full h-[calc(100vh-65px)]">
 	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
-		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start"><i class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</div>
-		<div class="divider"></div>
-		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
-		<div class="btn btn-wide btn-active btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
-		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 2</div>
-		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 3</div>
+		<div class="btn btn btn-ghost w-full text-white text-left justify-start h-16 mt-2"><i
+				class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</div>
+		<div class="divider my-0"></div>
+		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i
+				class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
+		<div class="btn btn-wide btn-active btn-ghost w-full text-white text-left justify-start mt-2"> <i
+				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
+		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start mt-2"> <i
+				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
+		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start mt-2"> <i
+				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
 	</div>
 	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
@@ -29,7 +34,8 @@ templ Classroom() {
 						<div>
 							<h1 class="text-5xl font-bold">World 1</h1>
 							<p class="py-6">
-								Our hero wake up in World 1 which is all about addition lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
+								Our hero wake up in World 1 which is all about addition lorem ipsum Provident cupiditate
+								voluptatem et in. Quaerat fugiat ut assumenda excepturi
 								exercitationem
 								quasi. In deleniti eaque aut repudiandae et a id nisi.
 							</p>
@@ -44,7 +50,8 @@ templ Classroom() {
 						<div>
 							<h1 class="text-5xl font-bold">World 2</h1>
 							<p class="py-6">
-								World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
+								World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et
+								in. Quaerat fugiat ut assumenda excepturi
 								exercitationem
 								quasi. In deleniti eaque aut repudiandae et a id nisi.
 							</p>
@@ -59,7 +66,8 @@ templ Classroom() {
 						<div>
 							<h1 class="text-5xl font-bold">world 3</h1>
 							<p class="py-6">
-								world 3 which is all about multiplication lorem ipsum provident cupiditate voluptatem et in. quaerat fugiat ut assumenda excepturi
+								world 3 which is all about multiplication lorem ipsum provident cupiditate voluptatem et
+								in. quaerat fugiat ut assumenda excepturi
 								exercitationem
 								quasi. in deleniti eaque aut repudiandae et a id nisi.
 							</p>
@@ -74,7 +82,8 @@ templ Classroom() {
 						<div>
 							<h1 class="text-5xl font-bold">world 4</h1>
 							<p class="py-6">
-								world 4 which is all about division lorem ipsum provident cupiditate voluptatem et in. quaerat fugiat ut assumenda excepturi
+								world 4 which is all about division lorem ipsum provident cupiditate voluptatem et in.
+								quaerat fugiat ut assumenda excepturi
 								exercitationem
 								quasi. in deleniti eaque aut repudiandae et a id nisi.
 							</p>
@@ -106,4 +115,29 @@ templ Classroom() {
 	</div>
 </div>
 }
+}
+
+type CreateParams struct {
+	Classname string
+	Section string
+}
+
+type CreateErrors struct {
+	ErrorMessage string
+}
+
+templ ClassroomForm(data CreateParams, errors CreateErrors) {
+	<form hx-post="/createclass" hx-swap="outerHTML">
+		<label class="form-control w-full max-w-s">
+			<div class="label">
+				<span class="label-text">Class name</span>
+			</div>
+			<input type="text" placeholder="Type here" class="input input-bordered w-full" />
+			<div class="text-sm text-error">invalid input</div>
+			<div class="label">
+				<span class="label-text">Section</span>
+			</div>
+			<input type="text" placeholder="Type here" class="input input-bordered w-full" />
+		</label>
+	</form>
 }
