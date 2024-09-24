@@ -127,3 +127,43 @@ func GetStudents() ([]types.Student, error) {
 
 	return students, nil
 }
+
+func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
+	userCreds := types.UserCredentials{
+		Username: r.FormValue("username"),
+		Password: r.FormValue("password"),
+	}
+
+	// then get teacherID from request.
+	user := r.Context().Value(types.UserContextKey).(types.AuthenticatedUser)
+
+	_, err := db.Exec("INSERT INTO classrooms (classroomname, section, teacherID) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, user.UserID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
+}
+
+func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
+	userCreds := types.UserCredentials{
+		Username: r.FormValue("username"),
+	}
+
+	var teacherID int
+	err := db.QueryRow("SELECT user_ID FROM users WHERE username = ?", userCreds.Username).Scan(&teacherID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return 0, err
+		}
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return 0, err
+	}
+
+	return teacherID, nil
+}
+
+func GetClassrooms(w http.ResponseWriter, r http.Request) error {
+
+}
