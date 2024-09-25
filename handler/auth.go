@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/auth"
 	"soln-teachermodule/view/home"
+
+	"github.com/gorilla/sessions"
 )
 
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
@@ -16,19 +21,23 @@ func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
-	credentials := auth.LoginParams {
+	credentials := auth.LoginParams{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
 	}
+
 	// authenticate the user
 	if err := database.AuthenticateWebUser(credentials.Username, credentials.Password); err != nil {
 		// if an error occurs
 		return render(w, r, auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: "Invalid username or password",
-		})) 
-	} else {
-		return render(w, r, home.Index())
+		}))
 	}
+	if err := setAuthCookie(w, r); err != nil {
+		return err
+	}
+
+	return render(w, r, home.Index())
 }
 
 func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
@@ -61,7 +70,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	log.Printf("Received data: %+v", data.Password)
-	// authenticate student 
+	// authenticate student
 	if database.AuthenticateSolnUser(data.Username, data.Password) {
 		response := LoginResponse{Success: true}
 		w.Header().Set("Content-Type", "application/json")
@@ -77,11 +86,10 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-
 type RegisterParams struct {
-	Username			string
-	Password			string
-	ConfirmPassword		string
+	Username        string
+	Password        string
+	ConfirmPassword string
 }
 
 func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
@@ -89,30 +97,50 @@ func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
-	credentials := auth.RegisterParams {
-		Username: 			r.FormValue("username"),
-		Password:			r.FormValue("password"),
-		ConfirmPassword:	r.FormValue("confirmPassword"),
+	credentials := auth.RegisterParams{
+		Username:        r.FormValue("username"),
+		Password:        r.FormValue("password"),
+		ConfirmPassword: r.FormValue("confirmPassword"),
 	}
 
 	// TODO: username is already taken error
 
-	// check if password and confirmPassword is the same
 	if credentials.Password == credentials.ConfirmPassword {
 		if err := database.RegisterAccount(w, r); err != nil {
 			return err
 		} else {
-		fmt.Print("Account registered successfully!")
-		return render(w, r, auth.LoginForm(auth.LoginParams{}, auth.LoginErrors{}))
+			fmt.Print("Account registered successfully!")
+			return render(w, r, auth.LoginForm(auth.LoginParams{}, auth.LoginErrors{}))
 		}
 	} else {
 		return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{
 			RegisterErrors: "Passwords do not match, please try again.",
-		} ))
+		}))
 	}
 
 }
 
+func generateSessionToken() (string, error) {
+	// Create a random 32-byte token
+	token := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, token)
+	if err != nil {
+		return "", err
+	}
+	// Encode the token to a base64 string
+	return base64.URLEncoding.EncodeToString(token), nil
+}
+
+func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
+	fmt.Print("this is executed")
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, "teacher")
+	accessToken, _ := generateSessionToken()
+	session.Values["access_token"] = accessToken
+	// session.Values["teacherID"], _ = database.GetTeacherID(credentials.Username)
+	return session.Save(r, w)
+}
+
 //func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-	
+
 //}
