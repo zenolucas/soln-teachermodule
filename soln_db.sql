@@ -53,9 +53,12 @@ CREATE TABLE IF NOT EXISTS questions (
 CREATE TABLE IF NOT EXISTS choices (
     choice_id INT AUTO_INCREMENT PRIMARY KEY,
     question_id INT, 
-    choice_text     VARCHAR(100) NOT NULL,
+    C1 VARCHAR(20),
+    C2 VARCHAR(20),
+    C3 VARCHAR(20),
+    C4 VARCHAR(20),
     FOREIGN KEY (question_id) REFERENCES questions(question_id)
-)
+);
 
 -- Suggestions: 
 -- Superadmin and admin
@@ -80,15 +83,9 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (2, 3);
 
 INSERT INTO questions (minigame_id, question_text, correct_answer) VALUES 
-(1, 'What is 1/2 + 1/2 ?', '1')
+(1, 'What is 1/2 + 1/2 ?', '1'),
 (1, 'What is 1/3 + 1/3 ?', '2/3');
 
-INSERT INTO choices (question_id, choice_text) VALUES 
-(1, '1/2'),
-(1, '1/3'),
-(1, '1'),
-(1, '2'),
-(2, '1/2'),
-(2, '1/3'),
-(2, '1/4'),
-(2, '2/3');
+INSERT INTO choices (question_id, C1, C2, C3, C4) VALUES 
+(1, '1/2', '1/3', '1', '2'),
+(2, '1/2', '1/3', '1/4', '2/3');

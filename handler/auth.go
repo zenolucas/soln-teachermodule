@@ -16,7 +16,15 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+const (
+	sessionUserKey        = "teacher"
+	sessionAccessTokenKey = "access_token"
+)
+
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
+	// user := GetAuthenticatedUser(r)
+	// fmt.Print("is htis executed?")
+	// fmt.Printf("%v+\n", user.LoggedIn)
 	return render(w, r, auth.Login())
 }
 
@@ -62,7 +70,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return nil
+		return err 
 	}
 
 	type LoginResponse struct {
@@ -85,6 +93,8 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 
 	return nil
 }
+
+
 
 type RegisterParams struct {
 	Username        string
@@ -132,15 +142,21 @@ func generateSessionToken() (string, error) {
 }
 
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
-	fmt.Print("this is executed")
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, "teacher")
+	session, _ := store.Get(r, sessionUserKey)
 	accessToken, _ := generateSessionToken()
-	session.Values["access_token"] = accessToken
+	fmt.Print("the generated accesstoken is ", accessToken)
+	session.Values[sessionAccessTokenKey] = accessToken
 	// session.Values["teacherID"], _ = database.GetTeacherID(credentials.Username)
 	return session.Save(r, w)
 }
 
-//func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-
-//}
+func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	fmt.Print(session.Values[sessionAccessTokenKey])
+	session.Values[sessionAccessTokenKey] = ""
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
