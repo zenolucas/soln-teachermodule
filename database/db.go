@@ -176,9 +176,8 @@ func GetClassrooms(w http.ResponseWriter, r http.Request) error {
 	return nil
 }
 
-func GetQuestionDictionary(minigame_id int) ([]types.Question, error) {
-	var questions []types.Question
-
+func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
+	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer
 	rows, err := db.Query("SELECT question_id, question_text, correct_answer FROM questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
@@ -187,38 +186,26 @@ func GetQuestionDictionary(minigame_id int) ([]types.Question, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var question types.Question
+		var question types.MultipleChoiceQuestion
 		if err := rows.Scan(&question.QuestionID, &question.QuestionText, &question.CorrectAnswer); err != nil {
-			return nil, nil
+			return nil, err
 		}
 		questions = append(questions, question)
 	}
 
 	for i := 0; i < len(questions); i++ {
 		// then we get choices
-		rows, err := db.Query("SELECT C1, C2, C3, C4 FROM choices WHERE question_id = ?", questions[i].QuestionID)
+		choicesRows, err := db.Query("SELECT C1, C2, C3, C4 FROM choices WHERE question_id = ?", questions[i].QuestionID)
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
+		defer choicesRows.Close()
 
-		type choiceHolder struct {
-			C1 string
-			C2 string
-			C3 string
-			C4 string
-		}
-
-		var holder choiceHolder
 		// then add choices to question in questions slice
-		for rows.Next() {
-			if err := rows.Scan(&holder.C1, &holder.C2, &holder.C3, &holder.C4); err != nil {
+		for choicesRows.Next() {
+			if err := choicesRows.Scan(&questions[i].Option1, &questions[i].Option2, &questions[i].Option3, &questions[i].Option4); err != nil {
 				return nil, err
 			}
-			questions[i].Choice1 = holder.C1
-			questions[i].Choice2 = holder.C2
-			questions[i].Choice3 = holder.C3
-			questions[i].Choice4 = holder.C4
 		}
 	}
 
