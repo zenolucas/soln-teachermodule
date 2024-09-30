@@ -7,7 +7,7 @@ import (
 	"soln-teachermodule/view/classroom"
 )
 
-func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
+func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, classroom.Classroom())
 }
 
@@ -30,3 +30,15 @@ func GetStudents(w http.ResponseWriter, r *http.Request) error {
 	}
 	return err
 }
+
+// func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) {
+// 	data := classroom.CreateParams{
+// 		Classname: r.FormValue("classname"),
+// 		Section:   r.FormValue("section"),
+// 	}
+
+// 	// maybe perform some data cleaning/inspection here?
+// 	// if bad, return error, else insert classroom
+// 	db.InsertClassroom(w, r)
+// 	return nil
+// }
