@@ -31,7 +31,15 @@ func Index() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex w-full h-[calc(100vh-65px)]\"><div class=\"w-1/4 bg-neutral flex\"></div><div class=\"w-3/4 bg-base-300 justify-center gap-4\"><div class=\"flex flex-wrap w-full text-white\"><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 1</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><a href=\"/classroom\" class=\"btn btn-secondary\">Open</a></div></div></div><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 2</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><button class=\"btn btn-secondary\">Open</button></div></div></div><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 2A</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><button class=\"btn btn-secondary\">Open</button></div></div></div><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 3</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><a href=\"/classroom\" class=\"btn btn-secondary\">Open</a></div></div></div><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 3</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><button class=\"btn btn-secondary\">Open</button></div></div></div><div class=\"glass card card-bordered bg-neutral w-96 shadow-xl h-80 ml-8 mt-8\"><figure><img src=\"http://localhost:3000/public/images/bg/soln-card-image.png\" alt=\"Shoes\"></figure><div class=\"card-body\"><h2 class=\"card-title\">Grade 6 - Section 5</h2><p>Lorem Ipsum</p><div class=\"card-actions justify-end\"><button class=\"btn btn-secondary\">Open</button></div></div></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = CreateClassForm(CreateParams{}, CreateErrors{}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -41,6 +49,39 @@ func Index() templ.Component {
 			return templ_7745c5c3_Err
 		})
 		templ_7745c5c3_Err = layout.App(true, true).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if !templ_7745c5c3_IsBuffer {
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
+		}
+		return templ_7745c5c3_Err
+	})
+}
+
+type CreateParams struct {
+	Classname string
+	Section   string
+}
+
+type CreateErrors struct {
+	ErrorMessage string
+}
+
+func CreateClassForm(data CreateParams, errors CreateErrors) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
+		if !templ_7745c5c3_IsBuffer {
+			templ_7745c5c3_Buffer = templ.GetBuffer()
+			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/createclassroom\" hx-swap=\"outerHTML\"><input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Create Classroom</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Class name</span></div><input type=\"text\" name=\"classname\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"text-sm text-error\">invalid input</div><div class=\"label\"><span class=\"label-text\">Section</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></label><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Create</button></div></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

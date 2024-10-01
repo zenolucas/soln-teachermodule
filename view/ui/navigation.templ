@@ -19,7 +19,7 @@ templ Navigation(create bool) {
 				<div tabindex="0" class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-52 shadow">
 					<div class="card-body">
 						<div class="card-actions">
-							<button class="btn btn-ghost btn-block">Create Class</button>
+							<label for="my_modal_6" class="btn w-full">Create Class</label>
 						</div>
 					</div>
 				</div>
@@ -44,9 +44,15 @@ templ Navigation(create bool) {
 						</a>
 					</li>
 					<li><a>Settings</a></li>
-					<li><a>Logout</a></li>
+					<li>@LogoutForm()</li>
 				</ul>
 			</div>
 		</div>
 	</div>
+}
+
+templ LogoutForm() {
+	<form method="POST" action="/logout">
+		<li><button type="submit" class="btn btn-link">Logout</button></li>
+	</form>
 }

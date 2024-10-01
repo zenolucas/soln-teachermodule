@@ -82,8 +82,46 @@ templ Index() {
 				</div>
 			</div>
 		</div>
+		@CreateClassForm(CreateParams{}, CreateErrors{})
 	</div>
 </div>
 
 }
+}
+
+type CreateParams struct {
+Classname string
+Section string
+}
+
+type CreateErrors struct {
+ErrorMessage string
+}
+
+templ CreateClassForm(data CreateParams, errors CreateErrors) {
+<form hx-post="/createclassroom" hx-swap="outerHTML">
+
+	<input type="checkbox" id="my_modal_6" class="modal-toggle" />
+	<div class="modal" role="dialog">
+		<div class="modal-box">
+			<h3 class="text-lg font-bold">Create Classroom</h3>
+			<label class="form-control w-full max-w-s">
+				<div class="label">
+					<span class="label-text">Class name</span>
+				</div>
+				<input type="text" name="classname" placeholder="Type here" class="input input-bordered w-full" />
+				<div class="text-sm text-error">invalid input</div>
+				<div class="label">
+					<span class="label-text">Section</span>
+				</div>
+				<input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+			</label>
+			<div class="modal-action">
+				<label for="my_modal_6" class="btn">Cancel</label>
+				<button type="submit" class="btn btn-secondary">Create</button>
+			</div>
+		</div>
+	</div>
+
+</form>
 }
