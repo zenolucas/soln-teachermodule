@@ -78,7 +78,7 @@ func LoginForm(credentials LoginParams, errors LoginErrors) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/login\" hx-swap=\"outerHTML\"><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"></div><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"><div class=\"max-w-md w-full bg-neutral py-10 px-8 rounded-xl\"><h1 class=\"text-center text-xl text-white\">Sol'n Teacher Portal </h1><div class=\"divider before:bg-white after:bg-white my-[5px]\"></div><div class=\"w-full\"><div class=\"label\"><span class=\"label-text text-white\">Username</span></div><input type=\"text\" name=\"username\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -86,7 +86,7 @@ func LoginForm(credentials LoginParams, errors LoginErrors) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" autocomplete=\"off\" required placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text text-white\">Password</span></div><input type=\"password\" name=\"password\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -94,12 +94,12 @@ func LoginForm(credentials LoginParams, errors LoginErrors) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" autocomplete=\"off\" required class=\"input input-bordered w-full\"></div>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(errors.InvalidCredentials) > 0 {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"text-sm text-error\">")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -112,12 +112,12 @@ func LoginForm(credentials LoginParams, errors LoginErrors) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<button type=\"submit\" class=\"btn btn-secondary w-full text-white my-[10px]\">Login <i class=\"fa-solid fa-arrow-right\"></i></button><div class=\"divider text-white before:bg-white after:bg-white my-[5px]\">OR</div><a href=\"/register\" class=\"btn btn-outline w-full text-white mt-[10px] \">Register an Account </a></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 6)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -190,7 +190,7 @@ func RegisterForm(credentials RegisterParams, errors RegisterErrors) templ.Compo
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/register\" hx-swap=\"outerHTML\"><div class=\"flex justify-center mt-[calc(100vh-100vh+8rem)]\"></div><div class=\"flex justify-center\"><div class=\"max-w-md w-full bg-neutral py-10 px-8 rounded-xl mt-[calc(100vh-100vh+8rem)]\"><h1 class=\"text-center text-xl text-white\">Register a Teacher Account </h1><div class=\"divider before:bg-white after:bg-white my-[5px]\"></div><div class=\"w-full\"><div class=\"label\"><span class=\"label-text text-white\">Username</span></div><input type=\"text\" name=\"username\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -198,7 +198,7 @@ func RegisterForm(credentials RegisterParams, errors RegisterErrors) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" autocomplete=\"off\" required placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text text-white\">Password</span></div><input type=\"password\" name=\"password\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 8)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -206,7 +206,7 @@ func RegisterForm(credentials RegisterParams, errors RegisterErrors) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" autocomplete=\"off\" required class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text text-white\">Confirm Password</span></div><input type=\"password\" name=\"confirmPassword\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 9)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -214,12 +214,12 @@ func RegisterForm(credentials RegisterParams, errors RegisterErrors) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" autocomplete=\"off\" required class=\"input input-bordered w-full\"> ")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 10)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(errors.RegisterErrors) > 0 {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"text-sm text-error\">")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 11)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -232,12 +232,12 @@ func RegisterForm(credentials RegisterParams, errors RegisterErrors) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 12)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><button type=\"submit\" class=\"btn btn-secondary w-full text-white mt-4\">Register Account <i class=\"fa-solid fa-arrow-right\"></i></button></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 13)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
