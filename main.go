@@ -39,6 +39,7 @@ func main() {
 	router.Group(func (auth chi.Router) {
 		auth.Use(handler.WithAuth)
 		auth.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
+		auth.Get("/level", handler.Make(handler.HandleLevelIndex))
 	})
 
 	// router.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
