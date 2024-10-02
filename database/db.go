@@ -179,7 +179,7 @@ func GetClassrooms(w http.ResponseWriter, r http.Request) error {
 func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text, correct_answer FROM questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, question_text, correct_answer FROM multiple_choice_questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 
 	for i := 0; i < len(questions); i++ {
 		// then we get choices
-		choicesRows, err := db.Query("SELECT C1, C2, C3, C4 FROM choices WHERE question_id = ?", questions[i].QuestionID)
+		choicesRows, err := db.Query("SELECT option_1, option_2, option_3, option_4 FROM multiple_choice_choices WHERE question_id = ?", questions[i].QuestionID)
 		if err != nil {
 			return nil, err
 		}
@@ -211,4 +211,31 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 
 	fmt.Println(questions)
 	return questions, nil
+}
+
+func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	question := types.MultipleChoiceQuestion{
+		QuestionText:  r.FormValue("question"),
+		Option1:       r.FormValue("option1"),
+		Option2:       r.FormValue("option2"),
+		Option3:       r.FormValue("option3"),
+		Option4:       r.FormValue("option4"),
+		CorrectAnswer: r.FormValue("correct_answer"),
+	}
+
+	// get questionID
+
+	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = 1",
+		question.QuestionText, question.CorrectAnswer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
+		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
+	if err != nil {
+		log.Fatal(another_err)
+	}
+
+	return err
 }
