@@ -21,16 +21,18 @@ func main() {
 	}
 
 	router := chi.NewMux()
-	router.Use(handler.WithUser)
 
 	// handle static files
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 	router.Get("/", handler.Make(handler.HandleLoginIndex))
 	router.Post("/login", handler.Make(handler.HandleLoginCreate))
-	router.Get("/register", handler.Make(handler.HandleRegisterIndex))
-	router.Post("/register", handler.Make(handler.HandleRegisterCreate))
-	router.Post("/logout", handler.Make(handler.HandleLogoutCreate))
-	router.Get("/students", handler.Make(handler.GetStudents))
+	// router.Get("/register", handler.Make(handler.HandleRegisterIndex))
+	// router.Post("/register", handler.Make(handler.HandleRegisterCreate))
+	// router.Post("/logout", handler.Make(handler.HandleLogoutCreate))
+
+	// router.Get("/students", handler.Make(handler.GetStudents))
+	// router.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
+	// router.Post("/updatemcquestions", handler.Make(handler.HandleUpdateMCQuestions))
 
 	router.Post("/soln/login", handler.Make(handler.HandleLoginGame))
 	router.Post("/soln/getquestions", handler.Make(handler.HandleGetQuestions))
@@ -40,6 +42,15 @@ func main() {
 		auth.Use(handler.WithAuth)
 		auth.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
 		auth.Get("/level", handler.Make(handler.HandleLevelIndex))
+
+		// auth.Post("/login", handler.Make(handler.HandleLoginCreate))
+		auth.Get("/register", handler.Make(handler.HandleRegisterIndex))
+		auth.Post("/register", handler.Make(handler.HandleRegisterCreate))
+		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
+
+		auth.Get("/students", handler.Make(handler.GetStudents))
+		auth.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
+		auth.Post("/updatemcquestions", handler.Make(handler.HandleUpdateMCQuestions))
 	})
 
 	// router.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
