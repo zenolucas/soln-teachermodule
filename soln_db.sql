@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS classrooms (
     classroom_id INT AUTO_INCREMENT PRIMARY KEY,
     classroom_name VARCHAR(100) NOT NULL,
     section VARCHAR(100),
+    description VARCHAR(200),
     teacher_id INT NOT NULL,
     FOREIGN KEY (teacher_id) REFERENCES users(user_id)
 );
@@ -43,21 +44,21 @@ CREATE TABLE IF NOT EXISTS level_minigames (
     FOREIGN KEY (minigame_id) REFERENCES minigames(minigame_id)
 );
 
-CREATE TABLE IF NOT EXISTS questions (
+CREATE TABLE IF NOT EXISTS multiple_choice_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY, 
     minigame_id INT,
     question_text   VARCHAR(200) NOT NULL,
     correct_answer  VARCHAR(200) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS choices (
+CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     choice_id INT AUTO_INCREMENT PRIMARY KEY,
     question_id INT, 
-    C1 VARCHAR(20),
-    C2 VARCHAR(20),
-    C3 VARCHAR(20),
-    C4 VARCHAR(20),
-    FOREIGN KEY (question_id) REFERENCES questions(question_id)
+    option_1 VARCHAR(20),
+    option_2 VARCHAR(20),
+    option_3 VARCHAR(20),
+    option_4 VARCHAR(20),
+    FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
 );
 
 -- Suggestions: 
@@ -72,9 +73,9 @@ INSERT INTO users (username, password, usertype) VALUES
 ('user5', 'password_hash5', 'student');
 
 -- Insert initial data into subjects table
-INSERT INTO classrooms (classroom_name, section, teacher_id) VALUES
-('Math101', '1', 1),
-('Remedial Class 1', '2', 2);
+INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
+('Math101', '1', 'Lorem Ipsum', 1),
+('Remedial Class 1', '2', 'Lorem Ipsum', 2);
 
 -- Insert initial data into enrollments table
 INSERT INTO enrollments (classroom_id, student_id) VALUES 
@@ -82,10 +83,10 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (1, 2),
 (2, 3);
 
-INSERT INTO questions (minigame_id, question_text, correct_answer) VALUES 
+INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES 
 (1, 'What is 1/2 + 1/2 ?', '1'),
 (1, 'What is 1/3 + 1/3 ?', '2/3');
 
-INSERT INTO choices (question_id, C1, C2, C3, C4) VALUES 
+INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES 
 (1, '1/2', '1/3', '1', '2'),
 (2, '1/2', '1/3', '1/4', '2/3');
