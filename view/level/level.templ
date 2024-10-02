@@ -4,11 +4,11 @@ import "soln-teachermodule/view/layout"
 
 templ Level() {
 @layout.App(true, false) {
-    <div class="flex justify-center w-full h-[calc(100vh-65px)]">
-        <div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-[calc(100vh-100vh+8rem)]">
-<input type="text" placeholder="Type here" 
-       class="input input-bordered input-primary w-full max-w-xs placeholder:text-black placeholder:opacity-100" />
-        </div>
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-8"
+         hx-get="/getmcquestions" hx-trigger="load" hx-target="this">
+    </div>
+    <div class="flex justify-center mt-4">
+         <button class="btn btn-primary text-white">add question</button>
     </div>
     }
 }
