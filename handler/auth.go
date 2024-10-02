@@ -70,7 +70,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err 
+		return err
 	}
 
 	type LoginResponse struct {
@@ -93,8 +93,6 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 
 	return nil
 }
-
-
 
 type RegisterParams struct {
 	Username        string
@@ -144,10 +142,8 @@ func generateSessionToken() (string, error) {
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
-	accessToken, _ := generateSessionToken()
-	fmt.Print("the generated accesstoken is ", accessToken)
-	session.Values[sessionAccessTokenKey] = accessToken
-	// session.Values["teacherID"], _ = database.GetTeacherID(credentials.Username)
+	session.Values["authenticated"] = true
+	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
 	return session.Save(r, w)
 }
 
@@ -155,7 +151,7 @@ func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	fmt.Print(session.Values[sessionAccessTokenKey])
-	session.Values[sessionAccessTokenKey] = ""
+	session.Values["authenticated"] = false
 	session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
