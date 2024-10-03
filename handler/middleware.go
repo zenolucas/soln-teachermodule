@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -22,11 +21,10 @@ func WithAuth(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		
-		fmt.Print("teacher is autheticated: ", session.Values["authenticated"])
+
 		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 			path := r.URL.Path
-			http.Redirect(w, r, "/?to" + path, http.StatusSeeOther)
+			http.Redirect(w, r, "/?to"+path, http.StatusSeeOther)
 		}
 
 		next.ServeHTTP(w, r)

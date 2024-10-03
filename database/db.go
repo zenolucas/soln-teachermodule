@@ -105,10 +105,11 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-func GetStudents() ([]types.Student, error) {
+func GetStudents(classroomID int) ([]types.Student, error) {
 	var students []types.Student
-
-	rows, err := db.Query("SELECT username FROM users WHERE usertype = 'student'")
+	fmt.Print("we got classroomID : ", classroomID)
+	// now make a query where we only select students enrolled in a classroomID
+	rows, err := db.Query("SELECT users.username FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? AND users.usertype = 'student'", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +173,24 @@ func SaveSessionToken(userID int, sessionToken string) error {
 	return err
 }
 
-func GetClassrooms(w http.ResponseWriter, r http.Request) error {
-	return nil
+func GetClassrooms(teacherID int) ([]types.Classroom, error) {
+	var classrooms []types.Classroom
+
+	rows, err := db.Query("SELECT classroom_id, classroom_name, section, description FROM classrooms WHERE teacher_id = ?", teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var classroom types.Classroom
+		if err := rows.Scan(&classroom.ClassroomID, &classroom.ClassroomName, &classroom.Section, &classroom.Description); err != nil {
+			return nil, err
+		}
+		classrooms = append(classrooms, classroom)
+	}
+
+	return classrooms, nil
 }
 
 func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {

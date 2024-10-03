@@ -3,17 +3,66 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"soln-teachermodule/database"
+	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
+	"strconv"
+
+	"github.com/gorilla/sessions"
 )
 
 func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, classroom.Classroom())
+	room := types.Classroom{
+		ClassroomID: r.FormValue("classroomID"),
+	}
+	return render(w, r, classroom.Classroom(room.ClassroomID))
 }
 
-func GetStudents(w http.ResponseWriter, r *http.Request) error {
+func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	teacherID := session.Values["teacherID"].(int)
+	var classrooms []types.Classroom
+
+	classrooms, err := database.GetClassrooms(teacherID)
+	if err != nil {
+		return err
+	}
+
+	for _, classroom := range classrooms {
+		fmt.Fprintf(w, `
+		<div class="glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8">
+				<figure>
+					<img src="http://localhost:3000/public/images/bg/soln-card-image.png" alt="image" />
+				</figure>
+				<div class="card-body">
+					<h2 class="card-title">%s - %s</h2>
+					<p>%s</p>
+					<div class="card-actions justify-end">
+						<form action="/classroom" method="POST">
+							<button class="btn btn-secondary" type="submit" name="classroomID" value="%s">Open</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		`, classroom.ClassroomName, classroom.Section, classroom.Description, classroom.ClassroomID)
+	}
+
+	return nil
+}
+
+func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
+	// get string value of classroomID
+	classroomIDString := r.FormValue("classroomID")
+	fmt.Print("stirng wise, we got", classroomIDString)
+	// convert to int
+	classroomID, err := strconv.Atoi(classroomIDString)
+	if err != nil {
+		return err
+	}
 	// fetch users from database
-	students, err := database.GetStudents()
+	students, err := database.GetStudents(classroomID)
 	if err != nil {
 		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
@@ -28,7 +77,7 @@ func GetStudents(w http.ResponseWriter, r *http.Request) error {
 			</tr>	
 		`, i+1, student.Username)
 	}
-	return err
+	return nil
 }
 
 // func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) {
