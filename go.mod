@@ -1,6 +1,8 @@
 module soln-teachermodule
 
-go 1.22.2
+go 1.23
+
+toolchain go1.23.1
 
 require (
 	github.com/a-h/templ v0.2.747
@@ -9,4 +11,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 )
 
-require filippo.io/edwards25519 v1.1.0 // indirect
+require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gorilla/sessions v1.4.0 // indirect
+)

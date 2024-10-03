@@ -2,7 +2,7 @@ package classroom
 
 import "soln-teachermodule/view/layout"
 
-templ Classroom() {
+templ Classroom(classroomID string) {
 @layout.App(true, false) {
 <div class="flex w-full h-[calc(100vh-65px)]">
 	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
@@ -104,13 +104,60 @@ templ Classroom() {
 								<th></th>
 							</tr>
 						</thead>
-						<tbody hx-get="/students" hx-trigger="load" hx-target="this">
-						</tbody>
+							<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+								<input type="hidden" name="classroomID" value={ classroomID } />
+							</form>
+							<tbody id="getstudents">
+							</tbody>
 					</table>
 				</div>
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Statistics" />
-			<div role="tabpanel" class="tab-content p-10">Statistics</div>
+			<div role="tabpanel" class="tab-content p-10">
+				<div class="stats shadow">
+					<div class="stat">
+						<div class="stat-figure text-primary">
+							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+								class="inline-block h-8 w-8 stroke-current">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+								</path>
+							</svg>
+						</div>
+						<div class="stat-title">Total Likes</div>
+						<div class="stat-value text-primary">25.6K</div>
+						<div class="stat-desc">21% more than last month</div>
+					</div>
+
+					<div class="stat">
+						<div class="stat-figure text-secondary">
+							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+								class="inline-block h-8 w-8 stroke-current">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+							</svg>
+						</div>
+						<div class="stat-title">Page Views</div>
+						<div class="stat-value text-secondary">2.6M</div>
+						<div class="stat-desc">21% more than last month</div>
+					</div>
+
+					<div class="stat">
+						<div class="stat-figure text-secondary">
+							<div class="avatar online">
+								<div class="w-16 rounded-full">
+									<img
+										src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+								</div>
+							</div>
+						</div>
+						<div class="stat-value">86%</div>
+						<div class="stat-title">Tasks done</div>
+						<div class="stat-desc text-secondary">31 tasks remaining</div>
+					</div>
+				</div>
+
+			</div>
 		</div>
 	</div>
 </div>
@@ -118,26 +165,26 @@ templ Classroom() {
 }
 
 type CreateParams struct {
-	Classname string
-	Section string
+Classname string
+Section string
 }
 
 type CreateErrors struct {
-	ErrorMessage string
+ErrorMessage string
 }
 
 templ ClassroomForm(data CreateParams, errors CreateErrors) {
-	<form hx-post="/createclass" hx-swap="outerHTML">
-		<label class="form-control w-full max-w-s">
-			<div class="label">
-				<span class="label-text">Class name</span>
-			</div>
-			<input type="text" placeholder="Type here" class="input input-bordered w-full" />
-			<div class="text-sm text-error">invalid input</div>
-			<div class="label">
-				<span class="label-text">Section</span>
-			</div>
-			<input type="text" placeholder="Type here" class="input input-bordered w-full" />
-		</label>
-	</form>
+<form hx-post="/createclass" hx-swap="outerHTML">
+	<label class="form-control w-full max-w-s">
+		<div class="label">
+			<span class="label-text">Class name</span>
+		</div>
+		<input type="text" placeholder="Type here" class="input input-bordered w-full" />
+		<div class="text-sm text-error">invalid input</div>
+		<div class="label">
+			<span class="label-text">Section</span>
+		</div>
+		<input type="text" placeholder="Type here" class="input input-bordered w-full" />
+	</label>
+</form>
 }

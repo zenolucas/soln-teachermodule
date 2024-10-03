@@ -79,9 +79,9 @@ INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
 
 -- Insert initial data into enrollments table
 INSERT INTO enrollments (classroom_id, student_id) VALUES 
-(1, 1),
-(1, 2),
-(2, 3);
+(1, 3),
+(1, 4),
+(2, 5);
 
 INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES 
 (1, 'What is 1/2 + 1/2 ?', '1'),
