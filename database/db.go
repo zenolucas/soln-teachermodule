@@ -10,10 +10,16 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 )
 
 var db *sql.DB
+
+const (
+	sessionUserKey        = "teacher"
+	sessionAccessTokenKey = "access_token"
+)
 
 func InitializeDatabase() error {
 	if err := godotenv.Load(); err != nil {
@@ -130,15 +136,18 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 }
 
 func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
-	userCreds := types.UserCredentials{
-		Username: r.FormValue("username"),
-		Password: r.FormValue("password"),
+	classroom := types.Classroom{
+		ClassroomName: r.FormValue("classname"),
+		Section:       r.FormValue("section"),
+		Description:   r.FormValue("description"),
 	}
 
-	// then get teacherID from request.
-	user := r.Context().Value(types.UserContextKey).(types.AuthenticatedUser)
+	// then get teacherID from session
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	teacherID := session.Values["teacherID"].(int)
 
-	_, err := db.Exec("INSERT INTO classrooms (classroomname, section, teacherID) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, user.UserID)
+	_, err := db.Exec("INSERT INTO classrooms (classroom_name, section, description, teacher_ID) VALUES (?, ?, ?, ?)", classroom.ClassroomName, classroom.Section, classroom.Description, teacherID)
 	if err != nil {
 		log.Fatal(err)
 	}
