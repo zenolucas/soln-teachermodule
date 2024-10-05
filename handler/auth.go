@@ -150,7 +150,6 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
-	fmt.Print(session.Values[sessionAccessTokenKey])
 	session.Values["authenticated"] = false
 	session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)

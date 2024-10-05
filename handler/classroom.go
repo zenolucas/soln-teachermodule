@@ -55,7 +55,6 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	// get string value of classroomID
 	classroomIDString := r.FormValue("classroomID")
-	fmt.Print("stirng wise, we got", classroomIDString)
 	// convert to int
 	classroomID, err := strconv.Atoi(classroomIDString)
 	if err != nil {

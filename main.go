@@ -26,7 +26,8 @@ func main() {
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 	router.Get("/", handler.Make(handler.HandleLoginIndex))
 	router.Post("/login", handler.Make(handler.HandleLoginCreate))
-
+	router.Get("/register", handler.Make(handler.HandleRegisterIndex))
+	router.Post("/register", handler.Make(handler.HandleRegisterCreate))
 	// endpoints for game
 	router.Post("/soln/login", handler.Make(handler.HandleLoginGame))
 	router.Post("/soln/getquestions", handler.Make(handler.HandleGetQuestions))
@@ -35,8 +36,6 @@ func main() {
 	// else be redirected to login.
 	router.Group(func(auth chi.Router) {
 		auth.Use(handler.WithAuth)
-		auth.Get("/register", handler.Make(handler.HandleRegisterIndex))
-		auth.Post("/register", handler.Make(handler.HandleRegisterCreate))
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
 		auth.Post("/classroom", handler.Make(handler.HandleClassroomIndex))
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))

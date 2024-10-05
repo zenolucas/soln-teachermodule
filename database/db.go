@@ -107,8 +107,7 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 
 func GetStudents(classroomID int) ([]types.Student, error) {
 	var students []types.Student
-	fmt.Print("we got classroomID : ", classroomID)
-	// now make a query where we only select students enrolled in a classroomID
+	// get students given classroomID
 	rows, err := db.Query("SELECT users.username FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? AND users.usertype = 'student'", classroomID)
 	if err != nil {
 		return nil, err
