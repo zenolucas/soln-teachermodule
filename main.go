@@ -39,6 +39,7 @@ func main() {
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
 		auth.Post("/classroom", handler.Make(handler.HandleClassroomIndex))
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))
+		auth.Post("/createclassroom", handler.Make(handler.HandleClassroomCreate))
 		auth.Get("/level", handler.Make(handler.HandleLevelIndex))
 		auth.Post("/students", handler.Make(handler.HandleGetStudents))
 		auth.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))

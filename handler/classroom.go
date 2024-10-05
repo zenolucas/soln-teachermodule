@@ -79,14 +79,12 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) {
-// 	data := classroom.CreateParams{
-// 		Classname: r.FormValue("classname"),
-// 		Section:   r.FormValue("section"),
-// 	}
+func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
+	// TODO: error handling / data cleaning
 
-// 	// maybe perform some data cleaning/inspection here?
-// 	// if bad, return error, else insert classroom
-// 	db.InsertClassroom(w, r)
-// 	return nil
-// }
+	err := database.InsertClassroom(w, r)
+	if err != nil {
+		return err
+	}
+	return nil
+}
