@@ -7,6 +7,7 @@ import (
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
+	"soln-teachermodule/view/home"
 	"strconv"
 
 	"github.com/gorilla/sessions"
@@ -80,11 +81,19 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
+	createParams := home.CreateParams{
+		Classname: r.FormValue("classname"),
+		Section:   r.FormValue("section"),
+	}
+
 	// TODO: error handling / data cleaning
 
 	err := database.InsertClassroom(w, r)
 	if err != nil {
-		return err
+		// if an error occurs
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: err.Error(),
+		}))
 	}
 	return nil
 }
