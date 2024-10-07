@@ -149,9 +149,9 @@ func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
 
 	_, err := db.Exec("INSERT INTO classrooms (classroom_name, section, description, teacher_ID) VALUES (?, ?, ?, ?)", classroom.ClassroomName, classroom.Section, classroom.Description, teacherID)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	return err
+	return nil 
 }
 
 func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
