@@ -11,12 +11,9 @@ templ Classroom(classroomID string) {
 		<div class="divider my-0"></div>
 		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i
 				class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
-		<div class="btn btn-wide btn-active btn-ghost w-full text-white text-left justify-start mt-2"> <i
-				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
-		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start mt-2"> <i
-				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
-		<div class="btn btn-wide btn btn-ghost w-full text-white text-left justify-start mt-2"> <i
-				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i>Grade 6 - Section 1</div>
+
+		<div class="flex flex-wrap w-full text-white" hx-get="getclassrooms_menu" hx-trigger="load" hx-target="this">
+		</div>
 	</div>
 	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
@@ -27,11 +24,6 @@ templ Classroom(classroomID string) {
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Levels" />
 			<div role="tabpanel" class="tab-content p-10">
-				<div class="hero bg-base-200 mb-4">
-					<div class="hero-content flex-col lg:flex-row">
-						<img src="http://localhost:3000/public/images/bg/card-image.png"
-							class="max-w-sm rounded-lg shadow-2xl" />
-						<div>
 							<h1 class="text-5xl font-bold">World 1</h1>
 							<p class="py-6">
 								Our hero wake up in World 1 which is all about addition lorem ipsum Provident cupiditate
@@ -39,53 +31,17 @@ templ Classroom(classroomID string) {
 								exercitationem
 								quasi. In deleniti eaque aut repudiandae et a id nisi.
 							</p>
-							<a href="/level" class="btn btn-primary">Open</a>
-						</div>
-					</div>
-				</div>
 				<div class="hero bg-base-200 mb-4">
 					<div class="hero-content flex-col lg:flex-row">
-						<img src="http://localhost:3000/public/images/bg/card-image.png"
+						<img src="http://localhost:3000/public/images/bg/snekkers.png"
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
-							<h1 class="text-5xl font-bold">World 2</h1>
+							<h1 class="text-2xl font-bold">Snekkers Battle Scene</h1>
 							<p class="py-6">
 								World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et
 								in. Quaerat fugiat ut assumenda excepturi
 								exercitationem
 								quasi. In deleniti eaque aut repudiandae et a id nisi.
-							</p>
-							<button class="btn btn-primary">Open</button>
-						</div>
-					</div>
-				</div>
-				<div class="hero bg-base-200 mb-4">
-					<div class="hero-content flex-col lg:flex-row">
-						<img src="http://localhost:3000/public/images/bg/card-image.png"
-							class="max-w-sm rounded-lg shadow-2xl" />
-						<div>
-							<h1 class="text-5xl font-bold">world 3</h1>
-							<p class="py-6">
-								world 3 which is all about multiplication lorem ipsum provident cupiditate voluptatem et
-								in. quaerat fugiat ut assumenda excepturi
-								exercitationem
-								quasi. in deleniti eaque aut repudiandae et a id nisi.
-							</p>
-							<button class="btn btn-primary">Open</button>
-						</div>
-					</div>
-				</div>
-				<div class="hero bg-base-200 mb-4">
-					<div class="hero-content flex-col lg:flex-row">
-						<img src="http://localhost:3000/public/images/bg/card-image.png"
-							class="max-w-sm rounded-lg shadow-2xl" />
-						<div>
-							<h1 class="text-5xl font-bold">world 4</h1>
-							<p class="py-6">
-								world 4 which is all about division lorem ipsum provident cupiditate voluptatem et in.
-								quaerat fugiat ut assumenda excepturi
-								exercitationem
-								quasi. in deleniti eaque aut repudiandae et a id nisi.
 							</p>
 							<button class="btn btn-primary">Open</button>
 						</div>
@@ -104,13 +60,17 @@ templ Classroom(classroomID string) {
 								<th></th>
 							</tr>
 						</thead>
-							<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
-								<input type="hidden" name="classroomID" value={ classroomID } />
-							</form>
-							<tbody id="getstudents">
-							</tbody>
+						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+							<input type="hidden" name="classroomID" value={ classroomID } />
+						</form>
+						<tbody id="getstudents">
+						</tbody>
 					</table>
+					<div class="flex justify-center">
+						<label for="modal_add_students" class="btn btn-primary text-white">Add Students</label>
+					</div>
 				</div>
+				@AddStudentsForm()
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Statistics" />
 			<div role="tabpanel" class="tab-content p-10">
@@ -156,7 +116,6 @@ templ Classroom(classroomID string) {
 						<div class="stat-desc text-secondary">31 tasks remaining</div>
 					</div>
 				</div>
-
 			</div>
 		</div>
 	</div>
@@ -164,27 +123,22 @@ templ Classroom(classroomID string) {
 }
 }
 
-type CreateParams struct {
-Classname string
-Section string
-}
+templ AddStudentsForm() {
+<form hx-post="/addstudents" hx-swap="outerHTML">
 
-type CreateErrors struct {
-ErrorMessage string
-}
+	<input type="checkbox" id="modal_add_students" class="modal-toggle" />
+	<div class="modal" role="dialog">
+		<div class="modal-box w-full">
+			<h3 class="text-lg font-bold">Add Students</h3>
+			<label class="form-control w-full">
+				<p> perform query and add students here!</p>
+			</label>
+			<div class="modal-action">
+				<label for="modal_add_students" class="btn">Cancel</label>
+				<button type="submit" class="btn btn-secondary">Add</button>
+			</div>
+		</div>
+	</div>
 
-templ ClassroomForm(data CreateParams, errors CreateErrors) {
-<form hx-post="/createclass" hx-swap="outerHTML">
-	<label class="form-control w-full max-w-s">
-		<div class="label">
-			<span class="label-text">Class name</span>
-		</div>
-		<input type="text" placeholder="Type here" class="input input-bordered w-full" />
-		<div class="text-sm text-error">invalid input</div>
-		<div class="label">
-			<span class="label-text">Section</span>
-		</div>
-		<input type="text" placeholder="Type here" class="input input-bordered w-full" />
-	</label>
 </form>
 }
