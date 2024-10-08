@@ -53,6 +53,27 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	teacherID := session.Values["teacherID"].(int)
+	var classrooms []types.Classroom
+
+	classrooms, err := database.GetClassrooms(teacherID)
+	if err != nil {
+		return err
+	}
+
+	for _, classroom := range classrooms {
+		fmt.Fprintf(w, `
+		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
+				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - %s</div>
+		`, classroom.ClassroomName, classroom.Section)
+	}
+
+	return nil
+}
+
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	// get string value of classroomID
 	classroomIDString := r.FormValue("classroomID")
