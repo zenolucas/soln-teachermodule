@@ -45,6 +45,8 @@ func main() {
 		auth.Post("/createclassroom", handler.Make(handler.HandleClassroomCreate))
 		auth.Get("/level", handler.Make(handler.HandleLevelIndex))
 		auth.Post("/students", handler.Make(handler.HandleGetStudents))
+		auth.Post("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
+		auth.Post("/addstudents", handler.Make(handler.HandleAddStudents))
 		auth.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
 		auth.Post("/updatemcquestions", handler.Make(handler.HandleUpdateMCQuestions))
 	})

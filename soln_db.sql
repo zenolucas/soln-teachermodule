@@ -5,8 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    section  VARCHAR(50),
     usertype ENUM('student', 'teacher') NOT NULL
 );
+
 
 CREATE TABLE IF NOT EXISTS classrooms (
     classroom_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -64,13 +66,16 @@ CREATE TABLE IF NOT EXISTS multiple_choice_choices (
 -- Suggestions: 
 -- Superadmin and admin
 
--- Insert initial data into users table
+-- Insert teacher data into users table
 INSERT INTO users (username, password, usertype) VALUES
 ('user1', 'pw', 'teacher'),
-('user2', 'password_hash2', 'teacher'),
-('user3', 'pw', 'student'),
-('user4', 'password_hash4', 'student'),
-('user5', 'password_hash5', 'student');
+('user2', 'password_hash2', 'teacher');
+
+-- insert student data
+INSERT INTO users (username, section, password, usertype) VALUES
+('user3', '1', 'pw', 'student'),
+('user4', '1', 'pw', 'student'),
+('user5', '2', 'pw', 'student');
 
 -- Insert initial data into subjects table
 INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES

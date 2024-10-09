@@ -135,6 +135,52 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 	return students, nil
 }
 
+func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
+	var students []types.Student
+
+	// get section name given classroomID
+	section, err := GetSection(classroomID)
+	if err != nil {
+		return nil, err
+	}
+
+	// get students given classroomID
+	rows, err := db.Query("SELECT user_id, username FROM users WHERE usertype = 'student' AND section = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var student types.Student
+		if err := rows.Scan(&student.UserID, &student.Username); err != nil {
+			return nil, fmt.Errorf("GetUnenrolledStudents: %v", err)
+		}
+		students = append(students, student)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUnenrolledStudents: %v", err)
+	}
+
+	return students, nil
+}
+
+func AddStudents(studentIDs []string, classroomID int) error {
+	for _, studentID := range studentIDs {
+
+		fmt.Println("adding student", studentID)
+
+		_, err := db.Exec("INSERT INTO enrollments (classroom_id, student_id) VALUES (?, ?)", classroomID, studentID)
+		if err != nil {
+			return err
+		}
+		fmt.Println("add success!")
+	}
+
+	return nil
+}
+
 func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
 	classroom := types.Classroom{
 		ClassroomName: r.FormValue("classname"),
@@ -151,7 +197,7 @@ func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return nil 
+	return nil
 }
 
 func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
@@ -172,6 +218,15 @@ func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
 	}
 
 	return teacherID, nil
+}
+
+func GetSection(classroomID int) (string, error) {
+	var section string
+	err := db.QueryRow("SELECT section FROM classrooms WHERE classroom_id = ?", classroomID).Scan(&section)
+	if err != nil {
+		return "", err
+	}
+	return section, nil
 }
 
 // Example function to save session token in the database
@@ -264,3 +319,4 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 	return err
 }
+  
