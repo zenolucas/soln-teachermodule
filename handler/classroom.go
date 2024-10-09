@@ -101,6 +101,49 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
+	room := types.Classroom{
+		ClassroomID: r.FormValue("classroomID"),
+	}
+
+	ClassroomID, err := strconv.Atoi(room.ClassroomID)
+	if err != nil {
+		return err
+	}
+
+	students, err := database.GetUnenrolledStudents(ClassroomID)
+	if err != nil {
+		http.Error(w, "Unable to get students", http.StatusInternalServerError)
+		return err
+	}
+
+	// output student array here
+	for _, student := range students {
+		fmt.Fprintf(w, `
+			<tr>
+				<td> <input type="checkbox" name="userID" value="%s" ></input></td>
+				<td>%s</td>
+			</tr>	
+		`, student.UserID, student.Username)
+	}
+
+	return nil
+}
+
+func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	studentIDs := r.Form["userID"]
+
+	database.AddStudents(studentIDs, classroomID)
+	return nil
+}
+
 func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	createParams := home.CreateParams{
 		Classname: r.FormValue("classname"),
@@ -118,3 +161,4 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 	return nil
 }
+

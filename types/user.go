@@ -16,4 +16,5 @@ type UserCredentials struct {
 
 type Student struct {
 	Username	string
+	UserID   	string
 }
