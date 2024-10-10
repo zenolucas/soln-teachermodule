@@ -2,7 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -76,7 +78,7 @@ func AuthenticateWebUser(username string, password string) error {
 }
 
 // PROPER ERROR HANDLING TO BE IMPLEMENTED
-func AuthenticateSolnUser(username string, password string) bool {
+func AuthenticateGameUser(username string, password string) bool {
 
 	var storedPassword string
 	row := db.QueryRow("SELECT password FROM users WHERE username = ?", username)
@@ -106,9 +108,48 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 
 	_, err := db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, "teacher")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	return err
+	return nil
+}
+
+func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil
+	}
+	defer r.Body.Close()
+
+	type Data struct {
+		FirstName   string
+		Lastname    string
+		Username    string
+		Password    string
+		Section     string
+		ClassNumber string
+	}
+
+	var data Data
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return err
+	}
+	fmt.Print("we got data: ", data)
+
+	_, err = db.Exec("INSERT INTO students (username, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?)", data.FirstName, data.Lastname, data.Username, data.Password, data.Section, data.ClassNumber)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetStudents(classroomID int) ([]types.Student, error) {
@@ -319,4 +360,3 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 	return err
 }
-  

@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 
+CREATE TABLE IF NOT EXISTS students (
+    student_id INT AUTO_INCREMENT PRIMARY KEY,
+    firstname VARCHAR(50) NOT NULL,
+    lastname VARCHAR(50) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    section  VARCHAR(50) NOT NULL,
+    class_number VARCHAR(50) NOT NULL, 
+    password VARCHAR(255) NOT NULL
+);
+
+
 CREATE TABLE IF NOT EXISTS classrooms (
     classroom_id INT AUTO_INCREMENT PRIMARY KEY,
     classroom_name VARCHAR(100) NOT NULL,
@@ -62,6 +73,20 @@ CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     option_4 VARCHAR(20),
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
 );
+
+CREATE TABLE IF NOT EXISTS fraction_questions (
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+    minigame_id INT,
+    fraction1_numerator INT NOT NULL,
+    fraction1_denominator INT NOT NULL,
+    fraction2_numerator INT NOT NULL,
+    fraction2_denominator INT NOT NULL,
+    fraction3_numerator INT NOT NULL,  
+    fraction3_denominator INT NOT NULL
+);
+
+-- insert data for fraction_questions
+-- INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator)
 
 -- Suggestions: 
 -- Superadmin and admin
