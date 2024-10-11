@@ -11,7 +11,6 @@ import (
 	"os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/auth"
-	"soln-teachermodule/view/home"
 
 	"github.com/gorilla/sessions"
 )
@@ -41,14 +40,16 @@ func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 			InvalidCredentials: "Invalid username or password",
 		}))
 	}
+
 	if err := setAuthCookie(w, r); err != nil {
 		return err
 	}
 
-	return render(w, r, home.Index())
+	hxRedirect(w, r, "/home")
+	return nil
 }
 
-func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
+func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -79,7 +80,7 @@ func HandleLoginGame(w http.ResponseWriter, r *http.Request) error {
 
 	log.Printf("Received data: %+v", data.Password)
 	// authenticate student
-	if database.AuthenticateSolnUser(data.Username, data.Password) {
+	if database.AuthenticateGameUser(data.Username, data.Password) {
 		response := LoginResponse{Success: true}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
