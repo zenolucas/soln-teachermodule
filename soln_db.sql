@@ -74,19 +74,27 @@ CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
 );
 
+
+
+
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
     fraction1_numerator INT NOT NULL,
     fraction1_denominator INT NOT NULL,
     fraction2_numerator INT NOT NULL,
-    fraction2_denominator INT NOT NULL,
-    fraction3_numerator INT NOT NULL,  
-    fraction3_denominator INT NOT NULL
+    fraction2_denominator INT NOT NULL
 );
 
+
 -- insert data for fraction_questions
--- INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator)
+INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(1, 5, 4, 3, 4),
+(1, 7, 10, 1, 5),
+(1, 9, 5, 4, 5),
+(2, 1, 2, 1, 2),
+(2, 1, 3, 3, 1), 
+(2, 2, 2, 2, 2);
 
 -- Suggestions: 
 -- Superadmin and admin
@@ -114,8 +122,8 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (2, 5);
 
 INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES 
-(1, 'What is 1/2 + 1/2 ?', '1'),
-(1, 'What is 1/3 + 1/3 ?', '2/3');
+(5, 'What is 1/2 + 1/2 ?', '1'),
+(5, 'What is 1/3 + 1/3 ?', '2/3');
 
 INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES 
 (1, '1/2', '1/3', '1', '2'),
