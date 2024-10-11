@@ -1,1 +1,0 @@
-<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-get=\"/getmcquestions\" hx-trigger=\"load\" hx-target=\"this\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button></div>

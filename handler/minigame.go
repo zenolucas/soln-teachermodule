@@ -9,7 +9,8 @@ import (
 )
 
 func HandleMinigame1Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Fractions("1"))
+	minigameID := r.FormValue("minigameID")
+	return render(w, r, minigame.Fractions(minigameID))
 }
 
 func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
@@ -25,7 +26,6 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<form action="/update/fractions" method="POST">
-			// insert hidden questionID here
 				<input type="hidden" name="question_id" value= "%d" />
 				<input type="hidden" name="minigame_id" value= "%d" />
 				<div class="flex gap-4 mt-4">
@@ -54,7 +54,8 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 				</div>
 			</div>  	
 			</form>
-.		`, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Numerator, fraction.Fraction2_Denominator)
+			</div>
+		`, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Numerator, fraction.Fraction2_Denominator)
 	}
 
 	return nil
@@ -91,12 +92,16 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 
 // }
 
-// func HandleMinigame5Index(w http.ResponseWriter, r *http.Request) error {
-// 	return render(w, r, minigame.Quiz())
-// }
+func HandleMinigame5Index(w http.ResponseWriter, r *http.Request) error {
+	minigameID := r.FormValue("minigameID")
+	return render(w, r, minigame.Quiz(minigameID))
+}
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	questions, err := database.GetQuestionDictionary(1)
+	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	questions, err := database.GetQuestionDictionary(minigameID)
 	if err != nil {
 		return err
 	}
@@ -141,15 +146,18 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 				</div>
 			</div>  	
 			</form>
+			</div>
 		`, i+1, question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4)
 	}
 	return err
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	// we want minigameID
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}
 
-	return render(w, r, minigame.Quiz())
+	// return render(w, r, minigame.Quiz())
+	return nil
 }
