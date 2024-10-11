@@ -38,7 +38,7 @@ templ Classroom(classroomID string) {
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<form action="/minigame1" method="POST">
-								<button class="btn btn-primary text-white" type="submit" name="minigameID" value="%s">Open</button>
+								<button class="btn btn-primary text-white" type="submit" name="minigameID" value="1">Open</button>
 							</form>
 						</div>
 					</div>
@@ -52,7 +52,9 @@ templ Classroom(classroomID string) {
 							<p class="py-6">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
-							<a href="/level" class="btn btn-primary text-white">Open</a>
+							<form action="/minigame5" method="POST">
+								<button class="btn btn-primary text-white" type="submit" name="minigameID" value="5">Open</button>
+							</form>
 						</div>
 					</div>
 				</div>
@@ -123,7 +125,7 @@ templ Classroom(classroomID string) {
 								exercitationem
 								quasi. In deleniti eaque aut repudiandae et a id nisi.
 							</p>
-							<a href="/level" class="btn btn-primary">Open</a>
+							<a href="/minigame5" class="btn btn-primary">Open</a>
 						</div>
 					</div>
 				</div>

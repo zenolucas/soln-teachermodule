@@ -5,12 +5,12 @@ import "soln-teachermodule/view/layout"
 
 templ Fractions(minigameID string) {
 @layout.App(true, false) {
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
-     <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#fractions-container">
+     <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
           <input type="hidden" name="minigameID" value={ minigameID } />
      </form>
-    <div id="fractions-container">
-    </div>
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
+          <div id="questions-container">
+          </div>
     </div>
     <div class="flex justify-center mt-4">
          <button class="btn btn-primary text-white">add question</button>
@@ -63,11 +63,16 @@ templ Worded3() {
     }
 }
 
-templ Quiz() {
+templ Quiz(minigameID string) {
 @layout.App(true, false) {
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-8"
-         hx-get="/getmcquestions" hx-trigger="load" hx-target="this">
+    <form hx-post="/getmcquestions" hx-swap="outerHMTL" hx-trigger="load" hx-target="#questions-container">
+          <input type="hidden" name="minigameID" value={ minigameID } />
+    </form>
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
+          <div id="questions-container">
+          </div>
     </div>
+
     <div class="flex justify-center mt-4">
          <button class="btn btn-primary text-white">add question</button>
           <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>

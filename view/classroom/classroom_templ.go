@@ -31,7 +31,7 @@ func Classroom(classroomID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex w-full h-[calc(100vh-65px)]\"><div class=\"w-1/4 bg-neutral flex flex-col overflow-x-auto\"><div class=\"btn btn btn-ghost w-full text-white text-left justify-start h-16 mt-2\"><i class=\"fa-solid fa-house fa-2xl ml-6\" style=\"color: #ffffff;\"></i>Home</div><div class=\"divider my-0\"></div><div class=\"btn btn-wide btn-ghost w-full text-white text-left justify-start\"><i class=\"fa-solid fa-school fa-2xl ml-6\" style=\"color: #ffffff;\"></i>Classrooms</div><div class=\"flex flex-wrap w-full text-white\" hx-get=\"getclassrooms_menu\" hx-trigger=\"load\" hx-target=\"this\"></div></div><div class=\"w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto\"><div role=\"tablist\" class=\"tabs tabs-bordered tabs-lg mx-1\"><input type=\"radio\" name=\"my_tabs_1\" role=\"tab\" class=\"tab\" aria-label=\"Overview\" checked=\"true\"><div role=\"tabpanel\" class=\"tab-content p-10\">overview</div><input type=\"radio\" name=\"my_tabs_1\" role=\"tab\" class=\"tab\" aria-label=\"Levels\"><div role=\"tabpanel\" class=\"tab-content p-10\"><h1 class=\"text-5xl font-bold\">World 1 - Addition of Fractions</h1><p class=\"py-6\">In the first world, the player will be introduced to a series of dialogues and mini-games centered around adding fractions. These challenges will require them to find common denominators, simplify fractions, and accurately perform addition, as well as helping them visualize fractions through interactive scenarios, building the foundation needed to advance further in the game.</p><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/assets/saisai.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Saisai Moving Rocks Scene</h1><p class=\"py-6\">This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.</p><form action=\"/minigame1\" method=\"POST\"><button class=\"btn btn-primary text-white\" type=\"submit\" name=\"minigameID\" value=\"1\">Open</button></form></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/assets/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Snekkers Battle Scene</h1><p class=\"py-6\">This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.</p><form action=\"/minigame5\" method=\"POST\"><button class=\"btn btn-primary text-white\" type=\"submit\" name=\"minigameID\" value=\"5\">Open</button></form></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><div><h1 class=\"text-2xl font-bold\">Saisai Moving Rocks Scene</h1><p class=\"py-6\">This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.</p><a href=\"/level\" class=\"btn btn-primary text-white\">Open</a></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><div><h1 class=\"text-2xl font-bold\">Snekkers Battle Scene</h1><p class=\"py-6\">This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.</p><a href=\"/level\" class=\"btn btn-primary text-white\">Open</a></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/bg/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Robots Ambush Scene</h1><p class=\"py-6\">This mini-game presents the player with worded problems, which they must analyze to input the fractions from the problem statement and solve for the answer.</p><a href=\"/level\" class=\"btn btn-primary\">Open</a></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/bg/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Snekkers Battle Scene</h1><p class=\"py-6\">World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem quasi. In deleniti eaque aut repudiandae et a id nisi.</p><a href=\"/level\" class=\"btn btn-primary\">Open</a></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/bg/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"> <img src=\"http://localhost:3000/public/images/bg/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Snekkers Battle Scene</h1><p class=\"py-6\">World 2 which is all about subtraction lorem ipsum Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem quasi. In deleniti eaque aut repudiandae et a id nisi.</p><a href=\"/minigame5\" class=\"btn btn-primary\">Open</a></div></div></div><div class=\"hero bg-base-200 mb-4\"><div class=\"hero-content flex-col lg:flex-row\"><img src=\"http://localhost:3000/public/images/assets/snekkers.png\" class=\"max-w-sm rounded-lg shadow-2xl\"><div><h1 class=\"text-2xl font-bold\">Snake Quiz Scene</h1><p class=\"py-6\">This level simulates a multiple-choice type of test where players are presented with a question and 4 choices.</p><a href=\"/level\" class=\"btn btn-primary\">Open</a></div></div></div><h1 class=\"text-5xl font-bold\">World 2 - Subtraction of Fractions</h1><p class=\"py-6\">For the next world, the player will now be challenged with a series of mini-games that will focus on tasks and puzzles related to subtracting fractions, requiring them to apply their knowledge of finding common denominators, simplifying results, and correctly performing subtraction between fractions in order to progress further in the game.</p></div><input type=\"radio\" name=\"my_tabs_1\" role=\"tab\" class=\"tab\" aria-label=\"Players\"><div role=\"tabpanel\" class=\"tab-content p-10\"><div class=\"overflow-x-auto\"><!-- get unenrolled students for add students --><form hx-post=\"/unenrolledstudents\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#getunenrolledstudents\"><input type=\"hidden\" name=\"classroomID\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -39,7 +39,23 @@ func Classroom(classroomID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><table class=\"table table-zebra text-xl\"><!-- head --><thead><tr><th></th><th class=\"text-xl\">Name</th><th></th></tr></thead><form hx-post=\"/students\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#getstudents\"><input type=\"hidden\" name=\"classroomID\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(classroomID))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><tbody id=\"getstudents\"></tbody></table><div class=\"flex justify-center\"><label for=\"modal_add_students\" class=\"btn btn-primary text-white\">Add Students</label></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = AddStudentsForm(classroomID).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><input type=\"radio\" name=\"my_tabs_1\" role=\"tab\" class=\"tab\" aria-label=\"Statistics\"><div role=\"tabpanel\" class=\"tab-content p-10\"><div class=\"stats shadow\"><div class=\"stat\"><div class=\"stat-figure text-primary\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" class=\"inline-block h-8 w-8 stroke-current\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z\"></path></svg></div><div class=\"stat-title\">Total Likes</div><div class=\"stat-value text-primary\">25.6K</div><div class=\"stat-desc\">21% more than last month</div></div><div class=\"stat\"><div class=\"stat-figure text-secondary\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" class=\"inline-block h-8 w-8 stroke-current\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\"></path></svg></div><div class=\"stat-title\">Page Views</div><div class=\"stat-value text-secondary\">2.6M</div><div class=\"stat-desc\">21% more than last month</div></div><div class=\"stat\"><div class=\"stat-figure text-secondary\"><div class=\"avatar online\"><div class=\"w-16 rounded-full\"><img src=\"https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp\"></div></div></div><div class=\"stat-value\">86%</div><div class=\"stat-title\">Tasks done</div><div class=\"stat-desc text-secondary\">31 tasks remaining</div></div></div></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -59,16 +75,7 @@ func Classroom(classroomID string) templ.Component {
 	})
 }
 
-type CreateParams struct {
-	Classname string
-	Section   string
-}
-
-type CreateErrors struct {
-	ErrorMessage string
-}
-
-func ClassroomForm(data CreateParams, errors CreateErrors) templ.Component {
+func AddStudentsForm(classroomID string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -81,7 +88,15 @@ func ClassroomForm(data CreateParams, errors CreateErrors) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/addstudents\" hx-swap=\"outerHTML\"><input type=\"checkbox\" id=\"modal_add_students\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box w-full\"><h3 class=\"text-lg font-bold\">Add Students</h3><table class=\"table table-zebra text-xl\"><!-- head --><thead><tr><th></th><th></th></tr></thead> <tbody id=\"getunenrolledstudents\"></tbody></table><div class=\"modal-action\"><label for=\"modal_add_students\" class=\"btn\">Cancel</label> <button type=\"submit\" name=\"classroomID\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(classroomID))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"btn btn-secondary\">Add</button></div></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

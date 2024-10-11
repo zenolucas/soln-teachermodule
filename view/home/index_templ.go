@@ -31,7 +31,7 @@ func Index() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex w-full h-[calc(100vh-65px)]\"><div class=\"w-1/4 bg-neutral flex\"></div><div class=\"w-3/4 bg-base-300 justify-center gap-4\"><div class=\"flex flex-wrap w-full text-white\" hx-get=\"getclassrooms\" hx-trigger=\"load\" hx-target=\"this\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -39,7 +39,7 @@ func Index() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -81,7 +81,7 @@ func CreateClassForm(data CreateParams, errors CreateErrors) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/createclassroom\" hx-swap=\"outerHTML\"><input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Create Classroom</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Class name</span></div><input type=\"text\" name=\"classname\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"text-sm text-error\">invalid input</div><div class=\"label\"><span class=\"label-text\">Section</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Description</span></div><textarea name=\"description\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></textarea></label><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Create</button></div></div></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
