@@ -32,7 +32,8 @@ func main() {
 	// endpoints for game
 	router.Post("/game/login", handler.Make(handler.HandleGameLogin))
 	router.Post("/game/register", handler.Make(handler.HandleGameRegister))
-	router.Post("/game/getquestions", handler.Make(handler.HandleGetQuestions))
+	router.Post("/game/getmcquestions", handler.Make(handler.HandleGetGameMCQuestions))
+	router.Post("/game/getfractions", handler.Make(handler.HandleGetGameFractions))
 
 	// then everything below will be grouped, and have the user authenticated first
 	// else be redirected to login.
@@ -48,9 +49,9 @@ func main() {
 		auth.Post("/addstudents", handler.Make(handler.HandleAddStudents))
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
 		// minigame endpoints
-		// auth.Post("/minigame1", handler.Make(handler.HandleMinigame1Index))
-		// auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
-		// auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
+		auth.Post("/minigame1", handler.Make(handler.HandleMinigame1Index))
+		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
+		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
 		// auth.Post("/minigame2", handler.Make(handler.HandleMinigame2Index))
 		// auth.Post("/minigame3", handler.Make(handler.HandleMinigame3Index))
 		// auth.Post("/minigame4", handler.Make(handler.HandleMinigame4Index))

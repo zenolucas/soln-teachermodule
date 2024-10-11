@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"soln-teachermodule/types"
+	"strconv"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -297,6 +298,83 @@ func GetClassrooms(teacherID int) ([]types.Classroom, error) {
 	return classrooms, nil
 }
 
+func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
+	MinigameIDStr := r.FormValue("minigame_id")
+	QuestionIDStr := r.FormValue("question_id")
+	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
+	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
+	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
+	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+
+	MinigameID, _ := strconv.Atoi(MinigameIDStr)
+	QuestionID, _ := strconv.Atoi(QuestionIDStr)
+	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
+	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
+	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
+	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
+
+	fmt.Printf("Values we got are: MinigameID = %d, QuestionID = %d, Fraction1_Numerator = %d, Fraction1_Denominator = %d, Fraction2_Numerator = %d, Fraction2_Denominator = %d\n",
+		MinigameID, QuestionID, Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator)
+
+	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print("update success!")
+	return nil
+}
+
+func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	question := types.MultipleChoiceQuestion{
+		QuestionText:  r.FormValue("question"),
+		Option1:       r.FormValue("option1"),
+		Option2:       r.FormValue("option2"),
+		Option3:       r.FormValue("option3"),
+		Option4:       r.FormValue("option4"),
+		CorrectAnswer: r.FormValue("correct_answer"),
+	}
+
+	// get questionID
+
+	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = 1",
+		question.QuestionText, question.CorrectAnswer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
+		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
+	if err != nil {
+		log.Fatal(another_err)
+	}
+
+	return err
+}
+
+// game queries below
+
+func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
+	var fractions []types.FractionQuestion
+
+	rows, err := db.Query("SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ?", minigame_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fraction types.FractionQuestion
+		if err := rows.Scan(&fraction.QuestionID, &fraction.Fraction1_Numerator, &fraction.Fraction1_Denominator, &fraction.Fraction2_Numerator, &fraction.Fraction2_Denominator); err != nil {
+			return nil, err
+		}
+		fractions = append(fractions, fraction)
+	}
+
+	return fractions, nil
+}
+
 func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer
@@ -332,31 +410,4 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 
 	fmt.Println(questions)
 	return questions, nil
-}
-
-func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	question := types.MultipleChoiceQuestion{
-		QuestionText:  r.FormValue("question"),
-		Option1:       r.FormValue("option1"),
-		Option2:       r.FormValue("option2"),
-		Option3:       r.FormValue("option3"),
-		Option4:       r.FormValue("option4"),
-		CorrectAnswer: r.FormValue("correct_answer"),
-	}
-
-	// get questionID
-
-	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = 1",
-		question.QuestionText, question.CorrectAnswer)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
-		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
-	if err != nil {
-		log.Fatal(another_err)
-	}
-
-	return err
 }
