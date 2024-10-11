@@ -322,7 +322,6 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Print("update success!")
 	return nil
 }
 
