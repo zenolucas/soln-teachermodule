@@ -432,3 +432,41 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 	fmt.Println(questions)
 	return questions, nil
 }
+
+func UpdateStatisticsDatabase(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil
+	}
+	defer r.Body.Close()
+
+	type Data struct {
+		Username             string
+		Num_Correct_Ans      int
+		Num_Wrong_Ans        int
+		Total_Attempts       int
+		Num_Unsimplified_Ans int
+	}
+
+	var data Data
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return err
+	}
+	fmt.Print("we got statistics data: ", data)
+
+	_, err = db.Exec("INSERT INTO statistics (username, num_correct_ans, num_wrong_ans, total_attempts, num_unsimplified_ans) VALUES (?, ?, ?, ?, ?)", data.Username, data.Num_Correct_Ans, data.Num_Wrong_Ans, data.Total_Attempts, data.Num_Unsimplified_Ans)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
