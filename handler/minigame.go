@@ -9,8 +9,7 @@ import (
 )
 
 func HandleMinigame1Index(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigameID")
-	return render(w, r, minigame.Fractions(minigameID))
+	return render(w, r, minigame.Fractions("1"))
 }
 
 func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
@@ -62,22 +61,82 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
+	// get minigameID here
+	minigameID := r.FormValue("minigame_id")
 	if err := database.UpdateFractions(w, r); err != nil {
 		return err
+	}
+
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
+}
+
+func HandleMinigame2Index(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, minigame.Fractions("2"))
+}
+
+func HandleMinigame3Index(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, minigame.Worded("3"))
+}
+
+// return render(w, r, minigame.Worded("3"))
+// }
+
+func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
+	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	fractions, err := database.GetWordedQuestions(minigameID)
+	if err != nil {
+		return err
+	}
+
+	for _, fraction := range fractions {
+		fmt.Fprintf(w, `
+			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+			<form action="/update/fractions" method="POST">
+				<input type="hidden" name="question_id" value= "%d" />
+				<input type="hidden" name="minigame_id" value= "%d" />
+				<div class="flex gap-4 mt-4 mb-4">
+					<div class="label">
+						<span class="label-text text-white">Question Text</span>
+					</div>
+					<input type="text" value="%s" name="question_text" class="input input-bordered input-primary w-full max-w-xs" />
+				</div>	
+				<div class="flex gap-4 mt-4">
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Numerator:</span>
+					</div>
+					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Denominator:</span>
+					</div>
+					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-full max-w-xs" />
+				</div>
+				<div class="flex gap-4 mt-4">
+				<div class="label">
+					<span class="label-text text-white">Fraction 2 Numerator</span>
+				</div>
+					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+				<div class="label">
+					<span class="label-text text-white">Fraction 2 Denominator</span>
+				</div>
+					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-full max-w-xs" />
+				</div>
+
+				<div class="flex justify-end">
+					<button  type="submit" class="btn btn-primary text-white ">save changes</button>
+				</div>
+			</div>  	
+			</form>
+			</div>
+		`, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Numerator, fraction.Fraction2_Denominator)
 	}
 	return nil
 }
 
-// func HandleMinigame2Index(w http.ResponseWriter, r *http.Request) error {
-// 	return render(w, r, minigame.Worded1())
-// }
-
 // func HandleGetWorded1(w http.ResponseWriter, r *http.Request) error {
 
-// }
-
-// func HandleMinigame3Index(w http.ResponseWriter, r *http.Request) error {
-// 	return render(w, r, minigame.Worded2())
 // }
 
 // func HandleGetWorded2(w http.ResponseWriter, r *http.Request) error {
@@ -93,8 +152,7 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 // }
 
 func HandleMinigame5Index(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigameID")
-	return render(w, r, minigame.Quiz(minigameID))
+	return render(w, r, minigame.Quiz("5"))
 }
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
@@ -109,7 +167,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	for i, question := range questions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
-			<form action="/updatemcquestions" method="POST">
+			<form action="/update/mcquestions" method="POST">
 				<span class="label-text text-white">Question %d:</span>
 				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-full max-w-xs" />
 				<div class="flex gap-4 mt-4">
@@ -158,6 +216,6 @@ func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// return render(w, r, minigame.Quiz())
+	hxRedirect(w, r, "/minigame5")
 	return nil
 }
