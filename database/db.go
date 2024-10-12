@@ -145,7 +145,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got data: ", data)
 
-	_, err = db.Exec("INSERT INTO students (username, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?)", data.FirstName, data.Lastname, data.Username, data.Password, data.Section, data.ClassNumber)
+	_, err = db.Exec("INSERT INTO students (username, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?)", data.Username, data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
 	if err != nil {
 		return err
 	}
@@ -375,8 +375,9 @@ func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 }
 
 func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
-	var wordedQuestions []types.WordedQuestion
+	var questions []types.WordedQuestion
 
+	// get questiontext and correct answer
 	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM worded_questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
 		return nil, err
@@ -385,15 +386,13 @@ func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
 
 	for rows.Next() {
 		var question types.WordedQuestion
-		if err := rows.Scan(&question.QuestionID, &question.Fraction1_Numerator, &question.Fraction1_Denominator, &question.Fraction2_Numerator, &question.Fraction2_Denominator); err != nil {
+		if err := rows.Scan(&question.QuestionID, &question.QuestionText, &question.Fraction1_Numerator, &question.Fraction1_Denominator, &question.Fraction2_Numerator, &question.Fraction2_Denominator); err != nil {
 			return nil, err
 		}
-		wordedQuestions = append(wordedQuestions, question)
+		questions = append(questions, question)
 	}
 
-	fmt.Print("we got the worded questions: ", wordedQuestions)
-
-	return wordedQuestions, nil
+	return questions, nil
 }
 
 func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
