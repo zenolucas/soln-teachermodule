@@ -97,9 +97,9 @@ CREATE TABLE IF NOT EXISTS worded_questions (
 -- insert data for worded questions
 
 INSERT INTO worded_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(3, "what is 2/4 + 2/4?" 2, 4, 2, 4),
+(3, "what is 2/4 + 2/4?", 2, 4, 2, 4),
 (3, "what is 7/10 + 1/5?", 7, 10, 1, 5),
-(3, "what is 9/5 + 4/5", 9, 5, 4, 5),
+(3, "what is 9/5 + 4/5", 9, 5, 4, 5);
 
 -- insert data for fraction_questions
 INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
