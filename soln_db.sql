@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
 );
 
-
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
@@ -84,6 +83,13 @@ CREATE TABLE IF NOT EXISTS fraction_questions (
     fraction2_denominator INT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS `statistics` (
+  `username` varchar(50) NOT NULL,
+  `num_correct_ans` int NOT NULL,
+  `num_wrong_ans` int NOT NULL,
+  `total_attempts` int NOT NULL,
+  `num_unsimplified_ans` int NOT NULL
+)
 CREATE TABLE IF NOT EXISTS worded_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
@@ -142,3 +148,7 @@ INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answe
 INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES 
 (1, '1/2', '1/3', '1', '2'),
 (2, '1/2', '1/3', '1/4', '2/3');
+
+INSERT INTO `statistics` (`username`, `num_correct_ans`, `num_wrong_ans`, `total_attempts`, `num_unsimplified_ans`) VALUES
+('boom', 0, 0, 0, 0),
+('test', 0, 0, 0, 0);
