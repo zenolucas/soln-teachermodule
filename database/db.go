@@ -374,6 +374,28 @@ func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	return fractions, nil
 }
 
+func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
+	var wordedQuestions []types.WordedQuestion
+
+	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM worded_questions WHERE minigame_id = ?", minigame_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var question types.WordedQuestion
+		if err := rows.Scan(&question.QuestionID, &question.Fraction1_Numerator, &question.Fraction1_Denominator, &question.Fraction2_Numerator, &question.Fraction2_Denominator); err != nil {
+			return nil, err
+		}
+		wordedQuestions = append(wordedQuestions, question)
+	}
+
+	fmt.Print("we got the worded questions: ", wordedQuestions)
+
+	return wordedQuestions, nil
+}
+
 func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer

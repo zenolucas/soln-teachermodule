@@ -63,7 +63,7 @@ func Fractions(minigameID string) templ.Component {
 	})
 }
 
-func Worded1() templ.Component {
+func Worded(minigameID string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -82,7 +82,15 @@ func Worded1() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-get=\"/getmcquestions\" hx-trigger=\"load\" hx-target=\"this\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-post=\"/getwordedquestions\" hx-trigger=\"load\" hx-target=\"this\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(minigameID))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -211,7 +219,7 @@ func Quiz(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getmcquestions\" hx-swap=\"outerHMTL\" hx-trigger=\"load\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getmcquestions\" hx-swap=\"outerHTML\" hx-trigger=\"load\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
