@@ -34,6 +34,7 @@ func main() {
 	router.Post("/game/register", handler.Make(handler.HandleGameRegister))
 	router.Post("/game/getmcquestions", handler.Make(handler.HandleGetGameMCQuestions))
 	router.Post("/game/getfractions", handler.Make(handler.HandleGetGameFractions))
+	router.Post("/game/updatestatistics", handler.Make(handler.HandleUpdateStatistics))
 
 	// then everything below will be grouped, and have the user authenticated first
 	// else be redirected to login.
