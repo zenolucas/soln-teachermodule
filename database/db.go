@@ -428,7 +428,7 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 		}
 	}
 
-	fmt.Println(questions)
+	// fmt.Println(questions)
 	return questions, nil
 }
 
