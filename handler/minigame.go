@@ -60,6 +60,18 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
+	fmt.Print("this is triggered!")
+	minigameID := r.FormValue("minigame_id")
+	err := database.AddFractionQuestions(w, r)
+	if err != nil {
+		return err
+	}
+
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
+}
+
 func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	// get minigameID here
 	minigameID := r.FormValue("minigame_id")
@@ -233,7 +245,6 @@ func getCorrectAnswer(correctAnswer string, option string) string {
 
 func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameID := r.FormValue("minigame_id")
-	fmt.Print("in handleaddquestions we got minigameid J", minigameID)
 	err := database.AddMCQuestions(w, r)
 	if err != nil {
 		return err
@@ -244,7 +255,6 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	// we want minigameID
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}

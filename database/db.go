@@ -318,6 +318,51 @@ func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	return fractions, nil
 }
 
+func AddFractionQuestions(w http.ResponseWriter, r *http.Request) error {
+	MinigameIDStr := r.FormValue("minigame_id")
+	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
+	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
+	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
+	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+
+	MinigameID, _ := strconv.Atoi(MinigameIDStr)
+	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
+	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
+	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
+	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
+
+	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?)",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID)
+	if err != nil {
+    return err
+	}
+
+	return nil
+}
+
+func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
+	MinigameIDStr := r.FormValue("minigame_id")
+	QuestionIDStr := r.FormValue("question_id")
+	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
+	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
+	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
+	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+
+	MinigameID, _ := strconv.Atoi(MinigameIDStr)
+	QuestionID, _ := strconv.Atoi(QuestionIDStr)
+	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
+	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
+	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
+	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
+
+	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
 	var questions []types.WordedQuestion
 
@@ -376,29 +421,6 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 	return questions, nil
 }
 
-func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
-	MinigameIDStr := r.FormValue("minigame_id")
-	QuestionIDStr := r.FormValue("question_id")
-	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
-	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
-	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
-	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
-
-	MinigameID, _ := strconv.Atoi(MinigameIDStr)
-	QuestionID, _ := strconv.Atoi(QuestionIDStr)
-	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
-	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
-	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
-	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
-
-	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
-		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigame_id")
