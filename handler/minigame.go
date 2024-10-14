@@ -28,24 +28,24 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 				<input type="hidden" name="question_id" value= "%d" />
 				<input type="hidden" name="minigame_id" value= "%d" />
 				<div class="flex gap-4 mt-4">
-					<div class="label">
+					<div class="label mr-4">
 						<span class="label-text text-white">Fraction 1 Numerator:</span>
 					</div>
-					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				<div class="label mr-4">
+					<span class="label-text text-white">Fraction 2 Numerator</span>
+				</div>
+					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</div>
+				<div class="flex gap-4 mt-4">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Denominator:</span>
 					</div>
-					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-full max-w-xs" />
-				</div>
-				<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Fraction 2 Numerator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
 				<div class="label">
 					<span class="label-text text-white">Fraction 2 Denominator</span>
 				</div>
-					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
 				</div>
 
 				<div class="flex justify-end">
@@ -54,7 +54,7 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Numerator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 
 	return nil
@@ -84,6 +84,7 @@ func HandleMinigame3Index(w http.ResponseWriter, r *http.Request) error {
 
 func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
+	fmt.Print("we got: ", minigameIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	fractions, err := database.GetWordedQuestions(minigameID)
@@ -94,34 +95,34 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	for _, fraction := range fractions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
-			<form action="/update/fractions" method="POST">
+			<form action="/update/worded" method="POST">
 				<input type="hidden" name="question_id" value= "%d" />
 				<input type="hidden" name="minigame_id" value= "%d" />
 				<div class="flex gap-4 mt-4 mb-4">
-					<div class="label">
+					<div class="label mr-16">
 						<span class="label-text text-white">Question Text</span>
 					</div>
-					<input type="text" value="%s" name="question_text" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%s" name="question_text" class="input input-bordered input-primary w-3/4 text-xl" />
 				</div>	
 				<div class="flex gap-4 mt-4">
-					<div class="label">
+					<div class="label mr-3">
 						<span class="label-text text-white">Fraction 1 Numerator:</span>
 					</div>
-					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				<div class="label mr-4">
+					<span class="label-text text-white">Fraction 2 Numerator</span>
+				</div>
+					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</div>
+				<div class="flex gap-4 mt-4">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Denominator:</span>
 					</div>
-					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-full max-w-xs" />
-				</div>
-				<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Fraction 2 Numerator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
 				<div class="label">
 					<span class="label-text text-white">Fraction 2 Denominator</span>
 				</div>
-					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
 				</div>
 
 				<div class="flex justify-end">
@@ -130,22 +131,25 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Numerator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 	return nil
 }
 
-// func HandleGetWorded1(w http.ResponseWriter, r *http.Request) error {
+func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
+	// get minigameID here
+	minigameID := r.FormValue("minigame_id")
+	if err := database.UpdateWordedQuestions(w, r); err != nil {
+		return err
+	}
 
-// }
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
+}
 
-// func HandleGetWorded2(w http.ResponseWriter, r *http.Request) error {
-
-// }
-
-// func HandleMinigame4Index(w http.ResponseWriter, r *http.Request) error {
-// 	return render(w, r, minigame.Worded3())
-// }
+func HandleMinigame4Index(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, minigame.Worded("4"))
+}
 
 // func HandleGetWorded3(w http.ResponseWriter, r *http.Request) error {
 
@@ -168,35 +172,39 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<form action="/update/mcquestions" method="POST">
+				<input type="hidden" name="question_id" value= "%d" />
 				<span class="label-text text-white">Question %d:</span>
-				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-full max-w-xs" />
+				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-3/4 text-lg" />
 				<div class="flex gap-4 mt-4">
 					<div class="label">
 						<span class="label-text text-white">Option 1:</span>
 					</div>
-					<input type="text" value="%s" name="option1" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%s" name="option1" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 					<div class="label">
 						<span class="label-text text-white">Option 2:</span>
 					</div>
-					<input type="text" value="%s" name="option2" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%s" name="option2" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 				</div>
 				<div class="flex gap-4 mt-4">
 				<div class="label">
 					<span class="label-text text-white">Option 3:</span>
 				</div>
-					<input type="text" value="%s" name="option3" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%s" name="option3" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 				<div class="label">
 					<span class="label-text text-white">Option 4:</span>
 				</div>
-					<input type="text" value="%s" name="option4" class="input input-bordered input-primary w-full max-w-xs" />
+					<input type="text" value="%s" name="option4" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 				</div>
 				<div class="flex mt-4 relative inline-block w-64">
-					<label for="dropdown" class="block text-white">Correct Answer</label>
-						<select id="dropdown" name="correct_answer" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-							<option value="option1">Option 1</option>
-							<option value="option2">Option 2</option>
-							<option value="option3">Option 3</option>
-						</select>
+				<div class="label">
+					<span class="label-text text-white">Correct Answer: </span>
+				</div>
+					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
+						<option value="%s" %s>Option 1</option> 
+						<option value="%s" %s>Option 2</option>
+						<option value="%s" %s>Option 3</option>
+						<option value="%s" %s>Option 4</option>
+					</select>
 				</div>
 
 				<div class="flex justify-end">
@@ -205,9 +213,34 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, i+1, question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4)
+		`, question.QuestionID, i+1, question.QuestionText,
+			question.Option1, question.Option2, question.Option3, question.Option4,
+			question.Option1, getCorrectAnswer(question.CorrectAnswer, question.Option1),
+			question.Option2, getCorrectAnswer(question.CorrectAnswer, question.Option2),
+			question.Option3, getCorrectAnswer(question.CorrectAnswer, question.Option3),
+			question.Option4, getCorrectAnswer(question.CorrectAnswer, question.Option4))
 	}
 	return err
+}
+
+// helper function to get correct answer for GetMCQuestion function above
+func getCorrectAnswer(correctAnswer string, option string) string {
+	if correctAnswer == option {
+		return "selected"
+	}
+	return ""
+}
+
+func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	minigameID := r.FormValue("minigame_id")
+	fmt.Print("in handleaddquestions we got minigameid J", minigameID)
+	err := database.AddMCQuestions(w, r)
+	if err != nil {
+		return err
+	}
+
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {

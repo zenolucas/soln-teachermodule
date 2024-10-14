@@ -17,7 +17,7 @@ templ Fractions(minigameID string) {
           <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
-    @CreateEditForm(QuestionParams{})
+    @CreateQuestionForm(QuestionParams{}, minigameID)
     }
 }
 
@@ -35,7 +35,7 @@ templ Worded(minigameID string) {
           <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
-    @CreateEditForm(QuestionParams{})
+    @CreateQuestionForm(QuestionParams{}, minigameID)
     }
 }
 
@@ -54,7 +54,7 @@ templ Quiz(minigameID string) {
           <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
-    @CreateQuestionForm(QuestionParams{})
+    @CreateQuestionForm(QuestionParams{}, minigameID)
     }
 }
 
@@ -66,38 +66,47 @@ type QuestionParams struct {
      Option4        string
 }
 
-templ CreateQuestionForm(data QuestionParams) {
+templ CreateQuestionForm(data QuestionParams, minigameID string) {
      <form hx-post="/addmcquestions" hx-swap="outerHTML">
+          <input type="hidden" name="minigame_id" value={ minigameID } />
           <input type="checkbox" id="my_modal_6" class="modal-toggle" />
           <div class="modal" role="dialog">
                <div class="modal-box">
-                    <h3 class="text-lg font-bold">Edit Question</h3>
+                    <h3 class="text-lg font-bold">Add Question</h3>
                     <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Question Text</span>
                          </div>
-                         <input type="text" name="classname" placeholder="Type here" class="input input-bordered w-full" />
-                         <div class="text-sm text-error">invalid input</div>
+                         <input type="text" name="question_text" placeholder="Type here" class="input input-bordered w-full" />
                          <div class="label">
                               <span class="label-text">Option 1</span>
                          </div>
-                         <input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+                         <input type="text" name="option_1" placeholder="Type here" class="input input-bordered w-full" />
 
                          <div class="label">
                               <span class="label-text">Option 2</span>
                          </div>
 
-                         <input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+                         <input type="text" name="option_2" placeholder="Type here" class="input input-bordered w-full" />
                          <div class="label">
                               <span class="label-text">Option 3</span>
                          </div>
 
-                         <input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+                         <input type="text" name="option_3" placeholder="Type here" class="input input-bordered w-full" />
                          <div class="label">
                               <span class="label-text">Option 4</span>
                          </div>
-                         <input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+                         <input type="text" name="option_4" placeholder="Type here" class="input input-bordered w-full" />
                     </label>
+                         <div class="label">
+                              <span class="label-text">Correct Answer</span>
+                         </div>
+					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
+						<option value="option_1">Option 1</option> 
+						<option value="option_2">Option 2</option>
+						<option value="option_3">Option 3</option>
+						<option value="option_4">Option 4</option>
+					</select>
                     <div class="modal-action">
                          <label for="my_modal_6" class="btn">Cancel</label>
                          <button type="submit" class="btn btn-secondary">Save Changes</button>
