@@ -1,7 +1,7 @@
 package types
 
 type MultipleChoiceQuestion struct {
-	QuestionID    string `json:"question_id"`
+	QuestionID    int    `json:"question_id"`
 	QuestionText  string `json:"question_text"`
 	Option1       string `json:"option_1"`
 	Option2       string `json:"option_2"`

@@ -298,62 +298,6 @@ func GetClassrooms(teacherID int) ([]types.Classroom, error) {
 	return classrooms, nil
 }
 
-func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
-	MinigameIDStr := r.FormValue("minigame_id")
-	QuestionIDStr := r.FormValue("question_id")
-	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
-	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
-	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
-	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
-
-	MinigameID, _ := strconv.Atoi(MinigameIDStr)
-	QuestionID, _ := strconv.Atoi(QuestionIDStr)
-	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
-	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
-	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
-	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
-
-	fmt.Printf("Values we got are: MinigameID = %d, QuestionID = %d, Fraction1_Numerator = %d, Fraction1_Denominator = %d, Fraction2_Numerator = %d, Fraction2_Denominator = %d\n",
-		MinigameID, QuestionID, Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator)
-
-	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
-		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	question := types.MultipleChoiceQuestion{
-		QuestionText:  r.FormValue("question"),
-		Option1:       r.FormValue("option1"),
-		Option2:       r.FormValue("option2"),
-		Option3:       r.FormValue("option3"),
-		Option4:       r.FormValue("option4"),
-		CorrectAnswer: r.FormValue("correct_answer"),
-	}
-
-	// get questionID
-
-	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = 1",
-		question.QuestionText, question.CorrectAnswer)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
-		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
-	if err != nil {
-		log.Fatal(another_err)
-	}
-
-	return err
-}
-
-// game queries below
-
 func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	var fractions []types.FractionQuestion
 
@@ -430,6 +374,129 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 
 	// fmt.Println(questions)
 	return questions, nil
+}
+
+func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
+	MinigameIDStr := r.FormValue("minigame_id")
+	QuestionIDStr := r.FormValue("question_id")
+	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
+	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
+	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
+	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+
+	MinigameID, _ := strconv.Atoi(MinigameIDStr)
+	QuestionID, _ := strconv.Atoi(QuestionIDStr)
+	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
+	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
+	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
+	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
+
+	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
+	minigameIDStr := r.FormValue("minigame_id")
+	questionIDStr := r.FormValue("question_id")
+	questionText := r.FormValue("question_text")
+	fraction1NumeratorStr := r.FormValue("fraction1_numerator")
+	fraction1DenominatorStr := r.FormValue("fraction1_denominator")
+	fraction2NumeratorStr := r.FormValue("fraction2_numerator")
+	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
+
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	questionID, _ := strconv.Atoi(questionIDStr)
+	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
+	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
+	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
+	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
+
+	_, err := db.Exec("UPDATE worded_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	MinigameIDStr := r.FormValue("minigame_id")
+	minigameID, _ := strconv.Atoi(MinigameIDStr)
+	question := types.MultipleChoiceQuestion{
+		QuestionText:  r.FormValue("question_text"),
+		Option1:       r.FormValue("option_1"),
+		Option2:       r.FormValue("option_2"),
+		Option3:       r.FormValue("option_3"),
+		Option4:       r.FormValue("option_4"),
+		CorrectAnswer: r.FormValue("correct_answer"),
+	}
+	var correctAnswer = ""
+	// get correct answer
+	if question.CorrectAnswer == "option_1" {
+		correctAnswer = question.Option1
+	} else if question.CorrectAnswer == "option_2" {
+		correctAnswer = question.Option2
+	} else if question.CorrectAnswer == "option_3" {
+		correctAnswer = question.Option3
+	} else if question.CorrectAnswer == "option_4" {
+		correctAnswer = question.Option4
+	}
+
+	result, err := db.Exec(`INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES (?, ?, ?)`, minigameID, question.QuestionText, correctAnswer)
+	if err != nil {
+		return err
+	}
+
+	// Get the last inserted question_id
+	questionID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	// Insert choices into the multiple_choice_choices table using the questionID
+	_, err = db.Exec(`INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES (?, ?, ?, ?, ?)`, questionID, question.Option1, question.Option2, question.Option3, question.Option4)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	question := types.MultipleChoiceQuestion{
+		QuestionText:  r.FormValue("question"),
+		Option1:       r.FormValue("option1"),
+		Option2:       r.FormValue("option2"),
+		Option3:       r.FormValue("option3"),
+		Option4:       r.FormValue("option4"),
+		CorrectAnswer: r.FormValue("correct_answer"),
+	}
+
+	fmt.Print("we got correct answer: ", question.CorrectAnswer)
+
+	// get question id
+	questionIDStr := r.FormValue("question_id")
+	questionID, _ := strconv.Atoi(questionIDStr)
+
+	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = ?",
+		question.QuestionText, question.CorrectAnswer, questionID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
+		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
+	if err != nil {
+		log.Fatal(another_err)
+	}
+
+	return err
 }
 
 func UpdateStatisticsDatabase(w http.ResponseWriter, r *http.Request) error {
