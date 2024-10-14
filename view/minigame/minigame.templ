@@ -9,12 +9,12 @@ templ Fractions(minigameID string) {
           <input type="hidden" name="minigameID" value={ minigameID } />
      </form>
     <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
+     <h1 class="text-5xl font-bold">Fraction Addition Questions</h1>
           <div id="questions-container">
           </div>
     </div>
     <div class="flex justify-center mt-4">
-         <button class="btn btn-primary text-white">add question</button>
-          <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>
+          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
     @CreateEditForm(QuestionParams{})
@@ -23,41 +23,16 @@ templ Fractions(minigameID string) {
 
 templ Worded(minigameID string) {
 @layout.App(true, false) {
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-8"
-         hx-post="/getwordedquestions" hx-trigger="load" hx-target="this">
+     <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
           <input type="hidden" name="minigameID" value={ minigameID } />
+     </form>
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
+     <h1 class="text-5xl font-bold">Worded Fraction Addition Questions</h1>
+          <div id="questions-container">
+          </div>
     </div>
     <div class="flex justify-center mt-4">
-         <button class="btn btn-primary text-white">add question</button>
-          <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>
-    </div>
-
-    @CreateEditForm(QuestionParams{})
-    }
-}
-
-templ Worded2() {
-@layout.App(true, false) {
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-8"
-         hx-get="/getmcquestions" hx-trigger="load" hx-target="this">
-    </div>
-    <div class="flex justify-center mt-4">
-         <button class="btn btn-primary text-white">add question</button>
-          <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>
-    </div>
-
-    @CreateEditForm(QuestionParams{})
-    }
-}
-
-templ Worded3() {
-@layout.App(true, false) {
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-8"
-         hx-get="/getmcquestions" hx-trigger="load" hx-target="this">
-    </div>
-    <div class="flex justify-center mt-4">
-         <button class="btn btn-primary text-white">add question</button>
-          <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>
+          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
     @CreateEditForm(QuestionParams{})
@@ -70,16 +45,16 @@ templ Quiz(minigameID string) {
           <input type="hidden" name="minigameID" value={ minigameID } />
     </form>
     <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
+     <h1 class="text-5xl font-bold">Quiz Questions (Multiple Choice)</h1>
           <div id="questions-container">
           </div>
     </div>
 
     <div class="flex justify-center mt-4">
-         <button class="btn btn-primary text-white">add question</button>
-          <label for="my_modal_6" class="btn btn-primary text-white">Edit</label>
+          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
     </div>
 
-    @CreateEditForm(QuestionParams{})
+    @CreateQuestionForm(QuestionParams{})
     }
 }
 
@@ -91,8 +66,8 @@ type QuestionParams struct {
      Option4        string
 }
 
-templ CreateEditForm(data QuestionParams) {
-     <form hx-post="/editquestions" hx-swap="outerHTML">
+templ CreateQuestionForm(data QuestionParams) {
+     <form hx-post="/addmcquestions" hx-swap="outerHTML">
           <input type="checkbox" id="my_modal_6" class="modal-toggle" />
           <div class="modal" role="dialog">
                <div class="modal-box">

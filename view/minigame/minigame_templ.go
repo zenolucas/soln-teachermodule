@@ -31,7 +31,7 @@ func Fractions(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getfractions\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -39,7 +39,7 @@ func Fractions(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\"><div id=\"questions-container\"></div></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -82,7 +82,7 @@ func Worded(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-post=\"/getwordedquestions\" hx-trigger=\"load\" hx-target=\"this\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -90,7 +90,7 @@ func Worded(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -114,7 +114,7 @@ func Worded(minigameID string) templ.Component {
 	})
 }
 
-func Worded2() templ.Component {
+func Quiz(minigameID string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -133,11 +133,19 @@ func Worded2() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-get=\"/getmcquestions\" hx-trigger=\"load\" hx-target=\"this\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = CreateEditForm(QuestionParams{}).Render(ctx, templ_7745c5c3_Buffer)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(minigameID))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 6)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = CreateQuestionForm(QuestionParams{}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -157,7 +165,15 @@ func Worded2() templ.Component {
 	})
 }
 
-func Worded3() templ.Component {
+type QuestionParams struct {
+	QuestionText string
+	Option1      string
+	Option2      string
+	Option3      string
+	Option4      string
+}
+
+func CreateQuestionForm(data QuestionParams) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -170,109 +186,7 @@ func Worded3() templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var8 := templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-			if !templ_7745c5c3_IsBuffer {
-				templ_7745c5c3_Buffer = templ.GetBuffer()
-				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\" hx-get=\"/getmcquestions\" hx-trigger=\"load\" hx-target=\"this\"></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = CreateEditForm(QuestionParams{}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if !templ_7745c5c3_IsBuffer {
-				_, templ_7745c5c3_Err = io.Copy(templ_7745c5c3_W, templ_7745c5c3_Buffer)
-			}
-			return templ_7745c5c3_Err
-		})
-		templ_7745c5c3_Err = layout.App(true, false).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !templ_7745c5c3_IsBuffer {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
-		}
-		return templ_7745c5c3_Err
-	})
-}
-
-func Quiz(minigameID string) templ.Component {
-	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-		if !templ_7745c5c3_IsBuffer {
-			templ_7745c5c3_Buffer = templ.GetBuffer()
-			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var10 := templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-			if !templ_7745c5c3_IsBuffer {
-				templ_7745c5c3_Buffer = templ.GetBuffer()
-				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getmcquestions\" hx-swap=\"outerHTML\" hx-trigger=\"load\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(minigameID))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\"><div id=\"questions-container\"></div></div><div class=\"flex justify-center mt-4\"><button class=\"btn btn-primary text-white\">add question</button> <label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Edit</label></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = CreateEditForm(QuestionParams{}).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if !templ_7745c5c3_IsBuffer {
-				_, templ_7745c5c3_Err = io.Copy(templ_7745c5c3_W, templ_7745c5c3_Buffer)
-			}
-			return templ_7745c5c3_Err
-		})
-		templ_7745c5c3_Err = layout.App(true, false).Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !templ_7745c5c3_IsBuffer {
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteTo(templ_7745c5c3_W)
-		}
-		return templ_7745c5c3_Err
-	})
-}
-
-type QuestionParams struct {
-	QuestionText string
-	Option1      string
-	Option2      string
-	Option3      string
-	Option4      string
-}
-
-func CreateEditForm(data QuestionParams) templ.Component {
-	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
-		if !templ_7745c5c3_IsBuffer {
-			templ_7745c5c3_Buffer = templ.GetBuffer()
-			defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/editquestions\" hx-swap=\"outerHTML\"><input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Edit Question</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Question Text</span></div><input type=\"text\" name=\"classname\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"text-sm text-error\">invalid input</div><div class=\"label\"><span class=\"label-text\">Option 1</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 2</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 3</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 4</span></div><input type=\"text\" name=\"section\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></label><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Save Changes</button></div></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
