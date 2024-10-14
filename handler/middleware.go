@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -22,9 +21,8 @@ func WithAuth(next http.Handler) http.Handler {
 		// fmt.Print("authenticatd is : ", session.Values["authenticated"])
 
 		if !session.Values["authenticated"].(bool) {
-			fmt.Print("this is executed!")
 			path := r.URL.Path
-			http.Redirect(w, r, "/?to"+path, http.StatusSeeOther)
+			hxRedirect(w, r, "/?to"+path)
 			return
 		}
 

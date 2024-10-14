@@ -159,6 +159,6 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 			ErrorMessage: err.Error(),
 		}))
 	}
+	hxRedirect(w, r, "/home")
 	return nil
 }
-
