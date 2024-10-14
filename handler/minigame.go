@@ -148,6 +148,17 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
+	minigameID := r.FormValue("minigame_id")
+	err := database.AddWordedQuestions(w, r)
+	if err != nil {
+		return err
+	}
+
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
+}
+
 func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	// get minigameID here
 	minigameID := r.FormValue("minigame_id")

@@ -60,7 +60,7 @@ func main() {
 		auth.Get("/minigame2", handler.Make(handler.HandleMinigame2Index))
 		auth.Get("/minigame3", handler.Make(handler.HandleMinigame3Index))
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
-		// auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
+		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
 		auth.Post("/update/worded", handler.Make(handler.HandleUpdateWorded))
 		// auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
 		auth.Get("/minigame4", handler.Make(handler.HandleMinigame4Index))
