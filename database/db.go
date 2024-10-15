@@ -363,6 +363,27 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 
 	return nil
 }
+
+func DeleteFractions(minigameID string, questionID string) error {
+	// Execute the DELETE query
+	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	if err != nil {
+		return err
+	}
+
+	// Check how many rows were affected (optional)
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return err
+	}
+
+	return nil
+}
+
 func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
 	var questions []types.WordedQuestion
 

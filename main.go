@@ -56,6 +56,7 @@ func main() {
 		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
 		auth.Post("/addfractionquestions", handler.Make(handler.HandleAddFractions))
 		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
+		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
 		// auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions))
 		auth.Get("/minigame2", handler.Make(handler.HandleMinigame2Index))
 		auth.Get("/minigame3", handler.Make(handler.HandleMinigame3Index))
