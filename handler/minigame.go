@@ -24,6 +24,13 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 	for _, fraction := range fractions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+			<div class="flex justify-end">
+				<form action="/delete/fractions" method="POST">
+					<input type="hidden" name="question_id" value="%d" />
+					<input type="hidden" name="minigame_id" value= "%d" />
+					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+				</form>
+			</div>
 			<form action="/update/fractions" method="POST">
 				<input type="hidden" name="question_id" value= "%d" />
 				<input type="hidden" name="minigame_id" value= "%d" />
@@ -54,14 +61,13 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 
 	return nil
 }
 
 func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
-	fmt.Print("this is triggered!")
 	minigameID := r.FormValue("minigame_id")
 	err := database.AddFractionQuestions(w, r)
 	if err != nil {
@@ -79,6 +85,18 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	hxRedirect(w, r, "/minigame"+minigameID)
+	return nil
+}
+
+func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
+	minigameID := r.FormValue("minigame_id")
+	questionID := r.FormValue("question_id")
+	fmt.Print("we got minigameID", minigameID)
+	fmt.Print("we got questionID", questionID)
+	if err := database.DeleteFractions(minigameID, questionID); err != nil {
+		return err
+	}
 	hxRedirect(w, r, "/minigame"+minigameID)
 	return nil
 }
