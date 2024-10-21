@@ -94,7 +94,15 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 			<tr>
 				<th>%d</th>
 				<td>%s</td>
-				<td class="flex justify-end"><a href="" class="btn btn-secondary">edit</a></td>
+				<td class="flex justify-end">
+					<a href="" class="btn btn-primary text-white mr-2">
+						view scores
+					</a>
+					<a href="" class="btn btn-primary text-white mr-2">
+						edit
+					</a>
+					<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+				</td>
 			</tr>	
 		`, i+1, student.Username)
 	}
