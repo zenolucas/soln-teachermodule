@@ -31,7 +31,7 @@ func Fractions(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getfractions\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -39,7 +39,7 @@ func Fractions(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\"><h1 class=\"text-5xl font-bold\">Fraction Addition Questions</h1><div id=\"questions-container\"></div></div><div class=\"flex justify-center mt-4\"><label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Add Question</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -82,7 +82,7 @@ func Worded(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getwordedquestions\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -90,7 +90,7 @@ func Worded(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\"><h1 class=\"text-5xl font-bold\">Worded Fraction Addition Questions</h1><div id=\"questions-container\"></div></div><div class=\"flex justify-center mt-4\"><label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Add Question</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -133,7 +133,7 @@ func Quiz(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/getmcquestions\" hx-swap=\"outerHTML\" hx-trigger=\"load\" hx-target=\"#questions-container\"><input type=\"hidden\" name=\"minigameID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -141,7 +141,7 @@ func Quiz(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><div class=\"flex justify-center items-center flex-col w-full h-140 mt-8\"><h1 class=\"text-5xl font-bold\">Quiz Questions (Multiple Choice)</h1><div id=\"questions-container\"></div></div><div class=\"flex justify-center mt-4\"><label for=\"my_modal_6\" class=\"btn btn-primary text-white\">Add Question</label></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 6)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -185,7 +185,7 @@ func CreateFractionQuestionForm(data FractionQuestionParams, minigameID string) 
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/addfractionquestions\" hx-swap=\"outerHTML\"><input type=\"hidden\" name=\"minigame_id\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -193,7 +193,7 @@ func CreateFractionQuestionForm(data FractionQuestionParams, minigameID string) 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Add Question</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Fraction 1 Numerator</span></div><input type=\"text\" name=\"fraction1_numerator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 1 Denominator</span></div><input type=\"text\" name=\"fraction1_denominator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 2 Numerator</span></div><input type=\"text\" name=\"fraction2_numerator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 2 Denominator</span></div><input type=\"text\" name=\"fraction2_denominator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></label><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Save Changes</button></div></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 8)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -224,7 +224,7 @@ func CreateWordedQuestionForm(data WordedQuestionParams, minigameID string) temp
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/add/wordedquestions\" hx-swap=\"outerHTML\"><input type=\"hidden\" name=\"minigame_id\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 9)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -232,7 +232,7 @@ func CreateWordedQuestionForm(data WordedQuestionParams, minigameID string) temp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Add Question</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Question Text</span></div><input type=\"text\" name=\"question_text\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 1 Numerator</span></div><input type=\"text\" name=\"fraction1_numerator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 1 Denominator</span></div><input type=\"text\" name=\"fraction1_denominator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 2 Numerator</span></div><input type=\"text\" name=\"fraction2_numerator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Fraction 2 Denominator</span></div><input type=\"text\" name=\"fraction2_denominator\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></label><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Save Changes</button></div></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 10)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -264,7 +264,7 @@ func CreateMCQuestionForm(data QuestionParams, minigameID string) templ.Componen
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form hx-post=\"/addmcquestions\" hx-swap=\"outerHTML\"><input type=\"hidden\" name=\"minigame_id\" value=\"")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 11)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -272,7 +272,7 @@ func CreateMCQuestionForm(data QuestionParams, minigameID string) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <input type=\"checkbox\" id=\"my_modal_6\" class=\"modal-toggle\"><div class=\"modal\" role=\"dialog\"><div class=\"modal-box\"><h3 class=\"text-lg font-bold\">Add Question</h3><label class=\"form-control w-full max-w-s\"><div class=\"label\"><span class=\"label-text\">Question Text</span></div><input type=\"text\" name=\"question_text\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 1</span></div><input type=\"text\" name=\"option_1\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 2</span></div><input type=\"text\" name=\"option_2\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 3</span></div><input type=\"text\" name=\"option_3\" placeholder=\"Type here\" class=\"input input-bordered w-full\"><div class=\"label\"><span class=\"label-text\">Option 4</span></div><input type=\"text\" name=\"option_4\" placeholder=\"Type here\" class=\"input input-bordered w-full\"></label><div class=\"label\"><span class=\"label-text\">Correct Answer</span></div><select name=\"correct_answer\" class=\"select select-bordered w-full max-w-xs\"><option value=\"option_1\">Option 1</option> <option value=\"option_2\">Option 2</option> <option value=\"option_3\">Option 3</option> <option value=\"option_4\">Option 4</option></select><div class=\"modal-action\"><label for=\"my_modal_6\" class=\"btn\">Cancel</label> <button type=\"submit\" class=\"btn btn-secondary\">Save Changes</button></div></div></div></form>")
+		templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 12)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
