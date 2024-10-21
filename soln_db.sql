@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS level_minigames (
 CREATE TABLE IF NOT EXISTS multiple_choice_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY, 
     minigame_id INT,
-    question_text   VARCHAR(200) NOT NULL,
+    question_text   VARCHAR(500) NOT NULL,
     correct_answer  VARCHAR(200) NOT NULL
 );
 
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `statistics` (
 CREATE TABLE IF NOT EXISTS worded_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
-    question_text VARCHAR(200),
+    question_text VARCHAR(500),
     fraction1_numerator INT NOT NULL,
     fraction1_denominator INT NOT NULL,
     fraction2_numerator INT NOT NULL,
