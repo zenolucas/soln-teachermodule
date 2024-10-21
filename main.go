@@ -22,7 +22,7 @@ func main() {
 
 	router := chi.NewMux()
 
-	// handle static files
+	// handle static files in public folder
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 	router.Get("/", handler.Make(handler.HandleLoginIndex))
 	router.Post("/login", handler.Make(handler.HandleLoginCreate))
@@ -70,6 +70,9 @@ func main() {
 		auth.Post("/addmcquestions", handler.Make(handler.HandleAddMCQuestions))
 		auth.Post("/update/mcquestions", handler.Make(handler.HandleUpdateMCQuestions))
 		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
+
+		// statistics endpoints
+		auth.Get("/statistics1", handler.Make(handler.HandleGetStatistics))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
