@@ -4,7 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"soln-teachermodule/database"
+	"soln-teachermodule/view/statistics"
 )
+
+func HandleGetStatistics(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, statistics.Statistics())
+}
 
 func HandleUpdateStatistics(w http.ResponseWriter, r *http.Request) error {
 
