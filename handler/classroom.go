@@ -17,6 +17,13 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	room := types.Classroom{
 		ClassroomID: r.FormValue("classroomID"),
 	}
+
+	// save classroomID in session
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	session.Values["classroomID"] = room.ClassroomID 
+	session.Save(r, w)
+
 	return render(w, r, classroom.Classroom(room.ClassroomID))
 }
 

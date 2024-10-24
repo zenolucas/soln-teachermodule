@@ -15,11 +15,6 @@ func WithAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		// Set cache control headers
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
-
 		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 		session, _ := store.Get(r, sessionUserKey)
 

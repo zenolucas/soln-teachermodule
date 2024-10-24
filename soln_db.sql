@@ -83,12 +83,12 @@ CREATE TABLE IF NOT EXISTS fraction_questions (
     fraction2_denominator INT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `statistics` (
-  `username` varchar(50) NOT NULL,
-  `num_correct_ans` int NOT NULL,
-  `num_wrong_ans` int NOT NULL,
-  `total_attempts` int NOT NULL,
-  `num_unsimplified_ans` int NOT NULL
+CREATE TABLE IF NOT EXISTS statistics (
+  statistic_id INT AUTO_INCREMENT PRIMARY KEY,
+  classroom_id INT NOT NULL,
+  username varchar(50) NOT NULL,
+  minigameID INT NOT NULL,
+  score INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS worded_questions (
@@ -122,6 +122,7 @@ INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_deno
 
 -- Suggestions: 
 -- Superadmin and admin
+
 
 -- Insert teacher data into users table
 INSERT INTO users (username, password, usertype) VALUES
@@ -169,8 +170,15 @@ INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, 
 (9, '1/5', '1/10', '2/5', '3/5'),
 (10, '1/2', '1/4', '3/4', '2/3');
 
-
-INSERT INTO `statistics` (`username`, `num_correct_ans`, `num_wrong_ans`, `total_attempts`, `num_unsimplified_ans`) VALUES
-('boom', 0, 0, 0, 0),
-('test', 0, 0, 0, 0);
-
+-- test values for statistics
+INSERT INTO statistics (username, classroom_id, minigameID, score) VALUES
+("USER1", 1, 5, 1),
+("USER2", 1, 5, 2),
+("USER3", 1, 5, 3),
+("USER4", 1, 5, 4),
+("USER5", 1, 5, 5),
+("USER6", 1, 5, 6),
+("USER7", 1, 5, 4),
+("USER8", 1, 5, 4),
+("USER9", 1, 5, 4),
+("USER10", 1, 5, 4);
