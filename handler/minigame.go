@@ -188,6 +188,18 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
+	minigameIDStr := r.FormValue("minigame_id")
+	questionIDStr := r.FormValue("question_id")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	questionID, _ := strconv.Atoi(questionIDStr)
+	if err := database.DeleteWorded(minigameID, questionID); err != nil {
+		return err
+	}
+	hxRedirect(w, r, "/minigame"+minigameIDStr)
+	return nil
+}
+
 func HandleMinigame4Index(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, minigame.Worded("4"))
 }

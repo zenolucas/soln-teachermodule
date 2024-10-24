@@ -366,18 +366,8 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 
 func DeleteFractions(minigameID string, questionID string) error {
 	// Execute the DELETE query
-	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	_, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
 	if err != nil {
-		return err
-	}
-
-	// Check how many rows were affected (optional)
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
 		return err
 	}
 
@@ -448,6 +438,16 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 
 	_, err := db.Exec("UPDATE worded_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteWorded(minigameID int, questionID int) error {
+	// Execute the DELETE query
+	_, err := db.Exec("DELETE FROM worded_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
 	if err != nil {
 		return err
 	}
@@ -566,7 +566,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-func UpdateStatisticsDatabase(w http.ResponseWriter, r *http.Request) error {
+func UpdateStatistics(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -580,11 +580,9 @@ func UpdateStatisticsDatabase(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		Username             string
-		Num_Correct_Ans      int
-		Num_Wrong_Ans        int
-		Total_Attempts       int
-		Num_Unsimplified_Ans int
+		Username   string
+		MinigameID int
+		Score      int
 	}
 
 	var data Data
@@ -596,10 +594,35 @@ func UpdateStatisticsDatabase(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO statistics (username, num_correct_ans, num_wrong_ans, total_attempts, num_unsimplified_ans) VALUES (?, ?, ?, ?, ?)", data.Username, data.Num_Correct_Ans, data.Num_Wrong_Ans, data.Total_Attempts, data.Num_Unsimplified_Ans)
+	_, err = db.Exec("INSERT INTO statistics (username, minigameID, score) VALUES (?, ?, ?)", data.Username, data.MinigameID, data.Score)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func GetClassStatistics(classroomID int) ([]types.ClassStatistics, error) {
+	// get classroomID
+	// classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	var statistics []types.ClassStatistics
+
+	// get scores and count per score
+	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM statistics WHERE classroom_id = ? GROUP BY score ORDER BY score", classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.ClassStatistics
+		if err := rows.Scan(&statistic.Score, &statistic.Count); err != nil {
+			return nil, err
+		}
+		statistics = append(statistics, statistic)
+	}
+	fmt.Print("returned class statistics contains: ", statistics)
+
+	return statistics, nil
 }
