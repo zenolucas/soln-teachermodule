@@ -35,7 +35,7 @@ func main() {
 	router.Post("/game/getfractions", handler.Make(handler.HandleGetGameFractions))
 	router.Post("/game/getworded", handler.Make(handler.HandleGetGameWorded))
 	router.Post("/game/getmcquestions", handler.Make(handler.HandleGetGameMCQuestions))
-	router.Post("/game/updatestatistics", handler.Make(handler.HandleUpdateStatistics))
+	router.Post("/game/update/statistics", handler.Make(handler.HandleUpdateStatistics))
 
 	// then everything below will be grouped, and have the user authenticated first
 	// else be redirected to login.
@@ -57,13 +57,12 @@ func main() {
 		auth.Post("/addfractionquestions", handler.Make(handler.HandleAddFractions))
 		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
 		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
-		// auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions))
 		auth.Get("/minigame2", handler.Make(handler.HandleMinigame2Index))
 		auth.Get("/minigame3", handler.Make(handler.HandleMinigame3Index))
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
 		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
 		auth.Post("/update/worded", handler.Make(handler.HandleUpdateWorded))
-		// auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
+		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
 		auth.Get("/minigame4", handler.Make(handler.HandleMinigame4Index))
 		auth.Get("/minigame5", handler.Make(handler.HandleMinigame5Index))
 		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
@@ -72,9 +71,12 @@ func main() {
 		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
 		// statistics endpoints
-		auth.Get("/statistics1", handler.Make(handler.HandleGetStatistics))
+		auth.Get("/statistics", handler.Make(handler.HandleGetStatistics))
+		// auth.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
 	})
 
+	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
+		
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
 	log.Fatal(http.ListenAndServe(port, router))
