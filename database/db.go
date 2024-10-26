@@ -602,6 +602,44 @@ func UpdateStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func UpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil
+	}
+	defer r.Body.Close()
+
+	type Data struct {
+		Username           string
+		Question_id        int
+		Minigame_id        int
+		Num_Right_Attempts int
+		Num_Wrong_Attempts int
+	}
+
+	var data Data
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return err
+	}
+	fmt.Print("we got statistics data: ", data)
+
+	_, err = db.Exec("INSERT INTO saisai_statistics (username, question_id, minigame_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.Username, data.Question_id, data.Minigame_id, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetClassStatistics(classroomID int) ([]types.ClassStatistics, error) {
 	// get classroomID
 	// classroomID, _ := strconv.Atoi(classroomIDStr)
