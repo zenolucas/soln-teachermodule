@@ -24,13 +24,16 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("bad request")
 	}
 
+	// convert classroomID to int
+	classroomID, _ := strconv.Atoi(room.ClassroomID)
+
 	// save classroomID in session
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
-	session.Values["classroomID"] = room.ClassroomID
+	session.Values["classroomID"] = classroomID
 	session.Save(r, w)
 
-	fmt.Print("classroomID is ", room.ClassroomID)
+	fmt.Print("classroomID is ", session.Values["classroomID"])
 
 	return render(w, r, classroom.Classroom(room.ClassroomID))
 }
