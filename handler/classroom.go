@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,14 +16,21 @@ import (
 
 func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	room := types.Classroom{
-		ClassroomID: r.FormValue("classroomID"),
+		ClassroomID: r.URL.Query().Get("classroom_id"),
+	}
+
+	if room.ClassroomID == "" {
+		http.Error(w, "Missing classroom_id", http.StatusBadRequest)
+		return errors.New("bad request")
 	}
 
 	// save classroomID in session
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
-	session.Values["classroomID"] = room.ClassroomID 
+	session.Values["classroomID"] = room.ClassroomID
 	session.Save(r, w)
+
+	fmt.Print("classroomID is ", room.ClassroomID)
 
 	return render(w, r, classroom.Classroom(room.ClassroomID))
 }
@@ -48,9 +56,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 					<h2 class="card-title">%s - %s</h2>
 					<p>%s</p>
 					<div class="card-actions justify-end">
-						<form action="/classroom" method="POST">
-							<button class="btn btn-secondary" type="submit" name="classroomID" value="%s">Open</button>
-						</form>
+						<a href="/classroom?classroom_id=%s" class="btn btn-secondary"> Open </a> 
 					</div>
 				</div>
 			</div>
