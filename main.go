@@ -42,7 +42,7 @@ func main() {
 	router.Group(func(auth chi.Router) {
 		auth.Use(handler.WithAuth)
 		auth.Get("/home", handler.Make(handler.HandleHomeIndex))
-		auth.Post("/classroom", handler.Make(handler.HandleClassroomIndex))
+		auth.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
 		auth.Post("/createclassroom", handler.Make(handler.HandleClassroomCreate))
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))
 		auth.Get("/getclassrooms_menu", handler.Make(handler.HandleGetClassroomsMenu))
@@ -75,8 +75,9 @@ func main() {
 		// auth.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
 	})
 
+	// this endpoint is out here because when grouped with auth, CORS error happens
 	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
-		
+
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
 	log.Fatal(http.ListenAndServe(port, router))
