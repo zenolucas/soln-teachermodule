@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	// "crypto/rand"
+	// "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -129,16 +129,16 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 
 }
 
-func generateSessionToken() (string, error) {
-	// Create a random 32-byte token
-	token := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, token)
-	if err != nil {
-		return "", err
-	}
-	// Encode the token to a base64 string
-	return base64.URLEncoding.EncodeToString(token), nil
-}
+// func generateSessionToken() (string, error) {
+// 	// Create a random 32-byte token
+// 	token := make([]byte, 32)
+// 	_, err := io.ReadFull(rand.Reader, token)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	// Encode the token to a base64 string
+// 	return base64.URLEncoding.EncodeToString(token), nil
+// }
 
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
