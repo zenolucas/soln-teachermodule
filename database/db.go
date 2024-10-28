@@ -156,7 +156,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 func GetStudents(classroomID int) ([]types.Student, error) {
 	var students []types.Student
 	// get students given classroomID
-	rows, err := db.Query("SELECT users.username FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? AND users.usertype = 'student'", classroomID)
+	rows, err := db.Query("SELECT students.username, students.student_id FROM enrollments e JOIN students ON e.student_id = students.student_id WHERE e.classroom_id = ? ", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 
 	for rows.Next() {
 		var student types.Student
-		if err := rows.Scan(&student.Username); err != nil {
+		if err := rows.Scan(&student.Username, &student.UserID); err != nil {
 			return nil, fmt.Errorf("GetStudents: %v", err)
 		}
 		students = append(students, student)
@@ -187,7 +187,7 @@ func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 	}
 
 	// get students given classroomID
-	rows, err := db.Query("SELECT user_id, username FROM users WHERE usertype = 'student' AND section = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, classroomID)
+	rows, err := db.Query("SELECT student_id, username FROM students WHERE section = ? AND student_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +220,15 @@ func AddStudents(studentIDs []string, classroomID int) error {
 		fmt.Println("add success!")
 	}
 
+	return nil
+}
+
+func DeleteStudent(studentID int) error {
+	// Execute the DELETE query
+	_, err := db.Exec("DELETE FROM enrollments WHERE student_id = ?", studentID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
