@@ -2,43 +2,37 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
-	// "os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/statistics"
 
 	"github.com/gorilla/sessions"
-	// "github.com/gorilla/sessions"
 )
 
-func HandleGetStatistics(w http.ResponseWriter, r *http.Request) error {
+func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	classroomID := session.Values["classroomID"].(int)
+	// fmt.Print("in statistics classroomID is ", session.Values["classroomID"])
+	fmt.Print("in statistics we got classroomID: ", classroomID)
+	classroomIDStr := strconv.Itoa(classroomID)
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	return render(w, r, statistics.Statistics())
+	return render(w, r, statistics.Statistics(classroomIDStr))
 }
 
 func HandleGetClassStatistics(w http.ResponseWriter, r *http.Request) error {
-	// Initialize the session store
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	fmt.Print("BUT THEN classroomID is : ", classroomIDStr)
 
-	// Retrieve the session
-	session, err := store.Get(r, sessionUserKey)
-	if err != nil {
-		http.Error(w, "Could not retrieve session", http.StatusInternalServerError)
-		return err
-	}
+	// convert string to int
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	// Retrieve classroomID from session safely
-	classroomID, ok := session.Values["classroomID"].(int)
-	if !ok {
-		http.Error(w, "Invalid classroom ID in session", http.StatusBadRequest)
-		return errors.New("classroomID not found or invalid in session")
-	}
-	fmt.Print("we got classroomID in handlegetclasstsatstics: ", classroomID)
-
 	// Fetch the statistics from the database
 	statistics, err := database.GetClassStatistics(classroomID)
 	if err != nil {
@@ -52,6 +46,16 @@ func HandleGetClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	json.NewEncoder(w).Encode(statistics)
 	return nil
 }
+
+func HandleQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
+	return render(w, r, statistics.QuestionStatistics())
+}
+
+
+
+
+
+// game functions below
 
 func HandleUpdateStatistics(w http.ResponseWriter, r *http.Request) error {
 	type StatisticsResponse struct {
