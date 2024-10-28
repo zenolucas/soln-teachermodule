@@ -120,13 +120,28 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 					<a href="" class="btn btn-primary text-white mr-2">
 						edit
 					</a>
-					<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+					<form hx-post="/delete/student">
+						<input type="hidden" name="studentID" value="%s" />
+						<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+					</form>
 				</td>
 			</tr>	
-		`, i+1, student.Username)
+		`, i+1, student.Username, student.UserID)
 	}
 	return nil
 }
+
+func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) error {
+	studentIDStr := r.FormValue("studentID")
+	studentID, _ := strconv.Atoi(studentIDStr)
+	fmt.Print("we got studentID ")
+	if err := database.DeleteStudent(studentID); err != nil{
+		return err
+	}
+	fmt.Print("delete success!")
+	return nil
+}
+
 
 func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 	room := types.Classroom{

@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
     classroom_id INT,
     student_id INT,
     FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
-    FOREIGN KEY (student_id) REFERENCES users(user_id),
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
     UNIQUE KEY unique_enrollment (classroom_id, student_id)
 );
 
@@ -130,10 +130,10 @@ INSERT INTO users (username, password, usertype) VALUES
 ('user2', 'password_hash2', 'teacher');
 
 -- insert student data
-INSERT INTO users (username, section, password, usertype) VALUES
-('user3', '1', 'pw', 'student'),
-('user4', '1', 'pw', 'student'),
-('user5', '2', 'pw', 'student');
+INSERT INTO students (username, firstname, lastname, class_number, section, password) VALUES
+('user3', 'John', 'Johnson', '1', '1', 'pw'),
+('user4', 'Mike', 'Tyson', '1', '1', 'pw'),
+('user5', 'Joe', 'Seph', '1', '1', 'pw');
 
 -- Insert initial data into subjects table
 INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
@@ -142,9 +142,9 @@ INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
 
 -- Insert initial data into enrollments table
 INSERT INTO enrollments (classroom_id, student_id) VALUES 
-(1, 3),
-(1, 4),
-(2, 5);
+(1, 1),
+(1, 2),
+(2, 3);
 
 INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES 
 (5, 'What is 1/2 + 1/2 ?', '1'),
