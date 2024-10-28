@@ -54,19 +54,15 @@ func main() {
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
 
 		// minigame endpoints
-		auth.Get("/minigame1", handler.Make(handler.HandleMinigame1Index))
+		auth.Get("/minigame", handler.Make(handler.HandleMinigameIndex))
 		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
 		auth.Post("/addfractionquestions", handler.Make(handler.HandleAddFractions))
 		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
 		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
-		auth.Get("/minigame2", handler.Make(handler.HandleMinigame2Index))
-		auth.Get("/minigame3", handler.Make(handler.HandleMinigame3Index))
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
 		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
 		auth.Post("/update/worded", handler.Make(handler.HandleUpdateWorded))
 		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
-		auth.Get("/minigame4", handler.Make(handler.HandleMinigame4Index))
-		auth.Get("/minigame5", handler.Make(handler.HandleMinigame5Index))
 		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
 		auth.Post("/addmcquestions", handler.Make(handler.HandleAddMCQuestions))
 		auth.Post("/update/mcquestions", handler.Make(handler.HandleUpdateMCQuestions))
@@ -79,6 +75,8 @@ func main() {
 
 	// this endpoint is out here because when grouped with auth, server breaks
 	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
+	router.Get("/statistics/question/chart", handler.Make(handler.HandleGetQuestionCharts))
+	router.Get("/statistics/question/data", handler.Make(handler.HandleGetQuestionStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)

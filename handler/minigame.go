@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"soln-teachermodule/database"
@@ -8,8 +9,22 @@ import (
 	"strconv"
 )
 
-func HandleMinigame1Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Fractions("1"))
+func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	if minigameIDStr == "1" {
+		return render(w, r, minigame.Fractions("1"))
+	} else if minigameIDStr == "2" {
+		return render(w, r, minigame.Fractions("2"))
+	} else if minigameIDStr == "3" {
+		return render(w, r, minigame.Worded("3"))
+	} else if minigameIDStr == "4" {
+		return render(w, r, minigame.Worded("4"))
+	} else if minigameIDStr == "5" {
+		return render(w, r, minigame.Quiz("5"))
+	} else {
+		http.Error(w, "invalid minigame id", http.StatusBadRequest)
+		return errors.New("bad request")
+	}
 }
 
 func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
@@ -74,7 +89,7 @@ func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
 
@@ -85,7 +100,7 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
 
@@ -97,20 +112,9 @@ func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
 	if err := database.DeleteFractions(minigameID, questionID); err != nil {
 		return err
 	}
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
-
-func HandleMinigame2Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Fractions("2"))
-}
-
-func HandleMinigame3Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Worded("3"))
-}
-
-// return render(w, r, minigame.Worded("3"))
-// }
 
 func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
@@ -173,7 +177,7 @@ func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
 
@@ -196,20 +200,8 @@ func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 	if err := database.DeleteWorded(minigameID, questionID); err != nil {
 		return err
 	}
-	hxRedirect(w, r, "/minigame"+minigameIDStr)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr)
 	return nil
-}
-
-func HandleMinigame4Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Worded("4"))
-}
-
-// func HandleGetWorded3(w http.ResponseWriter, r *http.Request) error {
-
-// }
-
-func HandleMinigame5Index(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, minigame.Quiz("5"))
 }
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
@@ -291,7 +283,7 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
 
