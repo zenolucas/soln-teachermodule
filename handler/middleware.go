@@ -18,7 +18,7 @@ func WithAuth(next http.Handler) http.Handler {
 		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 		session, _ := store.Get(r, sessionUserKey)
 
-		// fmt.Print("authenticatd is : ", session.Values["authenticated"])
+		// fmt.Print("authenticated is : ", session.Values["authenticated"])
 
 		if !session.Values["authenticated"].(bool) {
 			path := r.URL.Path

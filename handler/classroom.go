@@ -31,7 +31,10 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["classroomID"] = classroomID
-	session.Save(r, w)
+	err := session.Save(r, w)
+	if err != nil {
+		return err
+	}
 
 	fmt.Print("classroomID is ", session.Values["classroomID"])
 

@@ -72,11 +72,11 @@ func main() {
 		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
 		// statistics endpoints
-		auth.Get("/statistics", handler.Make(handler.HandleGetStatistics))
-		// auth.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
+		auth.Get("/statistics", handler.Make(handler.HandleStatisticsIndex))
+		auth.Get("/statistics/question", handler.Make(handler.HandleQuestionStatisticsIndex))
 	})
 
-	// this endpoint is out here because when grouped with auth, CORS error happens
+	// this endpoint is out here because when grouped with auth, server breaks
 	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")

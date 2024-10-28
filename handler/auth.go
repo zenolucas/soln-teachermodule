@@ -20,10 +20,9 @@ const (
 	sessionAccessTokenKey = "access_token"
 )
 
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
-	// user := GetAuthenticatedUser(r)
-	// fmt.Print("is htis executed?")
-	// fmt.Printf("%v+\n", user.LoggedIn)
 	return render(w, r, auth.Login())
 }
 
@@ -141,7 +140,7 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 // }
 
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["authenticated"] = true
 	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
@@ -149,7 +148,6 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["authenticated"] = false
 	session.Save(r, w)
