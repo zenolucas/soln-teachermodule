@@ -67,7 +67,7 @@ type FractionQuestionParams struct {
 }
 
 templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string) {
-     <form hx-post="/addfractionquestions" hx-swap="outerHTML">
+     <form hx-post="/add/fractionquestions" hx-swap="outerHTML">
           <input type="hidden" name="minigame_id" value={ minigameID } />
           <input type="checkbox" id="my_modal_6" class="modal-toggle" />
           <div class="modal" role="dialog">
@@ -161,7 +161,7 @@ Option4 string
 }
 
 templ CreateMCQuestionForm(data QuestionParams, minigameID string) {
-<form hx-post="/addmcquestions" hx-swap="outerHTML">
+<form hx-post="/add/mcquestions" hx-swap="outerHTML">
      <input type="hidden" name="minigame_id" value={ minigameID } />
      <input type="checkbox" id="my_modal_6" class="modal-toggle" />
      <div class="modal" role="dialog">
