@@ -35,7 +35,7 @@ func main() {
 	router.Post("/game/getfractions", handler.Make(handler.HandleGetGameFractions))
 	router.Post("/game/getworded", handler.Make(handler.HandleGetGameWorded))
 	router.Post("/game/getmcquestions", handler.Make(handler.HandleGetGameMCQuestions))
-	router.Post("/game/update/statistics", handler.Make(handler.HandleUpdateStatistics))
+	router.Post("/game/add/statistics", handler.Make(handler.HandleUpdateStatistics))
 	router.Post("/game/update/saisai/statistics", handler.Make(handler.HandleUpdateSaisaiStatistics))
 
 	// then everything below will be grouped, and have the user authenticated first
@@ -56,16 +56,16 @@ func main() {
 		// minigame endpoints
 		auth.Get("/minigame", handler.Make(handler.HandleMinigameIndex))
 		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
-		auth.Post("/addfractionquestions", handler.Make(handler.HandleAddFractions))
-		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
-		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
-		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
-		auth.Post("/update/worded", handler.Make(handler.HandleUpdateWorded))
-		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
 		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
-		auth.Post("/addmcquestions", handler.Make(handler.HandleAddMCQuestions))
+		auth.Post("/add/fractionquestions", handler.Make(handler.HandleAddFractions))
+		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
+		auth.Post("/add/mcquestions", handler.Make(handler.HandleAddMCQuestions))
+		auth.Post("/update/fractions", handler.Make(handler.HandleUpdateFractions))
+		auth.Post("/update/worded", handler.Make(handler.HandleUpdateWorded))
 		auth.Post("/update/mcquestions", handler.Make(handler.HandleUpdateMCQuestions))
+		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
+		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
 		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
 		// statistics endpoints
