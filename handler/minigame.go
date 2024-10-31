@@ -208,15 +208,16 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	questions, err := database.GetQuestionDictionary(minigameID)
+	questions, err := database.GetQuizQuestion(minigameID)
 	if err != nil {
 		return err
 	}
-
+	
 	for i, question := range questions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<form action="/update/mcquestions" method="POST">
+				<input type="hidden" name="minigameID" value="%d" />
 				<input type="hidden" name="question_id" value= "%d" />
 				<span class="label-text text-white">Question %d:</span>
 				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-3/4 text-lg" />
@@ -225,20 +226,24 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 						<span class="label-text text-white">Option 1:</span>
 					</div>
 					<input type="text" value="%s" name="option1" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="hidden"  value="%d" name="option1_choiceID" />
 					<div class="label">
 						<span class="label-text text-white">Option 2:</span>
 					</div>
 					<input type="text" value="%s" name="option2" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="hidden"  value="%d" name="option2_choiceID" />
 				</div>
 				<div class="flex gap-4 mt-4">
 				<div class="label">
 					<span class="label-text text-white">Option 3:</span>
 				</div>
 					<input type="text" value="%s" name="option3" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="hidden"  value="%d" name="option3_choiceID" />
 				<div class="label">
 					<span class="label-text text-white">Option 4:</span>
 				</div>
 					<input type="text" value="%s" name="option4" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="hidden"  value="%d" name="option4_choiceID" />
 				</div>
 				<div class="flex mt-4 relative inline-block w-64">
 				<div class="label">
@@ -258,19 +263,22 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, question.QuestionID, i+1, question.QuestionText,
-			question.Option1, question.Option2, question.Option3, question.Option4,
-			question.Option1, getCorrectAnswer(question.CorrectAnswer, question.Option1),
-			question.Option2, getCorrectAnswer(question.CorrectAnswer, question.Option2),
-			question.Option3, getCorrectAnswer(question.CorrectAnswer, question.Option3),
-			question.Option4, getCorrectAnswer(question.CorrectAnswer, question.Option4))
+		`, minigameID, question.QuestionID, i+1, question.QuestionText,
+			question.Choices[0].ChoiceText, question.Choices[0].ChoiceID, 
+			question.Choices[1].ChoiceText, question.Choices[1].ChoiceID,
+			question.Choices[2].ChoiceText, question.Choices[2].ChoiceID,
+			question.Choices[3].ChoiceText, question.Choices[3].ChoiceID,
+			question.Choices[0].ChoiceText, getCorrectAnswer(question.Choices[0].IsCorrect),
+			question.Choices[1].ChoiceText, getCorrectAnswer(question.Choices[1].IsCorrect),
+			question.Choices[2].ChoiceText, getCorrectAnswer(question.Choices[2].IsCorrect),
+			question.Choices[3].ChoiceText, getCorrectAnswer(question.Choices[3].IsCorrect))
 	}
 	return err
 }
 
 // helper function to get correct answer for GetMCQuestion function above
-func getCorrectAnswer(correctAnswer string, option string) string {
-	if correctAnswer == option {
+func getCorrectAnswer(isCorrect bool) string {
+	if isCorrect {
 		return "selected"
 	}
 	return ""
@@ -288,10 +296,11 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	minigameID := r.FormValue("minigameID")
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame5")
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }

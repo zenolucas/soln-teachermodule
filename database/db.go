@@ -58,7 +58,7 @@ func InitializeDatabase() error {
 
 func AuthenticateWebUser(username string, password string) error {
 	var storedPassword string
-	row := db.QueryRow("SELECT password FROM users WHERE username = ?", username)
+	row := db.QueryRow("SELECT password FROM teachers WHERE username = ?", username)
 	if err := row.Scan(&storedPassword); err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Print("authentication Error: incorrect username or password")
@@ -82,7 +82,7 @@ func AuthenticateWebUser(username string, password string) error {
 func AuthenticateGameUser(username string, password string) bool {
 
 	var storedPassword string
-	row := db.QueryRow("SELECT password FROM users WHERE username = ?", username)
+	row := db.QueryRow("SELECT password FROM students WHERE username = ?", username)
 	if err := row.Scan(&storedPassword); err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Print("authentication Error: incorrect username or password")
@@ -101,13 +101,31 @@ func AuthenticateGameUser(username string, password string) bool {
 	return true
 }
 
+func GetClassroomID(username string) (int, error) {
+	var classroomID int
+	var section string
+
+	// first get section of student
+	err := db.QueryRow("SELECT section FROM students WHERE username = ?", username).Scan(&section)
+	if err != nil {
+		return 0, err
+	}
+	// then get classroomID given section
+	err = db.QueryRow("SELECT classroom_id FROM classrooms WHERE section = ?", section).Scan(&classroomID)
+	if err != nil {
+		return 0, err
+	}
+
+	return classroomID, nil
+}
+
 func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 	userCreds := types.UserCredentials{
 		Username: r.FormValue("username"),
 		Password: r.FormValue("password"),
 	}
 
-	_, err := db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, "teacher")
+	_, err := db.Exec("INSERT INTO teachers (username, password) VALUES (?, ?)", userCreds.Username, userCreds.Password)
 	if err != nil {
 		return err
 	}
@@ -257,7 +275,7 @@ func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
 	}
 
 	var teacherID int
-	err := db.QueryRow("SELECT user_ID FROM users WHERE username = ?", userCreds.Username).Scan(&teacherID)
+	err := db.QueryRow("SELECT teacher_id FROM teachers WHERE username = ?", userCreds.Username).Scan(&teacherID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -464,10 +482,10 @@ func DeleteWorded(minigameID int, questionID int) error {
 	return nil
 }
 
-func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
+func GetQuizQuestion(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text, correct_answer FROM multiple_choice_questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
 		return nil, err
 	}
@@ -475,26 +493,29 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 
 	for rows.Next() {
 		var question types.MultipleChoiceQuestion
-		if err := rows.Scan(&question.QuestionID, &question.QuestionText, &question.CorrectAnswer); err != nil {
+		if err := rows.Scan(&question.QuestionID, &question.QuestionText); err != nil {
 			return nil, err
 		}
 		questions = append(questions, question)
 	}
 
-	for i := 0; i < len(questions); i++ {
-		// then we get choices
-		choicesRows, err := db.Query("SELECT option_1, option_2, option_3, option_4 FROM multiple_choice_choices WHERE question_id = ?", questions[i].QuestionID)
+	// then we get choices
+	for i, question := range questions {
+		var choices []types.Choice
+		choicesRow, err := db.Query("SELECT choice_id, choice_text, is_correct FROM multiple_choice_choices WHERE question_id = ?", question.QuestionID)
 		if err != nil {
 			return nil, err
 		}
-		defer choicesRows.Close()
+		defer choicesRow.Close()
 
-		// then add choices to question in questions slice
-		for choicesRows.Next() {
-			if err := choicesRows.Scan(&questions[i].Option1, &questions[i].Option2, &questions[i].Option3, &questions[i].Option4); err != nil {
+		for choicesRow.Next() {
+			var choice types.Choice
+			if err := choicesRow.Scan(&choice.ChoiceID, &choice.ChoiceText, &choice.IsCorrect); err != nil {
 				return nil, err
 			}
+			choices = append(choices, choice)
 		}
+		questions[i].Choices = choices
 	}
 
 	// fmt.Println(questions)
@@ -504,39 +525,49 @@ func GetQuestionDictionary(minigame_id int) ([]types.MultipleChoiceQuestion, err
 func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	MinigameIDStr := r.FormValue("minigame_id")
 	minigameID, _ := strconv.Atoi(MinigameIDStr)
+
 	question := types.MultipleChoiceQuestion{
-		QuestionText:  r.FormValue("question_text"),
-		Option1:       r.FormValue("option_1"),
-		Option2:       r.FormValue("option_2"),
-		Option3:       r.FormValue("option_3"),
-		Option4:       r.FormValue("option_4"),
-		CorrectAnswer: r.FormValue("correct_answer"),
-	}
-	var correctAnswer = ""
-	// get correct answer
-	if question.CorrectAnswer == "option_1" {
-		correctAnswer = question.Option1
-	} else if question.CorrectAnswer == "option_2" {
-		correctAnswer = question.Option2
-	} else if question.CorrectAnswer == "option_3" {
-		correctAnswer = question.Option3
-	} else if question.CorrectAnswer == "option_4" {
-		correctAnswer = question.Option4
+		QuestionText: r.FormValue("question_text"),
 	}
 
-	result, err := db.Exec(`INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES (?, ?, ?)`, minigameID, question.QuestionText, correctAnswer)
+	var choices []string
+	choices = append(choices, r.FormValue("option_1"))
+	choices = append(choices, r.FormValue("option_2"))
+	choices = append(choices, r.FormValue("option_3"))
+	choices = append(choices, r.FormValue("option_4"))
+
+	correctAnswer := r.FormValue("correct_answer")
+
+	// first insert question_text without the correct_answer id
+	result, err := db.Exec(`INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES (?, ?)`, minigameID, question.QuestionText)
 	if err != nil {
 		return err
 	}
 
 	// Get the last inserted question_id
-	questionID, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
+	questionID, _ := result.LastInsertId()
+	var correct_answer_id int64
 
 	// Insert choices into the multiple_choice_choices table using the questionID
-	_, err = db.Exec(`INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES (?, ?, ?, ?, ?)`, questionID, question.Option1, question.Option2, question.Option3, question.Option4)
+	for _, choiceText := range choices {
+		// to retrieve the choice_id of correct answer
+		if choiceText == correctAnswer {
+			result, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, true)
+			if err != nil {
+				return err
+			}
+			correct_answer_id, _ = result.LastInsertId()
+			// else if choice is not the correct answer
+		} else {
+			_, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text) VALUES (?, ?)", questionID, choiceText)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// insert choice_id of correct_answer into table
+	_, err = db.Exec(`INSERT INTO multiple_choice_questions (correct_answer) VALUES (?)`, correct_answer_id)
 	if err != nil {
 		return err
 	}
@@ -547,63 +578,76 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	question := types.MultipleChoiceQuestion{
 		QuestionText:  r.FormValue("question"),
-		Option1:       r.FormValue("option1"),
-		Option2:       r.FormValue("option2"),
-		Option3:       r.FormValue("option3"),
-		Option4:       r.FormValue("option4"),
-		CorrectAnswer: r.FormValue("correct_answer"),
 	}
 
-	fmt.Print("we got correct answer: ", question.CorrectAnswer)
+	correctAnswer := r.FormValue("correct_answer")
+	// construct choices[]
+	choices := constructChoices(r, correctAnswer)
 
-	// get question id
 	questionIDStr := r.FormValue("question_id")
 	questionID, _ := strconv.Atoi(questionIDStr)
 
-	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ?,  correct_answer = ? WHERE question_id = ?",
-		question.QuestionText, question.CorrectAnswer, questionID)
+	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
+		question.QuestionText, questionID)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	_, another_err := db.Exec("UPDATE multiple_choice_choices SET option_1 = ?, option_2 = ?, option_3 = ?, option_4 = ? WHERE question_id = 1",
-		question.QuestionText, question.Option1, question.Option2, question.Option3, question.Option4, question.CorrectAnswer)
-	if err != nil {
-		log.Fatal(another_err)
+	// given the choices[]
+	// loop through, each choice gets to execute an update
+	for _, choice := range choices {
+		_, err = db.Exec("UPDATE multiple_choice_choices SET choice_text = ?, is_correct = ? WHERE choice_id = ?",
+			choice.ChoiceText, choice.IsCorrect, choice.ChoiceID)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
 }
 
-func UpdateStatistics(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return nil
+// helper func to construct choices[]
+func constructChoices(r *http.Request, correctAnswer string) ([]types.Choice) {
+	var choices []types.Choice
+	var choice types.Choice
+
+	option1 := r.FormValue("option1")
+	choice.ChoiceText = option1
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option1_choiceID")) 
+	choice.IsCorrect = getCorrectAnswer(option1, correctAnswer)
+	choices = append(choices, choice)
+
+	option2 := r.FormValue("option2")
+	choice.ChoiceText = option2
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option2_choiceID")) 
+	choice.IsCorrect = getCorrectAnswer(option2, correctAnswer)
+	choices = append(choices, choice)
+
+	option3 := r.FormValue("option3")
+	choice.ChoiceText = option3
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option3_choiceID")) 
+	choice.IsCorrect = getCorrectAnswer(option3, correctAnswer)
+	choices = append(choices, choice)
+
+	option4 := r.FormValue("option4")
+	choice.ChoiceText = option4
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option4_choiceID")) 
+	choice.IsCorrect = getCorrectAnswer(option4, correctAnswer)
+	choices = append(choices, choice)
+
+	return choices
+}
+
+// helper func for construct choices to get correct answer
+func getCorrectAnswer(option string, correctAnswer string) bool {
+	if option == correctAnswer {
+		return true
 	}
+	return false
+}
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return nil
-	}
-	defer r.Body.Close()
-
-	type Data struct {
-		Username   string
-		MinigameID int
-		Score      int
-	}
-
-	var data Data
-
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err
-	}
-	fmt.Print("we got statistics data: ", data)
-
-	_, err = db.Exec("INSERT INTO statistics (username, minigameID, score) VALUES (?, ?, ?)", data.Username, data.MinigameID, data.Score)
+func AddQuizStatistics(classroomID int, minigameID int, username string, score int) error {
+	_, err := db.Exec("INSERT INTO quiz_statistics (classroomID, minigameID, username, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, username, score)
 	if err != nil {
 		return err
 	}
@@ -611,7 +655,37 @@ func UpdateStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func UpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
+func AddQuizQuestionStatistics(classroomID int, minigameID int, questionID int, username string, choice int) error {
+	_, err := db.Exec("INSERT INTO quiz_question_statistics (classroom_id, minigame_id, question_id, username, choice) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, username, choice)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetQuestionIDs(minigameID int) ([]int, error) {
+	var questionIDs []int
+
+	rows, err := db.Query("SELECT question_ID FROM multiple_choice_questions WHERE minigame_id = ?", 5)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var questionID int
+		err := rows.Scan(&questionID)
+		if err != nil {
+			return nil, err
+		}
+		questionIDs = append(questionIDs, questionID)
+	}
+
+	return questionIDs, nil
+}
+
+func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -649,14 +723,14 @@ func UpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func GetClassStatistics(classroomID int) ([]types.ClassStatistics, error) {
+func GetClassStatistics(classroomID int, minigameID int) ([]types.ClassStatistics, error) {
 	// get classroomID
 	// classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	var statistics []types.ClassStatistics
 
 	// get scores and count per score
-	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM statistics WHERE classroom_id = ? GROUP BY score ORDER BY score", classroomID)
+	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM quiz_statistics WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}
@@ -672,4 +746,12 @@ func GetClassStatistics(classroomID int) ([]types.ClassStatistics, error) {
 	fmt.Print("returned class statistics contains: ", statistics)
 
 	return statistics, nil
+}
+
+func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID int, choiceID int) error {
+	_, err := db.Exec("INSERT INTO multiple_choice_responses (classroom_id, minigame_id, question_id, student_id, choice_id) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, studentID, choiceID)
+	if err != nil {
+		return err
+	}
+	return nil 
 }
