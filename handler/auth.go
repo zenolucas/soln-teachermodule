@@ -3,10 +3,7 @@ package handler
 import (
 	// "crypto/rand"
 	// "encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
 	"soln-teachermodule/database"
@@ -48,52 +45,13 @@ func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return nil
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return nil
-	}
-	defer r.Body.Close()
-
-	type Data struct {
-		Username string
-		Password string
-	}
-
-	var data Data
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err
-	}
-
-	type LoginResponse struct {
-		Success bool `json:"success"`
-	}
-
-	log.Printf("Received data: %+v", data.Password)
-	// authenticate student
-	if database.AuthenticateGameUser(data.Username, data.Password) {
-		response := LoginResponse{Success: true}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
-	} else {
-		response := LoginResponse{Success: false}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
-	}
-
-	return nil
+func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
+	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	session.Values["authenticated"] = true
+	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
+	return session.Save(r, w)
 }
-
 type RegisterParams struct {
 	Username        string
 	Password        string
@@ -139,15 +97,9 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 // 	return base64.URLEncoding.EncodeToString(token), nil
 // }
 
-func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
-	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	session.Values["authenticated"] = true
-	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
-	return session.Save(r, w)
-}
 
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
+	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["authenticated"] = false
 	session.Save(r, w)
