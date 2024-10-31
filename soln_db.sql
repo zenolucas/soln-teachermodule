@@ -1,14 +1,11 @@
 CREATE DATABASE IF NOT EXISTS soln_db;
 USE soln_db;
 
-CREATE TABLE IF NOT EXISTS users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS teachers (
+    teacher_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    section  VARCHAR(50),
-    usertype ENUM('student', 'teacher') NOT NULL
+    password VARCHAR(255) NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS students (
     student_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -20,14 +17,13 @@ CREATE TABLE IF NOT EXISTS students (
     password VARCHAR(255) NOT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS classrooms (
     classroom_id INT AUTO_INCREMENT PRIMARY KEY,
     classroom_name VARCHAR(100) NOT NULL,
     section VARCHAR(100),
     description VARCHAR(200),
     teacher_id INT NOT NULL,
-    FOREIGN KEY (teacher_id) REFERENCES users(user_id)
+    FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id)
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
@@ -39,39 +35,46 @@ CREATE TABLE IF NOT EXISTS enrollments (
     UNIQUE KEY unique_enrollment (classroom_id, student_id)
 );
 
-CREATE TABLE IF NOT EXISTS levels (
-    level_id INT AUTO_INCREMENT PRIMARY KEY,
-    level_name VARCHAR(100)
-);
-
-CREATE TABLE IF NOT EXISTS minigames (
-    minigame_id INT AUTO_INCREMENT PRIMARY KEY,
-    minigame_name   VARCHAR(100) NOT NULL,
-    minigame_type   ENUM('quest', 'miniboss') NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS level_minigames (
-    level_id INT, 
-    minigame_id INT, 
-    FOREIGN KEY (level_id) REFERENCES levels(level_id),
-    FOREIGN KEY (minigame_id) REFERENCES minigames(minigame_id)
-);
+-- CREATE TABLE IF NOT EXISTS minigames (
+--     minigame_id INT AUTO_INCREMENT PRIMARY KEY,
+--     minigame_name   VARCHAR(100) NOT NULL
+-- );
 
 CREATE TABLE IF NOT EXISTS multiple_choice_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY, 
     minigame_id INT,
-    question_text   VARCHAR(500) NOT NULL,
-    correct_answer  VARCHAR(200) NOT NULL
+    question_text VARCHAR(500) NOT NULL
 );
 
+-- Table to store choices
 CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     choice_id INT AUTO_INCREMENT PRIMARY KEY,
     question_id INT, 
-    option_1 VARCHAR(20),
-    option_2 VARCHAR(20),
-    option_3 VARCHAR(20),
-    option_4 VARCHAR(20),
+    choice_text VARCHAR(20) NOT NULL,
+    is_correct BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
+);
+
+CREATE TABLE IF NOT EXISTS multiple_choice_responses (
+    response_id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT,
+    minigame_id INT,
+    question_id INT,
+    student_id INT,
+    choice_id INT,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
+    -- FOREIGN KEY (minigame_id) REFERENCES minigames(minigame_id),
+    FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id),
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
+    FOREIGN KEY (choice_id) REFERENCES multiple_choice_choices(choice_id)
+);
+
+CREATE TABLE IF NOT EXISTS quiz_statistics (
+  statistic_id INT AUTO_INCREMENT PRIMARY KEY,
+  classroom_id INT NOT NULL,
+  minigame_id INT NOT NULL,
+  username varchar(50) NOT NULL,
+  score INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS fraction_questions (
@@ -83,13 +86,6 @@ CREATE TABLE IF NOT EXISTS fraction_questions (
     fraction2_denominator INT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS statistics (
-  statistic_id INT AUTO_INCREMENT PRIMARY KEY,
-  classroom_id INT NOT NULL,
-  username varchar(50) NOT NULL,
-  minigameID INT NOT NULL,
-  score INT NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS worded_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -101,8 +97,8 @@ CREATE TABLE IF NOT EXISTS worded_questions (
     fraction2_denominator INT NOT NULL
 );
 
--- insert data for worded questions
 
+-- insert data for worded questions
 INSERT INTO worded_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
 (3, "what is 2/4 + 2/4?", 2, 4, 2, 4),
 (3, "what is 7/10 + 1/5?", 7, 10, 1, 5),
@@ -125,9 +121,9 @@ INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_deno
 
 
 -- Insert teacher data into users table
-INSERT INTO users (username, password, usertype) VALUES
-('user1', 'pw', 'teacher'),
-('user2', 'password_hash2', 'teacher');
+INSERT INTO teachers (username, password) VALUES
+('user1', 'pw'),
+('user2', 'pw');
 
 -- insert student data
 INSERT INTO students (username, firstname, lastname, class_number, section, password) VALUES
@@ -146,32 +142,72 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (1, 2),
 (2, 3);
 
-INSERT INTO multiple_choice_questions (minigame_id, question_text, correct_answer) VALUES 
-(5, 'What is 1/2 + 1/2 ?', '1'),
-(5, 'What is 1/3 + 1/3 ?', '2/3'),
-(5, 'What is 1/4 + 1/4 ?', '1/2'),
-(5, 'What is 1/5 + 1/5 ?', '2/5'),
-(5, 'What is 1/6 + 1/6 ?', '1/3'),
-(5, 'What is 1/7 + 1/7 ?', '2/7'),
-(5, 'What is 1/8 + 1/8 ?', '1/4'),
-(5, 'What is 1/9 + 1/9 ?', '2/9'),
-(5, 'What is 1/10 + 1/10 ?', '1/5'),
-(5, 'What is 1/2 + 1/4 ?', '3/4');
+INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
+(5, 'What is 1/2 + 1/2 ?'),
+(5, 'What is 1/3 + 1/3 ?'),
+(5, 'What is 1/4 + 1/4 ?'),
+(5, 'What is 1/5 + 1/5 ?'),
+(5, 'What is 1/6 + 1/6 ?'),
+(5, 'What is 1/7 + 1/7 ?'),
+(5, 'What is 1/8 + 1/8 ?'),
+(5, 'What is 1/9 + 1/9 ?'),
+(5, 'What is 1/10 + 1/10 ?'),
+(5, 'What is 1/2 + 1/4 ?');
 
-INSERT INTO multiple_choice_choices (question_id, option_1, option_2, option_3, option_4) VALUES 
-(1, '1/2', '1/3', '1', '2'),
-(2, '1/2', '1/3', '1/4', '2/3'),
-(3, '1/2', '1/4', '3/4', '1'),
-(4, '1/5', '1/2', '2/5', '3/5'),
-(5, '1/3', '1/6', '1/2', '2/3'),
-(6, '2/7', '1/7', '1/5', '1/6'),
-(7, '1/4', '1/8', '1/2', '1/3'),
-(8, '2/9', '1/9', '1/2', '1/3'),
-(9, '1/5', '1/10', '2/5', '3/5'),
-(10, '1/2', '1/4', '3/4', '2/3');
+INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES 
+(1, '1/2', FALSE),
+(1, '1/3', FALSE),
+(1, '1', TRUE),
+(1, '2', FALSE),
+
+(2, '1/2', FALSE),
+(2, '1/3', FALSE),
+(2, '1/4', FALSE),
+(2, '2/3', TRUE),
+
+(3, '1/2', TRUE),
+(3, '1/4', FALSE),
+(3, '3/4', FALSE),
+(3, '1', FALSE),
+
+(4, '1/5', FALSE),
+(4, '1/2', FALSE),
+(4, '2/5', TRUE),
+(4, '3/5', FALSE),
+
+(5, '1/3', TRUE),
+(5, '1/6', FALSE),
+(5, '1/2', FALSE),
+(5, '2/3', FALSE),
+
+(6, '2/7', TRUE),
+(6, '1/7', FALSE),
+(6, '1/5', FALSE),
+(6, '1/6', FALSE),
+
+(7, '1/4', TRUE),
+(7, '1/8', FALSE),
+(7, '1/2', FALSE),
+(7, '1/3', FALSE),
+
+(8, '2/9', TRUE),
+(8, '1/9', FALSE),
+(8, '1/2', FALSE),
+(8, '1/3', FALSE),
+
+(9, '1/5', TRUE),
+(9, '1/10', FALSE),
+(9, '2/5', FALSE),
+(9, '3/5', FALSE),
+
+(10, '1/2', FALSE),
+(10, '1/4', FALSE),
+(10, '3/4', TRUE),
+(10, '2/3', FALSE);
 
 -- test values for statistics
-INSERT INTO statistics (username, classroom_id, minigameID, score) VALUES
+INSERT INTO quiz_statistics (username, classroom_id, minigame_id, score) VALUES
+
 ("USER1", 1, 5, 1),
 ("USER2", 1, 5, 2),
 ("USER3", 1, 5, 3),
