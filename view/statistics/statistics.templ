@@ -1,23 +1,25 @@
 package statistics
 
 import "soln-teachermodule/view/layout"
+import "fmt"
 
-templ Statistics(classroomID string) {
+templ QuizStatistics(classroomID string, minigameID string) {
 @layout.App(true, false) {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
     <h1 class="text-5xl font-bold mt-2 mb-4">Fraction Addition Statistics</h1>
     <div>
-        <a href="/statistics" class="btn btn-secondary btn-active text-white">Class Statistics</a>
-        <a href="/statistics/question" class="btn btn-secondary text-white">Statistics by Question</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Class Statistics</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics/question?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Question Statistics</a>
     </div>
     <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         <canvas id="myStatisticsChart" width="300" height="200"></canvas>
     </div>
 
-    <script classroomID={ classroomID }>
+    <script classroomID={ classroomID } minigameID={ minigameID }>
         async function getClassStatistics() {
             const classroomID = document.currentScript.getAttribute("classroomID")
-            const response = await fetch(`http://localhost:3000/statistics/class?classroomID=${classroomID}`);
+            const minigameID = document.currentScript.getAttribute("minigameID")
+            const response = await fetch(`http://localhost:3000/statistics/class?classroomID=${classroomID}&minigameID=${minigameID}`);
             const results = await response.json();
             console.log(results)
             return results
@@ -47,6 +49,15 @@ templ Statistics(classroomID string) {
                     scales: {
                         x: {
                             beginAtZero: true  // X-axis starts at 0
+                        },
+                        y: {
+                            ticks: {
+                            // For a category axis, the val is the index so the lookup via getLabelForValue is needed
+                                callback: function(val, index) {
+                                    // Hide every 2nd tick label
+                                    return index % 2 === 0 ? this.getLabelForValue(val) : '';
+                                },
+                            }
                         }
                     },
                     plugins: {
@@ -62,13 +73,14 @@ templ Statistics(classroomID string) {
 }
 }
 
-templ QuestionStatistics() {
+// let this be for Quiz Question Statistics
+templ QuestionStatistics(minigameID string) {
 @layout.App(true, false) {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
     <h1 class="text-5xl font-bold mt-2 mb-4">Question Statistics</h1>
     <div>
-        <a href="/statistics" class="btn btn-secondary text-white">Class Statistics</a>
-        <a href="/statistics/question" class="btn btn-secondary btn-active text-white">Statistics by Question</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Class Statistics</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics/question?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Question Statistics</a>
     </div>
     <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         <div class="text-2xl mt-2 mb-2">Question 1: What is 1/2 + 1/2 ?</div>
@@ -81,15 +93,15 @@ templ QuestionStatistics() {
     </div>
 </div>
 
-<script>
-    Chart.defaults.font.size = 30;  // Set the default font size globally
-    var ctx = document.getElementById('myStatisticsChart1').getContext('2d');
+    <script>
+        Chart.defaults.font.size = 30;  // Set the default font size globally
+        var ctx = document.getElementById('myStatisticsChart1').getContext('2d');
     var myChart = new Chart(ctx, {
-        type: 'bar',  // Keep type as 'bar'
+        type: 'bar',  
         data: {
-            labels: ["1/3", "1/4", "1/2", "1"],  // Scores data
+            labels: ["1/3", "1/4", "1/2", "1"],  // choices data
             datasets: [{
-                data: [1, 2, 1, 7],  // Scores data
+                data: [1, 2, 1, 7],  // scores data
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(255, 99, 132, 0.2)',
@@ -100,10 +112,10 @@ templ QuestionStatistics() {
             }]
         },
         options: {
-            indexAxis: 'y',  // This makes the bars horizontal
+            indexAxis: 'y',  
             scales: {
                 x: {
-                    beginAtZero: true  // X-axis starts at 0
+                    beginAtZero: true  
                 }
             },
             plugins: {
@@ -148,5 +160,13 @@ templ QuestionStatistics() {
         }
     });
 </script>
+
+<form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
+</form>
+
+<div id="question-chart-container">
+</div>
+
+
 }
 }

@@ -35,7 +35,8 @@ func main() {
 	router.Post("/game/getfractions", handler.Make(handler.HandleGetGameFractions))
 	router.Post("/game/getworded", handler.Make(handler.HandleGetGameWorded))
 	router.Post("/game/getmcquestions", handler.Make(handler.HandleGetGameMCQuestions))
-	router.Post("/game/add/statistics", handler.Make(handler.HandleUpdateStatistics))
+	router.Post("/game/add/statistics/quiz", handler.Make(handler.HandlePostQuizScore))
+	router.Post("/game/add/statistics/quiz/response", handler.Make(handler.HandleQuizResponse))
 	router.Post("/game/update/saisai/statistics", handler.Make(handler.HandleUpdateSaisaiStatistics))
 
 	// then everything below will be grouped, and have the user authenticated first
@@ -74,9 +75,9 @@ func main() {
 	})
 
 	// this endpoint is out here because when grouped with auth, server breaks
-	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
-	router.Get("/statistics/question/chart", handler.Make(handler.HandleGetQuestionCharts))
-	router.Get("/statistics/question/data", handler.Make(handler.HandleGetQuestionStatistics))
+	// router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
+	// router.Get("/statistics/question/chart", handler.Make(handler.HandleGetQuestionCharts))
+	// router.Get("/statistics/question/data", handler.Make(handler.HandleGetQuestionStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
