@@ -723,11 +723,17 @@ func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func GetClassStatistics(classroomID int, minigameID int) ([]types.ClassStatistics, error) {
+func GetFractionClassStatistics(classroomID int, minigameID int) ([]types.FractionClassStatistics, error) {
+	var statistics []types.FractionClassStatistics
+
+	return statistics, nil
+}
+
+func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
 	// get classroomID
 	// classroomID, _ := strconv.Atoi(classroomIDStr)
 
-	var statistics []types.ClassStatistics
+	var statistics []types.QuizClassStatistics
 
 	// get scores and count per score
 	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM quiz_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
@@ -737,7 +743,7 @@ func GetClassStatistics(classroomID int, minigameID int) ([]types.ClassStatistic
 	defer rows.Close()
 
 	for rows.Next() {
-		var statistic types.ClassStatistics
+		var statistic types.QuizClassStatistics
 		if err := rows.Scan(&statistic.Score, &statistic.Count); err != nil {
 			return nil, err
 		}

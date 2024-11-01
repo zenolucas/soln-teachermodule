@@ -3,13 +3,77 @@ package statistics
 import "soln-teachermodule/view/layout"
 import "fmt"
 
+templ FractionStatistics(classroomID string, minigameID string) {
+@layout.App(true, false) {
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
+        <h1 class="text-5xl font-bold mt-2 mb-4">Fraction Addition Statistics</h1>
+        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+            <canvas id="myStatisticsChart" width="300" height="200"></canvas>
+        </div>
+    </div>
+
+    <script classroomID={ classroomID } minigameID={ minigameID }>
+        async function getClassStatistics() {
+            const classroomID = document.currentScript.getAttribute("classroomID")
+            const minigameID = document.currentScript.getAttribute("minigameID")
+            const response = await fetch(`http://localhost:3000/statistics/fraction/class?classroomID=${classroomID}&minigameID=${minigameID}`);
+            const results = await response.json();
+            console.log(results)
+            return results
+        }
+
+        getClassStatistics().then(results => {
+            const count = results.map(item => item.Count);
+            const score = results.map(item => item.Score);
+            renderChart(score, count);
+        });
+
+        function renderChart(score, count) {
+            Chart.defaults.font.size = 30;  // Set the default font size globally
+            var ctx = document.getElementById('myStatisticsChart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'bar',  // Keep type as 'bar'
+                data: {
+                    labels: score, // Score ranges
+                    datasets: [{
+                        label: 'number of students',
+                        data: count,  // Scores data
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'x',
+                    scales: {
+                        x: {
+                            beginAtZero: true  // X-axis starts at 0
+                        },
+                        y: {
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+}
+}
+
+
 templ QuizStatistics(classroomID string, minigameID string) {
 @layout.App(true, false) {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-    <h1 class="text-5xl font-bold mt-2 mb-4">Fraction Addition Statistics</h1>
+    <h1 class="text-5xl font-bold mt-2 mb-4">Quiz Statistics</h1>
     <div>
-        <a href={ templ.URL(fmt.Sprintf("/statistics?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Class Statistics</a>
-        <a href={ templ.URL(fmt.Sprintf("/statistics/question?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Question Statistics</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Class Statistics</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Question Statistics</a>
     </div>
     <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         <canvas id="myStatisticsChart" width="300" height="200"></canvas>
@@ -19,7 +83,7 @@ templ QuizStatistics(classroomID string, minigameID string) {
         async function getClassStatistics() {
             const classroomID = document.currentScript.getAttribute("classroomID")
             const minigameID = document.currentScript.getAttribute("minigameID")
-            const response = await fetch(`http://localhost:3000/statistics/class?classroomID=${classroomID}&minigameID=${minigameID}`);
+            const response = await fetch(`http://localhost:3000/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);
             const results = await response.json();
             console.log(results)
             return results
@@ -75,11 +139,11 @@ templ QuestionStatistics(minigameID string) {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Question Statistics</h1>
         <div>
-            <a href={ templ.URL(fmt.Sprintf("/statistics?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Class Statistics</a>
-            <a href={ templ.URL(fmt.Sprintf("/statistics/question?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Question Statistics</a>
+            <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s", minigameID))} class="btn btn-secondary text-white">Class Statistics</a>
+            <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s", minigameID))} class="btn btn-secondary btn-active text-white">Question Statistics</a>
         </div>
 
-        <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
+        <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
         </form>
         <div id="question-chart-container">
         </div>

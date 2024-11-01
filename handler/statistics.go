@@ -32,6 +32,10 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("loading up statistics, we got minigameID: ", minigameID)
 
+	if minigameID == "1" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	}
+
 	if minigameID == "5" {
 		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
 	} else {
@@ -40,18 +44,16 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
-func HandleGetClassStatistics(w http.ResponseWriter, r *http.Request) error {
+func HandleFractionClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	minigameIDStr := r.URL.Query().Get("minigameID")
-
-	fmt.Printf("we got classroomid: %s, and minigameID %s", classroomIDStr, minigameIDStr)
 
 	// convert string to int
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
-
+	
 	// Fetch the statistics from the database
-	statistics, err := database.GetClassStatistics(classroomID, minigameID)
+	statistics, err := database.GetFractionClassStatistics(classroomID, minigameID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
@@ -64,7 +66,33 @@ func HandleGetClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func HandleQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
+
+
+func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	minigameIDStr := r.URL.Query().Get("minigameID")
+
+	fmt.Printf("we got classroomid: %s, and minigameID %s", classroomIDStr, minigameIDStr)
+
+	// convert string to int
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	// Fetch the statistics from the database
+	statistics, err := database.GetQuizClassStatistics(classroomID, minigameID)
+	if err != nil {
+		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
+		return err
+	}
+
+	// Set headers and send the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(statistics)
+	return nil
+}
+
+func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	// we get minigameID 1 or 10
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	return render(w, r, statistics.QuestionStatistics(minigameIDStr))
@@ -95,7 +123,7 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 			</div>
 			<script>
 				async function getClassStatistics%d() {
-				const response = await fetch('http://localhost:3000/statistics/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const response = await fetch('http://localhost:3000/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d');
 				const results = await response.json();
 				return results
 				}
