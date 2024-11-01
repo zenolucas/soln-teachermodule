@@ -118,6 +118,7 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 							labels: label, 
 							datasets: [{
 								data: count, 
+								%s
 								borderWidth: 1
 							}]
 						},
@@ -140,9 +141,53 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 					});
 				}
 			</script>
-		`, i+1, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+		`, i+1, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i, setColors(question))
 	}
 	return nil
+}
+
+// helper function to set bar colors for question statistics
+func setColors(question types.MultipleChoiceQuestion) string {
+	choices := question.Choices
+
+	for i, choice := range(choices) {
+		if choice.IsCorrect {
+			if i == 0 {
+				return `
+					backgroundColor: [
+						'rgba(75, 192, 192, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)'
+						],`
+			} else if i == 1 {
+				return `
+					backgroundColor: [
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(75, 192, 192, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)'
+						],`
+			} else if i == 2 {
+				return `
+					backgroundColor: [
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(75, 192, 192, 0.5)',
+						'rgba(255, 99, 132, 0.5)'
+						],`
+			} else {
+				return `
+					backgroundColor: [
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(255, 99, 132, 0.5)',
+						'rgba(75, 192, 192, 0.5)'
+						],`
+			}
+		}
+	}
+	return "" 
 }
 
 func HandleGetQuestionStatistics(w http.ResponseWriter, r *http.Request) error {
