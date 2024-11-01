@@ -646,8 +646,8 @@ func getCorrectAnswer(option string, correctAnswer string) bool {
 	return false
 }
 
-func AddQuizStatistics(classroomID int, minigameID int, username string, score int) error {
-	_, err := db.Exec("INSERT INTO quiz_statistics (classroomID, minigameID, username, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, username, score)
+func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) error {
+	_, err := db.Exec("INSERT INTO quiz_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
 	if err != nil {
 		return err
 	}

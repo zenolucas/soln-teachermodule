@@ -206,7 +206,7 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	type Data struct {
 		ClassroomID int
 		MinigameID  int
-		Username    string
+		StudentID   int 
 		Score       int
 	}
 
@@ -224,7 +224,7 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// record quiz statistics
-	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, data.Username, data.Score)
+	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, data.StudentID, data.Score)
 	if err != nil {
 		return err
 	}

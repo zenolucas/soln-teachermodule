@@ -69,12 +69,14 @@ CREATE TABLE IF NOT EXISTS multiple_choice_responses (
     FOREIGN KEY (choice_id) REFERENCES multiple_choice_choices(choice_id)
 );
 
-CREATE TABLE IF NOT EXISTS quiz_statistics (
+CREATE TABLE IF NOT EXISTS quiz_scores (
   statistic_id INT AUTO_INCREMENT PRIMARY KEY,
   classroom_id INT NOT NULL,
   minigame_id INT NOT NULL,
-  username varchar(50) NOT NULL,
-  score INT NOT NULL
+  student_id INT NOT NULL,
+  score INT NOT NULL,
+  FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
+  FOREIGN KEY (student_id) REFERENCES students(student_id)
 );
 
 CREATE TABLE IF NOT EXISTS fraction_questions (
@@ -206,15 +208,6 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (10, '2/3', FALSE);
 
 -- test values for statistics
-INSERT INTO quiz_statistics (username, classroom_id, minigame_id, score) VALUES
-
-("USER1", 1, 5, 1),
-("USER2", 1, 5, 2),
-("USER3", 1, 5, 3),
-("USER4", 1, 5, 4),
-("USER5", 1, 5, 5),
-("USER6", 1, 5, 6),
-("USER7", 1, 5, 4),
-("USER8", 1, 5, 4),
-("USER9", 1, 5, 4),
-("USER10", 1, 5, 4);
+INSERT INTO quiz_scores (student_id, classroom_id, minigame_id, score) VALUES
+(3, 1, 5, 1),
+(2, 1, 5, 2);
