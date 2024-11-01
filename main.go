@@ -71,13 +71,14 @@ func main() {
 
 		// statistics endpoints
 		auth.Get("/statistics", handler.Make(handler.HandleStatisticsIndex))
-		auth.Get("/statistics/question", handler.Make(handler.HandleQuestionStatisticsIndex))
+		// auth.Get("/statistics/question", handler.Make(handler.HandleQuestionStatisticsIndex))
 	})
 
 	// this endpoint is out here because when grouped with auth, server breaks
-	// router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
-	// router.Get("/statistics/question/chart", handler.Make(handler.HandleGetQuestionCharts))
-	// router.Get("/statistics/question/data", handler.Make(handler.HandleGetQuestionStatistics))
+	router.Get("/statistics/class", handler.Make(handler.HandleGetClassStatistics))
+	router.Get("/statistics/question", handler.Make(handler.HandleQuestionStatisticsIndex))
+	router.Get("/statistics/question/chart", handler.Make(handler.HandleGetQuestionCharts))
+	router.Get("/statistics/question/data", handler.Make(handler.HandleGetQuestionStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)

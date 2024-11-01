@@ -10,6 +10,8 @@ import (
 	"strconv"
 
 	"soln-teachermodule/database"
+	"soln-teachermodule/types"
+
 	// "soln-teachermodule/types"
 	"soln-teachermodule/view/statistics"
 
@@ -79,65 +81,38 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	// questionIDs to put into the url parameters on async functions
-	var questionIDs []int
-	questionIDs, err := database.GetQuestionIDs(minigameID)
+	var questions []types.MultipleChoiceQuestion
+	questions, err := database.GetQuizQuestion(minigameID)
 	if err != nil {
 		return err
 	}
 
-	// questions := []types.MultipleChoiceQuestion{
-	// 	{
-	// 		QuestionID:    1,
-	// 		QuestionText:  "What is the capital of France?",
-	// 		Option1:       "Berlin",
-	// 		Option2:       "Madrid",
-	// 		Option3:       "Paris",
-	// 		Option4:       "Rome",
-	// 		CorrectAnswer: "Paris",
-	// 	},
-	// 	{
-	// 		QuestionID:    2,
-	// 		QuestionText:  "Which planet is known as the Red Planet?",
-	// 		Option1:       "Earth",
-	// 		Option2:       "Mars",
-	// 		Option3:       "Jupiter",
-	// 		Option4:       "Venus",
-	// 		CorrectAnswer: "Mars",
-	// 	},
-	// 	{
-	// 		QuestionID:    3,
-	// 		QuestionText:  "What is the largest ocean on Earth?",
-	// 		Option1:       "Indian Ocean",
-	// 		Option2:       "Atlantic Ocean",
-	// 		Option3:       "Arctic Ocean",
-	// 		Option4:       "Pacific Ocean",
-	// 		CorrectAnswer: "Pacific Ocean",
-	// 	},
-	// }
-
-	for i, id := range questionIDs {
+	for i, question := range questions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-				<canvas id="QuestionsChart%d" width="300" height="200"></canvas>
+				<div class="text-2xl mt-2 mb-2">Question %d: %s</div>
+				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
 			</div>
 			<script>
-				async function getClassStatistics() {
-				const response = await fetch('http://localhost:3000/statistics/question/data?questionID=%d&classroomID=%d');
+				async function getClassStatistics%d() {
+				const response = await fetch('http://localhost:3000/statistics/question/data?questionID=%d&classroomID=%d&minigameID=%d');
 				const results = await response.json();
 				return results
 				}
 
-				getClassStatistics().then(results => {
+				getClassStatistics%d().then(results => {
 					results;
 					const label = results.map(item => item.choice);  
 					const count = results.map(item => item.count);  
-					renderChart(label, count);
+					console.log(label)
+					console.log(count)
+					renderChart%d(label, count);
 				});
 
-				function renderChart(label, count) {
+				function renderChart%d(label, count) {
 					Chart.defaults.font.size = 30;  // Set the default font size globally
-					var ctx = document.getElementById('QuestionChart%d').getContext('2d');
-					var myChart = new Chart(ctx, {
+					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
+					var myChart%d = new Chart(ctx%d, {
 						type: 'bar',  // Keep type as 'bar'
 						data: {
 							labels: label, 
@@ -147,10 +122,13 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 							}]
 						},
 						options: {
-							indexAxis: 'x',  // This makes the bars horizontal
+							indexAxis: 'y',  // This makes the bars horizontal
 							scales: {
 								x: {
-									beginAtZero: true  // X-axis starts at 0
+									beginAtZero: true,  // X-axis starts at 0
+									ticks: {
+										stepSize: 1
+									}
 								}
 							},
 							plugins: {
@@ -162,31 +140,33 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 					});
 				}
 			</script>
-		`, i, id, classroomID, i)
+		`, i+1, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
 	}
 	return nil
 }
 
-// func HandleGetQuestionStatistics(w http.ResponseWriter, r *http.Request) error {
-// 	classroomIDStr := r.URL.Query().Get("questionID")
-// 	questionIDStr := r.URL.Query().Get("questionID")
+func HandleGetQuestionStatistics(w http.ResponseWriter, r *http.Request) error {
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	questionIDStr := r.URL.Query().Get("questionID")
 
-// 	classroomID, _ := strconv.Atoi(classroomIDStr)
-// 	questionID, _ := strconv.Atoi(questionIDStr)
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	questionID, _ := strconv.Atoi(questionIDStr)
 
-// 	statistics, err := database.GetQuestionStatistics(classroomID, minigameID, questionID)
-// 	if err != nil {
-// 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
-// 		return err
-// 	}
+	statistics, err := database.GetQuizResponseStatistics(classroomID, minigameID, questionID)
+	if err != nil {
+		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
+		return err
+	}
 
-// 	// Set headers and send the response
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.Header().Set("Access-Control-Allow-Origin", "*")
-// 	json.NewEncoder(w).Encode(statistics)
-// 	return nil
+	// Set headers and send the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(statistics)
+	return nil
 
-// }
+}
 
 // game functions below
 
@@ -206,7 +186,7 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	type Data struct {
 		ClassroomID int
 		MinigameID  int
-		StudentID   int 
+		StudentID   int
 		Score       int
 	}
 
@@ -237,8 +217,6 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
 	}
-
-	fmt.Print("POST RESPONSE IS EXECUTED!!!")
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

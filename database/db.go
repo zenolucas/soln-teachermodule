@@ -730,7 +730,7 @@ func GetClassStatistics(classroomID int, minigameID int) ([]types.ClassStatistic
 	var statistics []types.ClassStatistics
 
 	// get scores and count per score
-	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM quiz_statistics WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
+	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM quiz_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}
@@ -746,6 +746,43 @@ func GetClassStatistics(classroomID int, minigameID int) ([]types.ClassStatistic
 	fmt.Print("returned class statistics contains: ", statistics)
 
 	return statistics, nil
+}
+
+
+func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.QuizResponseStatistics, error) {
+	var responseStatistics []types.QuizResponseStatistics
+
+	rows, err := db.Query(`
+			SELECT 
+			c.choice_text,
+			COUNT(r.choice_id) AS response_count
+		FROM 
+			multiple_choice_choices AS c
+		LEFT JOIN 
+			multiple_choice_responses AS r ON c.choice_id = r.choice_id
+			AND r.question_id = ? 
+			AND r.minigame_id = ? 
+			AND r.classroom_id = ?
+		WHERE 
+			c.question_id = ?
+		GROUP BY 
+			c.choice_text;
+	`, questionID, minigameID, classroomID, questionID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.QuizResponseStatistics
+		if err := rows.Scan(&statistic.Choice, &statistic.Count); err != nil {
+			return nil, err
+		}
+		responseStatistics = append(responseStatistics, statistic)
+	}
+	
+	return responseStatistics, nil
 }
 
 func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID int, choiceID int) error {
