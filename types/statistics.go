@@ -1,6 +1,11 @@
 package types
 
-type ClassStatistics struct {
+type FractionClassStatistics struct {
+	Right int
+	Wrong int
+}
+
+type QuizClassStatistics struct {
 	Score int
 	Count int
 }
