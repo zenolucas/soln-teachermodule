@@ -70,16 +70,18 @@ func main() {
 		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
 		// statistics endpoints
-		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
+		// auth.Get("/statistics/worded", handler.Make(handler.HandleStatisticsIndex))
+		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
 	})
 
 	// these endpoints are out here because when grouped with auth middleware, the server breaks
-	router.Get("/statistics/fraction/class", handler.Make(handler.HandleFractionClassStatistics))
+	router.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
+	router.Get("/statistics/fraction/question/data", handler.Make(handler.HandleFractionResponseStatistics))
 	router.Get("/statistics/quiz/class", handler.Make(handler.HandleQuizClassStatistics))
 	router.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
-	router.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleGetQuestionCharts))
-	router.Get("/statistics/quiz/question/data", handler.Make(handler.HandleGetQuestionStatistics))
+	router.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleQuizQuestionCharts))
+	router.Get("/statistics/quiz/question/data", handler.Make(handler.HandleQuizResponseStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)

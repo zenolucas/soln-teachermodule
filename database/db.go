@@ -430,8 +430,6 @@ func AddWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	fraction2NumeratorStr := r.FormValue("fraction2_numerator")
 	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
 
-	fmt.Print("addword from db is executes")
-
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
 	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
@@ -482,10 +480,10 @@ func DeleteWorded(minigameID int, questionID int) error {
 	return nil
 }
 
-func GetQuizQuestion(minigame_id int) ([]types.MultipleChoiceQuestion, error) {
+func GetQuizQuestions(minigameID int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?", minigameID)
 	if err != nil {
 		return nil, err
 	}
@@ -664,27 +662,6 @@ func AddQuizQuestionStatistics(classroomID int, minigameID int, questionID int, 
 	return nil
 }
 
-func GetQuestionIDs(minigameID int) ([]int, error) {
-	var questionIDs []int
-
-	rows, err := db.Query("SELECT question_ID FROM multiple_choice_questions WHERE minigame_id = ?", 5)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var questionID int
-		err := rows.Scan(&questionID)
-		if err != nil {
-			return nil, err
-		}
-		questionIDs = append(questionIDs, questionID)
-	}
-
-	return questionIDs, nil
-}
-
 func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -723,16 +700,28 @@ func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func GetFractionClassStatistics(classroomID int, minigameID int) ([]types.FractionClassStatistics, error) {
+func GetFractionResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
 	var statistics []types.FractionClassStatistics
+
+	// get count of right and wrong responses
+	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_statistics WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.FractionClassStatistics
+		if err := rows.Scan(&statistic.RightAttemptsCount, &statistic.WrongAttemptsCount); err != nil {
+			return nil, err
+		}
+		statistics = append(statistics, statistic)
+	}
 
 	return statistics, nil
 }
 
 func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
-	// get classroomID
-	// classroomID, _ := strconv.Atoi(classroomIDStr)
-
 	var statistics []types.QuizClassStatistics
 
 	// get scores and count per score
