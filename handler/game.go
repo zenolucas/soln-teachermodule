@@ -159,7 +159,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	questions, err := database.GetQuizQuestion(data.MinigameID)
+	questions, err := database.GetQuizQuestions(data.MinigameID)
 	if err != nil {
 		return err
 	}

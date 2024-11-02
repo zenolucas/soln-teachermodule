@@ -34,6 +34,8 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 	if minigameID == "1" {
 		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "2" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
 	}
 
 	if minigameID == "5" {
