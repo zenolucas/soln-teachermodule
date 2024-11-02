@@ -88,6 +88,16 @@ CREATE TABLE IF NOT EXISTS fraction_questions (
     fraction2_denominator INT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS fraction_statistics (
+    statistic_id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT,
+    minigame_id INT,
+    question_id INT,
+    student_id INT,
+    num_right_attempts INT,
+    num_wrong_attempts INT
+);
+
 
 CREATE TABLE IF NOT EXISTS worded_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -207,7 +217,13 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (10, '3/4', TRUE),
 (10, '2/3', FALSE);
 
--- test values for statistics
+-- test values for statistics quiz
 INSERT INTO quiz_scores (student_id, classroom_id, minigame_id, score) VALUES
 (3, 1, 5, 1),
 (2, 1, 5, 2);
+
+-- test values for statistics fractoins 
+INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
+(1, 1, 1, 1, 2, 1),
+(1, 1, 1, 1, 3, 1),
+(1, 1, 1, 1, 4, 1);

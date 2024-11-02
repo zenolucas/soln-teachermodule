@@ -44,20 +44,102 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
-func HandleFractionClassStatistics(w http.ResponseWriter, r *http.Request) error {
+func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error {
+	// get classroomID from session values
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	classroomID := session.Values["classroomID"].(int)
+
+	// get minigameID
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	// questionIDs to put into the url parameters on async functions
+	var questions []types.FractionQuestion
+	questions, err := database.GetFractionQuestions(minigameID)
+	if err != nil {
+		return err
+	}
+
+	for i, question := range questions {
+		fmt.Fprintf(w, `
+			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+				<div class="text-2xl mt-2 mb-2">Question: %d/%d + %d/%d ?</div>
+				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
+			</div>
+			<script>
+				async function getClassStatistics%d() {
+				const response = await fetch('http://localhost:3000/statistics/fraction/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const results = await response.json();
+				return results
+				}
+
+				getClassStatistics%d().then(results => {
+					results;
+					const right = results.map(item => item.num_right_attempts);  
+					const wrong = results.map(item => item.num_wrong_attempts);  
+					var count = right.concat(wrong)
+					renderChart%d(count);
+				});
+
+				function renderChart%d(count) {
+					Chart.defaults.font.size = 30;  // Set the default font size globally
+					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
+					var myChart%d = new Chart(ctx%d, {
+						type: 'bar',  // Keep type as 'bar'
+						data: {
+							labels: ["Correct Attempts", "Wrong Attempts"], 
+							datasets: [{
+								data: count, 
+								borderWidth: 1,
+								categoryPercentage: 0.3,
+								backgroundColor: [
+									'rgba(75, 192, 192, 0.5)',
+									'rgba(255, 99, 132, 0.5)'
+									]
+							}]
+						},
+						options: {
+							indexAxis: 'x',  // This makes the bars horizontal
+							scales: {
+								y: {
+									beginAtZero: true,  
+									ticks: {
+										stepSize: 1
+									}
+								}
+							},
+							plugins: {
+								legend: {
+									display: false
+								}
+							}
+						}
+					});
+				}
+			</script>
+		`, question.Fraction1_Numerator, question.Fraction1_Denominator, question.Fraction2_Numerator, question.Fraction2_Denominator, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+	}
+
+	return nil
+}
+
+func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	minigameIDStr := r.URL.Query().Get("minigameID")
+	questionIDStr := r.URL.Query().Get("questionID")
 
-	// convert string to int
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
-	
-	// Fetch the statistics from the database
-	statistics, err := database.GetFractionClassStatistics(classroomID, minigameID)
+	questionID, _ := strconv.Atoi(questionIDStr)
+
+	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
 	}
+
+	fmt.Print("on fractionrepsonsestats: we got : ", statistics)
 
 	// Set headers and send the response
 	w.Header().Set("Content-Type", "application/json")
@@ -65,8 +147,6 @@ func HandleFractionClassStatistics(w http.ResponseWriter, r *http.Request) error
 	json.NewEncoder(w).Encode(statistics)
 	return nil
 }
-
-
 
 func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
@@ -93,12 +173,11 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
-	// we get minigameID 1 or 10
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	return render(w, r, statistics.QuestionStatistics(minigameIDStr))
 }
 
-func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
+func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID from session values
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
@@ -110,7 +189,7 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.MultipleChoiceQuestion
-	questions, err := database.GetQuizQuestion(minigameID)
+	questions, err := database.GetQuizQuestions(minigameID)
 	if err != nil {
 		return err
 	}
@@ -178,7 +257,7 @@ func HandleGetQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 func setColors(question types.MultipleChoiceQuestion) string {
 	choices := question.Choices
 
-	for i, choice := range(choices) {
+	for i, choice := range choices {
 		if choice.IsCorrect {
 			if i == 0 {
 				return `
@@ -215,10 +294,10 @@ func setColors(question types.MultipleChoiceQuestion) string {
 			}
 		}
 	}
-	return "" 
+	return ""
 }
 
-func HandleGetQuestionStatistics(w http.ResponseWriter, r *http.Request) error {
+func HandleQuizResponseStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	questionIDStr := r.URL.Query().Get("questionID")
@@ -238,7 +317,6 @@ func HandleGetQuestionStatistics(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(statistics)
 	return nil
-
 }
 
 // game functions below

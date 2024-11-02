@@ -208,7 +208,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	questions, err := database.GetQuizQuestion(minigameID)
+	questions, err := database.GetQuizQuestions(minigameID)
 	if err != nil {
 		return err
 	}
