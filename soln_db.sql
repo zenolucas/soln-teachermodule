@@ -222,8 +222,14 @@ INSERT INTO quiz_scores (student_id, classroom_id, minigame_id, score) VALUES
 (3, 1, 5, 1),
 (2, 1, 5, 2);
 
--- test values for statistics fractoins 
+-- test values for statistics fractoins FOR MINIGAME ID 1
 INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
 (1, 1, 1, 1, 2, 1),
-(1, 1, 1, 1, 3, 1),
-(1, 1, 1, 1, 4, 1);
+(1, 1, 2, 1, 3, 1),
+(1, 1, 3, 1, 4, 1);
+
+-- test values for statistics fractoins FOR MINIGAME ID 2
+INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
+(1, 2, 4, 1, 2, 1),
+(1, 2, 5, 1, 3, 1),
+(1, 2, 6, 1, 4, 1);
