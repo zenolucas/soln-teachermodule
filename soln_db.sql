@@ -98,7 +98,6 @@ CREATE TABLE IF NOT EXISTS fraction_statistics (
     num_wrong_attempts INT
 );
 
-
 CREATE TABLE IF NOT EXISTS worded_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
@@ -109,6 +108,15 @@ CREATE TABLE IF NOT EXISTS worded_questions (
     fraction2_denominator INT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS worded_statistics (
+    statistic_id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT,
+    minigame_id INT,
+    question_id INT,
+    student_id INT,
+    num_right_attempts INT,
+    num_wrong_attempts INT
+);
 
 -- insert data for worded questions
 INSERT INTO worded_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
@@ -233,3 +241,17 @@ INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student
 (1, 2, 4, 1, 2, 1),
 (1, 2, 5, 1, 3, 1),
 (1, 2, 6, 1, 4, 1);
+
+-- test values for worded statistics FOR MINIGAME ID 3
+INSERT INTO worded_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
+(1, 3, 1, 1, 2, 1),
+(1, 3, 2, 1, 3, 1),
+(1, 3, 3, 1, 4, 1);
+
+-- test values for worded statistics FOR MINIGAME ID 4
+INSERT INTO worded_statistics(classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
+(1, 4, 4, 1, 2, 1),
+(1, 4, 5, 1, 3, 1),
+(1, 4, 6, 1, 4, 1);
+
+-- you know what? Let's just merge worded statistics into fraction_statistics

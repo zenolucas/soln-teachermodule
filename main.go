@@ -71,13 +71,15 @@ func main() {
 
 		// statistics endpoints
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
-		// auth.Get("/statistics/worded", handler.Make(handler.HandleStatisticsIndex))
+		auth.Get("/statistics/worded", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
 	})
 
 	// these endpoints are out here because when grouped with auth middleware, the server breaks
 	router.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
 	router.Get("/statistics/fraction/question/data", handler.Make(handler.HandleFractionResponseStatistics))
+	router.Get("/statistics/worded/question/chart", handler.Make(handler.HandleWordedQuestionCharts))
+	router.Get("/statistics/worded/question/data", handler.Make(handler.HandleWordedResponseStatistics))
 	router.Get("/statistics/quiz/class", handler.Make(handler.HandleQuizClassStatistics))
 	router.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
 	router.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleQuizQuestionCharts))
