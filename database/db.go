@@ -575,7 +575,7 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	question := types.MultipleChoiceQuestion{
-		QuestionText:  r.FormValue("question"),
+		QuestionText: r.FormValue("question"),
 	}
 
 	correctAnswer := r.FormValue("correct_answer")
@@ -605,31 +605,31 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 // helper func to construct choices[]
-func constructChoices(r *http.Request, correctAnswer string) ([]types.Choice) {
+func constructChoices(r *http.Request, correctAnswer string) []types.Choice {
 	var choices []types.Choice
 	var choice types.Choice
 
 	option1 := r.FormValue("option1")
 	choice.ChoiceText = option1
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option1_choiceID")) 
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option1_choiceID"))
 	choice.IsCorrect = getCorrectAnswer(option1, correctAnswer)
 	choices = append(choices, choice)
 
 	option2 := r.FormValue("option2")
 	choice.ChoiceText = option2
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option2_choiceID")) 
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option2_choiceID"))
 	choice.IsCorrect = getCorrectAnswer(option2, correctAnswer)
 	choices = append(choices, choice)
 
 	option3 := r.FormValue("option3")
 	choice.ChoiceText = option3
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option3_choiceID")) 
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option3_choiceID"))
 	choice.IsCorrect = getCorrectAnswer(option3, correctAnswer)
 	choices = append(choices, choice)
 
 	option4 := r.FormValue("option4")
 	choice.ChoiceText = option4
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option4_choiceID")) 
+	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option4_choiceID"))
 	choice.IsCorrect = getCorrectAnswer(option4, correctAnswer)
 	choices = append(choices, choice)
 
@@ -662,7 +662,8 @@ func AddQuizQuestionStatistics(classroomID int, minigameID int, questionID int, 
 	return nil
 }
 
-func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
+// adds statistics for minigames 1 and 2 (simple fraction gameplay), also for substraction simple fraction gameplay
+func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -676,9 +677,10 @@ func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		Username           string
-		Question_id        int
-		Minigame_id        int
+		ClassroomID        int
+		StudentID          int
+		QuestionID         int
+		MinigameID         int
 		Num_Right_Attempts int
 		Num_Wrong_Attempts int
 	}
@@ -692,7 +694,7 @@ func AddSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO saisai_statistics (username, question_id, minigame_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.Username, data.Question_id, data.Minigame_id, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	_, err = db.Exec("INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {
 		return err
 	}
@@ -765,7 +767,6 @@ func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassS
 	return statistics, nil
 }
 
-
 func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.QuizResponseStatistics, error) {
 	var responseStatistics []types.QuizResponseStatistics
 
@@ -798,7 +799,7 @@ func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) 
 		}
 		responseStatistics = append(responseStatistics, statistic)
 	}
-	
+
 	return responseStatistics, nil
 }
 
@@ -807,5 +808,5 @@ func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID 
 	if err != nil {
 		return err
 	}
-	return nil 
+	return nil
 }
