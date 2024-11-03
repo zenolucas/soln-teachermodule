@@ -36,9 +36,11 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
 	} else if minigameID == "2" {
 		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	}
-
-	if minigameID == "5" {
+	} else if minigameID == "3" {
+		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "4" {
+		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "5" {
 		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
 	} else {
 		http.Error(w, "invalid minigame id", http.StatusBadRequest)
@@ -136,6 +138,111 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 	questionID, _ := strconv.Atoi(questionIDStr)
 
 	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
+	if err != nil {
+		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
+		return err
+	}
+
+	fmt.Print("on fractionrepsonsestats: we got : ", statistics)
+
+	// Set headers and send the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	json.NewEncoder(w).Encode(statistics)
+	return nil
+}
+
+func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
+	// get classroomID from session values
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	classroomID := session.Values["classroomID"].(int)
+
+	// get minigameID
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	// questionIDs to put into the url parameters on async functions
+	var questions []types.WordedQuestion
+	questions, err := database.GetWordedQuestions(minigameID)
+	if err != nil {
+		return err
+	}
+
+	for i, question := range questions {
+		fmt.Fprintf(w, `
+			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+				<div class="text-2xl mt-2 mb-2">Question: %s</div>
+				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
+			</div>
+			<script>
+				async function getClassStatistics%d() {
+				const response = await fetch('http://localhost:3000/statistics/worded/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const results = await response.json();
+				return results
+				}
+
+				getClassStatistics%d().then(results => {
+					results;
+					const right = results.map(item => item.num_right_attempts);  
+					const wrong = results.map(item => item.num_wrong_attempts);  
+					var count = right.concat(wrong)
+					renderChart%d(count);
+				});
+
+				function renderChart%d(count) {
+					Chart.defaults.font.size = 30;  // Set the default font size globally
+					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
+					var myChart%d = new Chart(ctx%d, {
+						type: 'bar',  // Keep type as 'bar'
+						data: {
+							labels: ["Correct Attempts", "Wrong Attempts"], 
+							datasets: [{
+								data: count, 
+								borderWidth: 1,
+								categoryPercentage: 0.3,
+								backgroundColor: [
+									'rgba(75, 192, 192, 0.5)',
+									'rgba(255, 99, 132, 0.5)'
+									]
+							}]
+						},
+						options: {
+							indexAxis: 'x',  // This makes the bars horizontal
+							scales: {
+								y: {
+									beginAtZero: true,  
+									ticks: {
+										stepSize: 1
+									}
+								}
+							},
+							plugins: {
+								legend: {
+									display: false
+								}
+							}
+						}
+					});
+				}
+			</script>
+		`, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+	}
+
+	return nil
+}
+
+
+func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) error {
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	questionIDStr := r.URL.Query().Get("questionID")
+
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	questionID, _ := strconv.Atoi(questionIDStr)
+
+	statistics, err := database.GetWordedResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err

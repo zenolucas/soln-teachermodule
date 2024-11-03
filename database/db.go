@@ -721,6 +721,28 @@ func GetFractionResponseStatistics(classroomID int, minigameID int, questionID i
 	return statistics, nil
 }
 
+func GetWordedResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
+	// we can reuse types.FractionClassStatistics because they're the same structure (number of right or wrong attempts)
+	var statistics []types.FractionClassStatistics
+
+	// get count of right and wrong responses
+	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM worded_statistics WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.FractionClassStatistics
+		if err := rows.Scan(&statistic.RightAttemptsCount, &statistic.WrongAttemptsCount); err != nil {
+			return nil, err
+		}
+		statistics = append(statistics, statistic)
+	}
+
+	return statistics, nil
+}
+
 func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
 	var statistics []types.QuizClassStatistics
 

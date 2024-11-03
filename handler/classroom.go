@@ -36,8 +36,8 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Print("classroomID is ", session.Values["classroomID"])
-
+	// fmt.Print("classroomID is ", session.Values["classroomID"])
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	return render(w, r, classroom.Classroom(room.ClassroomID))
 }
 
@@ -139,6 +139,11 @@ func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	fmt.Print("delete success!")
+	session, _ := store.Get(r, sessionUserKey)
+	classroomID := session.Values["classroomID"]
+	url := "/classroom?classroom_id="
+	url += classroomID.(string)
+	hxRedirect(w, r, url)
 	return nil
 }
 

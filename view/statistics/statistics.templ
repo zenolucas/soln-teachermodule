@@ -7,65 +7,32 @@ templ FractionStatistics(classroomID string, minigameID string) {
 @layout.App(true, false) {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Fraction Addition Statistics</h1>
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <canvas id="myStatisticsChart" width="300" height="200"></canvas>
+
+        <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/fraction/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
+        </form>
+
+        <div id="question-chart-container">
         </div>
+
     </div>
-
-    <script classroomID={ classroomID } minigameID={ minigameID }>
-        async function getClassStatistics() {
-            const classroomID = document.currentScript.getAttribute("classroomID")
-            const minigameID = document.currentScript.getAttribute("minigameID")
-            const response = await fetch(`http://localhost:3000/statistics/fraction/class?classroomID=${classroomID}&minigameID=${minigameID}`);
-            const results = await response.json();
-            console.log(results)
-            return results
-        }
-
-        getClassStatistics().then(results => {
-            const count = results.map(item => item.Count);
-            const score = results.map(item => item.Score);
-            renderChart(score, count);
-        });
-
-        function renderChart(score, count) {
-            Chart.defaults.font.size = 30;  // Set the default font size globally
-            var ctx = document.getElementById('myStatisticsChart').getContext('2d');
-            var myChart = new Chart(ctx, {
-                type: 'bar',  // Keep type as 'bar'
-                data: {
-                    labels: score, // Score ranges
-                    datasets: [{
-                        label: 'number of students',
-                        data: count,  // Scores data
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'x',
-                    scales: {
-                        x: {
-                            beginAtZero: true  // X-axis starts at 0
-                        },
-                        y: {
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-    </script>
-
-}
+    }
 }
 
+
+templ WordedStatistics(classroomID string, minigameID string) {
+@layout.App(true, false) {
+    <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
+        <h1 class="text-5xl font-bold mt-2 mb-4">Worded Questions Statistics</h1>
+
+        <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/worded/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
+        </form>
+
+        <div id="question-chart-container">
+        </div>
+
+    </div>
+    }
+}
 
 templ QuizStatistics(classroomID string, minigameID string) {
 @layout.App(true, false) {
