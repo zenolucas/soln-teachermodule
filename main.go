@@ -67,7 +67,7 @@ func main() {
 		auth.Post("/update/mcquestions", handler.Make(handler.HandleUpdateMCQuestions))
 		auth.Post("/delete/fractions", handler.Make(handler.HandleDeleteFractions)) // TO BE CHANGED FROM POST TO DELETE
 		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
-		// auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
+		auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
 		// statistics endpoints
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
