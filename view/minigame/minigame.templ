@@ -6,7 +6,7 @@ import "soln-teachermodule/view/layout"
 templ Fractions(minigameID string) {
 @layout.App(true, false) {
 <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
-     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="minigame_id" value={ minigameID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Fraction Addition Questions</h1>
@@ -25,7 +25,7 @@ templ Fractions(minigameID string) {
 templ Worded(minigameID string) {
 @layout.App(true, false) {
 <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
-     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="minigame_id" value={ minigameID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Worded Fraction Addition Questions</h1>
@@ -43,7 +43,7 @@ templ Worded(minigameID string) {
 templ Quiz(minigameID string) {
 @layout.App(true, false) {
 <form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
-     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="minigame_id" value={ minigameID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Quiz Questions (Multiple Choice)</h1>

@@ -520,7 +520,7 @@ func HandleUpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error 
 		Success bool `json:"success"`
 	}
 
-	err := database.AddSaisaiStatistics(w, r)
+	err := database.AddFractionStatistics(w, r)
 	if err != nil {
 		response := StatisticsResponse{Success: false}
 		w.Header().Set("Content-Type", "application/json")

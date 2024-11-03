@@ -644,6 +644,17 @@ func getCorrectAnswer(option string, correctAnswer string) bool {
 	return false
 }
 
+func DeleteMCQuestions(minigameID int, questionID int) error {
+// Execute the DELETE query
+_, err := db.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+if err != nil {
+	return err
+}
+
+return nil
+
+}
+
 func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) error {
 	_, err := db.Exec("INSERT INTO quiz_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
 	if err != nil {
