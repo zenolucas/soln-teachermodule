@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     firstname VARCHAR(50),
     lastname VARCHAR(50),
-    username VARCHAR(50) NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
     usertype ENUM('teacher', 'student') NOT NULL,
     section  VARCHAR(50),
     class_number VARCHAR(50), 

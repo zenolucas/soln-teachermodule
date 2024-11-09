@@ -3,12 +3,14 @@ package handler
 import (
 	// "crypto/rand"
 	// "encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/auth"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 )
 
@@ -52,6 +54,7 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
 	return session.Save(r, w)
 }
+
 type RegisterParams struct {
 	Username        string
 	Password        string
@@ -73,6 +76,13 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 
 	if credentials.Password == credentials.ConfirmPassword {
 		if err := database.RegisterAccount(w, r); err != nil {
+			// check for duplicate entry
+			var mysqlErr *mysql.MySQLError
+			if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+				return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{
+					RegisterErrors: "That username is already taken.",
+				}))
+			}
 			return err
 		} else {
 			fmt.Print("Account registered successfully!")
