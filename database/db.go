@@ -342,6 +342,8 @@ func GetClassrooms(teacherID int) ([]types.Classroom, error) {
 func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	var fractions []types.FractionQuestion
 
+	fmt.Print("we got minigame ID right? ", minigame_id)
+
 	rows, err := db.Query("SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
 		return nil, err
@@ -355,6 +357,8 @@ func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 		}
 		fractions = append(fractions, fraction)
 	}
+
+	fmt.Print("we got fractions: ", fractions)
 
 	return fractions, nil
 }
@@ -372,7 +376,7 @@ func AddFractionQuestions(w http.ResponseWriter, r *http.Request) error {
 	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
 	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?)",
+	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?, ?)",
 		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID)
 	if err != nil {
 		return err
@@ -415,18 +419,18 @@ func DeleteFractions(minigameID string, questionID string) error {
 	return nil
 }
 
-func GetWordedQuestions(minigame_id int) ([]types.WordedQuestion, error) {
-	var questions []types.WordedQuestion
+func GetWordedQuestions(minigame_id int) ([]types.FractionQuestion, error) {
+	var questions []types.FractionQuestion
 
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM worded_questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ?", minigame_id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var question types.WordedQuestion
+		var question types.FractionQuestion
 		if err := rows.Scan(&question.QuestionID, &question.QuestionText, &question.Fraction1_Numerator, &question.Fraction1_Denominator, &question.Fraction2_Numerator, &question.Fraction2_Denominator); err != nil {
 			return nil, err
 		}
@@ -450,7 +454,7 @@ func AddWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
 	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO worded_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?, ?)",
+	_, err := db.Exec("INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID)
 	if err != nil {
 		return err
@@ -475,7 +479,7 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
 	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
 
-	_, err := db.Exec("UPDATE worded_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+	_, err := db.Exec("UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID)
 	if err != nil {
 		return err
@@ -486,7 +490,7 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 
 func DeleteWorded(minigameID int, questionID int) error {
 	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM worded_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	_, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
 	if err != nil {
 		return err
 	}
@@ -496,6 +500,7 @@ func DeleteWorded(minigameID int, questionID int) error {
 
 func GetQuizQuestions(minigameID int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
+	fmt.Print("we got minigame ID: ", minigameID)
 	// get questiontext and correct answer
 	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?", minigameID)
 	if err != nil {
@@ -530,7 +535,7 @@ func GetQuizQuestions(minigameID int) ([]types.MultipleChoiceQuestion, error) {
 		questions[i].Choices = choices
 	}
 
-	// fmt.Println(questions)
+	fmt.Println(questions)
 	return questions, nil
 }
 
@@ -719,7 +724,7 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO fraction_statistics (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {
 		return err
 	}
@@ -731,7 +736,7 @@ func GetFractionResponseStatistics(classroomID int, minigameID int, questionID i
 	var statistics []types.FractionClassStatistics
 
 	// get count of right and wrong responses
-	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_statistics WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -753,7 +758,7 @@ func GetWordedResponseStatistics(classroomID int, minigameID int, questionID int
 	var statistics []types.FractionClassStatistics
 
 	// get count of right and wrong responses
-	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM worded_statistics WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -774,7 +779,7 @@ func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassS
 	var statistics []types.QuizClassStatistics
 
 	// get scores and count per score
-	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM quiz_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
+	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM multiple_choice_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}

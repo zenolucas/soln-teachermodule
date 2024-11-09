@@ -85,9 +85,9 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 
 	for _, classroom := range classrooms {
 		fmt.Fprintf(w, `
-		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
+		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
 				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - %s</div>
-		`, classroom.ClassroomName, classroom.Section)
+		`, classroom.ClassroomID, classroom.ClassroomName, classroom.Section)
 	}
 
 	return nil

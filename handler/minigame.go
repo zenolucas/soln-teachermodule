@@ -28,7 +28,7 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigameID")
+	minigameIDStr := r.FormValue("minigame_id")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	fractions, err := database.GetFractionQuestions(minigameID)
@@ -117,7 +117,7 @@ func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigameID")
+	minigameIDStr := r.FormValue("minigame_id")
 	fmt.Print("we got: ", minigameIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
@@ -172,7 +172,7 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`,fraction.QuestionID, minigameID, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame"+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
 	return nil
 }
 
@@ -219,7 +219,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	
+
 	for i, question := range questions {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
@@ -278,7 +278,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			</form>
 			</div>
 		`, question.QuestionID, minigameID, minigameID, question.QuestionID, i+1, question.QuestionText,
-			question.Choices[0].ChoiceText, question.Choices[0].ChoiceID, 
+			question.Choices[0].ChoiceText, question.Choices[0].ChoiceID,
 			question.Choices[1].ChoiceText, question.Choices[1].ChoiceID,
 			question.Choices[2].ChoiceText, question.Choices[2].ChoiceID,
 			question.Choices[3].ChoiceText, question.Choices[3].ChoiceID,
@@ -325,7 +325,6 @@ func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
-	
 
 	if err := database.DeleteMCQuestions(minigameID, questionID); err != nil {
 		return err
