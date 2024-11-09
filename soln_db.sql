@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS enrollments (
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
-    question_type ENUM('simple', 'worded'),
     question_text VARCHAR(500),
     fraction1_numerator INT NOT NULL,
     fraction1_denominator INT NOT NULL,
@@ -111,22 +110,22 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (2, 5);
 
 -- insert data for simple fraction questions
-INSERT INTO fraction_questions (minigame_id, question_type, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(1, 'simple', 5, 4, 3, 4),
-(1, 'simple', 7, 10, 1, 5),
-(1, 'simple', 9, 5, 4, 5),
-(2, 'simple', 1, 2, 1, 2),
-(2, 'simple', 1, 3, 3, 1), 
-(2, 'simple', 2, 2, 2, 2);
+INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(1, 5, 4, 3, 4),
+(1, 7, 10, 1, 5),
+(1, 9, 5, 4, 5),
+(2, 1, 2, 1, 2),
+(2, 1, 3, 3, 1), 
+(2, 2, 2, 2, 2);
 
 -- insert data for worded fraction questions
-INSERT INTO fraction_questions (minigame_id, question_type, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(3, 'worded', "what is 2/4 + 2/4?", 2, 4, 2, 4),
-(3, 'worded', "what is 7/10 + 1/5?", 7, 10, 1, 5),
-(3, 'worded', "what is 9/5 + 4/5", 9, 5, 4, 5),
-(4, 'worded', "what is 3/4 + 3/4?", 3, 4, 3, 4),
-(4, 'worded', "what is 8/10 + 2/5?", 8, 10, 2, 5),
-(4, 'worded', "what is 8/5 + 3/5", 8, 5, 3, 5);
+INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(3, "what is 2/4 + 2/4?", 2, 4, 2, 4),
+(3, "what is 7/10 + 1/5?", 7, 10, 1, 5),
+(3, "what is 9/5 + 4/5", 9, 5, 4, 5),
+(4, "what is 3/4 + 3/4?", 3, 4, 3, 4),
+(4, "what is 8/10 + 2/5?", 8, 10, 2, 5),
+(4, "what is 8/5 + 3/5", 8, 5, 3, 5);
 
 INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
 (5, 'What is 1/2 + 1/2 ?'),

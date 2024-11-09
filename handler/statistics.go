@@ -163,7 +163,7 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	// questionIDs to put into the url parameters on async functions
-	var questions []types.WordedQuestion
+	var questions []types.FractionQuestion
 	questions, err := database.GetWordedQuestions(minigameID)
 	if err != nil {
 		return err

@@ -6,10 +6,10 @@ templ Classroom(classroomID string) {
 @layout.App(true, false) {
 <div class="flex w-full h-[calc(100vh-65px)]">
 	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
-		<div class="btn btn btn-ghost w-full text-white text-left justify-start h-16 mt-2"><i
-				class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</div>
+		<a href="/home" class="btn btn btn-ghost w-full text-white text-left justify-start h-16 mt-2"><i
+				class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</a>
 		<div class="divider my-0"></div>
-		<div class="btn btn-wide btn-ghost w-full text-white text-left justify-start"> <i
+		<div class="btn btn-wide no-animation btn-ghost w-full text-white text-left justify-start"> <i
 				class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
 
 		<div class="flex flex-wrap w-full text-white" hx-get="getclassrooms_menu" hx-trigger="load" hx-target="this">
@@ -215,6 +215,9 @@ templ AddStudentsForm(classroomID string) {
 	<div class="modal" role="dialog">
 		<div class="modal-box w-full">
 			<h3 class="text-lg font-bold">Add Students</h3>
+			// <label>
+			// 	<input type="checkbox" id="selectAll"/> Select All
+			// </label>
 			<table class="table table-zebra text-xl">
 				<!-- head -->
 				<thead>

@@ -164,7 +164,6 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	fmt.Print("is this executed?")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
