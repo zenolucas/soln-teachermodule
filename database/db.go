@@ -58,7 +58,7 @@ func InitializeDatabase() error {
 
 func AuthenticateWebUser(username string, password string) error {
 	var storedPassword string
-	row := db.QueryRow("SELECT password FROM teachers WHERE username = ?", username)
+	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "teacher")
 	if err := row.Scan(&storedPassword); err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Print("authentication Error: incorrect username or password")
@@ -82,7 +82,7 @@ func AuthenticateWebUser(username string, password string) error {
 func AuthenticateGameUser(username string, password string) bool {
 
 	var storedPassword string
-	row := db.QueryRow("SELECT password FROM students WHERE username = ?", username)
+	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "student")
 	if err := row.Scan(&storedPassword); err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Print("authentication Error: incorrect username or password")
@@ -101,12 +101,13 @@ func AuthenticateGameUser(username string, password string) bool {
 	return true
 }
 
+// gets classroomID of a student
 func GetClassroomID(username string) (int, error) {
 	var classroomID int
 	var section string
 
 	// first get section of student
-	err := db.QueryRow("SELECT section FROM students WHERE username = ?", username).Scan(&section)
+	err := db.QueryRow("SELECT section FROM users WHERE username = ? AND usertype = ?", username, "student").Scan(&section)
 	if err != nil {
 		return 0, err
 	}
@@ -116,7 +117,20 @@ func GetClassroomID(username string) (int, error) {
 		return 0, err
 	}
 
+	fmt.Print("returned classroomID is :", classroomID)
 	return classroomID, nil
+}
+
+func GetStudentID(username string) (int, error) {
+	var studentID int
+
+	// first get section of student
+	err := db.QueryRow("SELECT user_id FROM users WHERE username = ? AND usertype = ?", username, "student").Scan(&studentID)
+	if err != nil {
+		return 0, err
+	}
+
+	return studentID, nil
 }
 
 func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
@@ -125,7 +139,7 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 		Password: r.FormValue("password"),
 	}
 
-	_, err := db.Exec("INSERT INTO teachers (username, password) VALUES (?, ?)", userCreds.Username, userCreds.Password)
+	_, err := db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, "teacher")
 	if err != nil {
 		return err
 	}
@@ -163,7 +177,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got data: ", data)
 
-	_, err = db.Exec("INSERT INTO students (username, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?)", data.Username, data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
+	_, err = db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
 	if err != nil {
 		return err
 	}
@@ -174,7 +188,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 func GetStudents(classroomID int) ([]types.Student, error) {
 	var students []types.Student
 	// get students given classroomID
-	rows, err := db.Query("SELECT students.username, students.student_id FROM enrollments e JOIN students ON e.student_id = students.student_id WHERE e.classroom_id = ? ", classroomID)
+	rows, err := db.Query("SELECT users.firstname, users.lastname, users.user_id FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? ", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +196,7 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 
 	for rows.Next() {
 		var student types.Student
-		if err := rows.Scan(&student.Username, &student.UserID); err != nil {
+		if err := rows.Scan(&student.Firstname, &student.Lastname, &student.UserID); err != nil {
 			return nil, fmt.Errorf("GetStudents: %v", err)
 		}
 		students = append(students, student)
@@ -205,7 +219,7 @@ func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 	}
 
 	// get students given classroomID
-	rows, err := db.Query("SELECT student_id, username FROM students WHERE section = ? AND student_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, classroomID)
+	rows, err := db.Query("SELECT user_id, username FROM users WHERE section = ? AND usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, "student", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +255,7 @@ func AddStudents(studentIDs []string, classroomID int) error {
 	return nil
 }
 
-func DeleteStudent(studentID int) error {
+func UnenrollStudent(studentID int) error {
 	// Execute the DELETE query
 	_, err := db.Exec("DELETE FROM enrollments WHERE student_id = ?", studentID)
 	if err != nil {
@@ -275,7 +289,7 @@ func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
 	}
 
 	var teacherID int
-	err := db.QueryRow("SELECT teacher_id FROM teachers WHERE username = ?", userCreds.Username).Scan(&teacherID)
+	err := db.QueryRow("SELECT user_id FROM users WHERE username = ? AND usertype = ?", userCreds.Username, "teacher").Scan(&teacherID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -645,13 +659,13 @@ func getCorrectAnswer(option string, correctAnswer string) bool {
 }
 
 func DeleteMCQuestions(minigameID int, questionID int) error {
-// Execute the DELETE query
-_, err := db.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
-if err != nil {
-	return err
-}
+	// Execute the DELETE query
+	_, err := db.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	if err != nil {
+		return err
+	}
 
-return nil
+	return nil
 
 }
 
