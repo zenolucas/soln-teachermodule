@@ -35,9 +35,9 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	type LoginResponse struct {
-		Success bool `json:"success"`
-		ClassroomID int `json:"classroom_id"`
-		StudentID int `json:"student_id`
+		Success     bool `json:"success"`
+		ClassroomID int  `json:"classroom_id"`
+		StudentID   int  `json:"student_id"`
 	}
 
 	log.Printf("Received data: %+v", data.Password)
@@ -49,7 +49,13 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		response := LoginResponse{Success: true, ClassroomID: classroomID}
+		// get userID of student
+		studentID, err := database.GetStudentID(data.Username)
+		if err != nil {
+			return err
+		}	
+
+		response := LoginResponse{Success: true, ClassroomID: classroomID, StudentID: studentID}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -60,6 +66,28 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		json.NewEncoder(w).Encode(response)
 	}
 
+	return nil
+}
+
+func HandleGameRegister(w http.ResponseWriter, r *http.Request) error {
+
+	type RegisterResponse struct {
+		Success bool `json:"success"`
+	}
+
+	err := database.RegisterGameAccount(w, r)
+	if err != nil {
+		response := RegisterResponse{Success: false}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return err
+	}
+
+	response := RegisterResponse{Success: true}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
@@ -136,6 +164,7 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
+	fmt.Print("is this executed?")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil

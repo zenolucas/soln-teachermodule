@@ -51,7 +51,7 @@ func main() {
 		auth.Post("/students", handler.Make(handler.HandleGetStudents))
 		auth.Post("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
 		auth.Post("/addstudents", handler.Make(handler.HandleAddStudents))
-		auth.Post("/delete/student", handler.Make(handler.HandleDeleteStudent))
+		auth.Post("/delete/student", handler.Make(handler.HandleUnenrollStudent))
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))
 
 		// minigame endpoints

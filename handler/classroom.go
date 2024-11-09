@@ -112,7 +112,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<tr>
 				<th>%d</th>
-				<td>%s</td>
+				<td>%s %s</td>
 				<td class="flex justify-end">
 					<a href="" class="btn btn-primary text-white mr-2">
 						view scores
@@ -126,16 +126,16 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 					</form>
 				</td>
 			</tr>	
-		`, i+1, student.Username, student.UserID)
+		`, i+1, student.Firstname, student.Lastname, student.UserID)
 	}
 	return nil
 }
 
-func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) error {
+func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.FormValue("studentID")
 	studentID, _ := strconv.Atoi(studentIDStr)
 	fmt.Print("we got studentID ")
-	if err := database.DeleteStudent(studentID); err != nil{
+	if err := database.UnenrollStudent(studentID); err != nil {
 		return err
 	}
 	fmt.Print("delete success!")
@@ -146,7 +146,6 @@ func HandleDeleteStudent(w http.ResponseWriter, r *http.Request) error {
 	hxRedirect(w, r, url)
 	return nil
 }
-
 
 func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 	room := types.Classroom{
@@ -168,7 +167,7 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 	for _, student := range students {
 		fmt.Fprintf(w, `
 			<tr>
-				<td> <input type="checkbox" name="userID" value="%s" ></input></td>
+				<td> <input type="checkbox" name="userID" value="%s" class="itemCheckbox"></input></td>
 				<td>%s</td>
 			</tr>	
 		`, student.UserID, student.Username)
