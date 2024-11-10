@@ -42,6 +42,20 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
 	} else if minigameID == "5" {
 		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "6" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "7" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "8" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "9" {
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "10" {
+		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "11" {
+		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
+	} else if minigameID == "12" {
+		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
 	} else {
 		http.Error(w, "invalid minigame id", http.StatusBadRequest)
 		return errors.New("bad request")
