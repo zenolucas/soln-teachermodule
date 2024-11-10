@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -78,7 +79,6 @@ func AuthenticateWebUser(username string, password string) error {
 	return nil
 }
 
-// PROPER ERROR HANDLING TO BE IMPLEMENTED
 func AuthenticateGameUser(username string, password string) bool {
 
 	var storedPassword string
@@ -149,13 +149,13 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return errors.New("Invalid Request Method") 
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return nil
+		return err
 	}
 	defer r.Body.Close()
 
@@ -173,16 +173,16 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err
+		return err 
 	}
 	fmt.Print("we got data: ", data)
 
 	_, err = db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
 	if err != nil {
-		return err
+		return err 
 	}
 
-	return nil
+	return nil 
 }
 
 func GetStudents(classroomID int) ([]types.Student, error) {

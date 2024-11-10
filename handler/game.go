@@ -2,11 +2,14 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"soln-teachermodule/database"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
@@ -35,10 +38,13 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	type LoginResponse struct {
-		Success     bool `json:"success"`
-		ClassroomID int  `json:"classroom_id"`
-		StudentID   int  `json:"student_id"`
+		Success     bool   `json:"success"`
+		ClassroomID int    `json:"classroom_id"`
+		StudentID   int    `json:"student_id"`
+		ErrorText   string `json:"error_text"`
 	}
+	
+	var response LoginResponse
 
 	log.Printf("Received data: %+v", data.Password)
 	// authenticate student
@@ -53,38 +59,39 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		studentID, err := database.GetStudentID(data.Username)
 		if err != nil {
 			return err
-		}	
-
-		response := LoginResponse{Success: true, ClassroomID: classroomID, StudentID: studentID}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		}
+		response = LoginResponse{Success: true, ClassroomID: classroomID, StudentID: studentID}
 	} else {
-		response := LoginResponse{Success: false}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		response = LoginResponse{Success: false, ErrorText: "wrong username or password"}
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
 func HandleGameRegister(w http.ResponseWriter, r *http.Request) error {
 
 	type RegisterResponse struct {
-		Success bool `json:"success"`
+		Success   bool   `json:"success"`
+		ErrorText string `json:"error_text"`
 	}
 
-	err := database.RegisterGameAccount(w, r)
-	if err != nil {
-		response := RegisterResponse{Success: false}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
-		return err
+	var response RegisterResponse
+
+	if err := database.RegisterGameAccount(w, r); err != nil {
+		// check what kind of error
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			response = RegisterResponse{Success: false, ErrorText: "username is already taken"}
+		} else {
+			response = RegisterResponse{Success: false, ErrorText: "register error"}
+		}
+	} else {
+		response = RegisterResponse{Success: true}
 	}
 
-	response := RegisterResponse{Success: true}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
