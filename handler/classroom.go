@@ -114,11 +114,8 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 				<th>%d</th>
 				<td>%s %s</td>
 				<td class="flex justify-end">
-					<a href="" class="btn btn-primary text-white mr-2">
+					<a href="/student?userID=%s" class="btn btn-primary text-white mr-2">
 						view scores
-					</a>
-					<a href="" class="btn btn-primary text-white mr-2">
-						edit
 					</a>
 					<form hx-post="/delete/student">
 						<input type="hidden" name="studentID" value="%s" />
@@ -126,7 +123,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 					</form>
 				</td>
 			</tr>	
-		`, i+1, student.Firstname, student.Lastname, student.UserID)
+		`, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID)
 	}
 	return nil
 }
