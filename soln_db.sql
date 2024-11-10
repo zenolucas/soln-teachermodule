@@ -118,6 +118,21 @@ INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_deno
 (2, 1, 3, 3, 1), 
 (2, 2, 2, 2, 2);
 
+-- insert sample data for minigames 6, 7, 8, 9 
+INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(6, 2, 4, 1, 4),
+(6, 3, 4, 2, 4),
+(6, 4, 5, 3, 5),
+(7, 2, 3, 1, 3),
+(7, 3, 3, 2, 3), 
+(7, 2, 7, 1, 7),
+(8, 2, 4, 1, 4),
+(8, 2, 3, 1, 3), 
+(8, 2, 4, 1, 4),
+(9, 4, 9, 3, 9),
+(9, 4, 5, 3, 5), 
+(9, 5, 7, 4, 7);
+
 -- insert data for worded fraction questions
 INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
 (3, "what is 2/4 + 2/4?", 2, 4, 2, 4),
@@ -127,6 +142,7 @@ INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator,
 (4, "what is 8/10 + 2/5?", 8, 10, 2, 5),
 (4, "what is 8/5 + 3/5", 8, 5, 3, 5);
 
+-- sample data for quiz, minigame 5
 INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
 (5, 'What is 1/2 + 1/2 ?'),
 (5, 'What is 1/3 + 1/3 ?'),
@@ -190,6 +206,7 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (10, '3/4', TRUE),
 (10, '2/3', FALSE);
 
+-- sample data for quiz, minigame 11 
 INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES
 (11, 'What is 1/2 - 1/4?'),
 (11, 'What is 2/3 - 1/3?'),
@@ -253,6 +270,70 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (20, '1/3', FALSE),
 (20, '2/4', FALSE);
 
+
+-- sample data for quiz, minigame 12
+INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES
+(12, 'What is 1/2 + 1/4?'),
+(12, 'What is 2/3 - 1/3?'),
+(12, 'What is 1/4 + 1/4?'),
+(12, 'What is 2/3 + 1/6?'),
+(12, 'What is 5/8 - 1/8?'),
+(12, 'What is 2/2 - 1/2?'),
+(12, 'What is 1/3 + 1/3?'),
+(12, 'What is 3/4 - 1/4?'),
+(12, 'What is 1/2 + 1/4?'),
+(12, 'What is 3/4 - 1/2?');
+
+INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES
+(21, '1/2', FALSE),
+(21, '3/4', TRUE),
+(21, '1/4', FALSE),
+(21, '1', FALSE),
+
+(22, '1/3', TRUE),
+(22, '2/3', FALSE),
+(22, '1/2', FALSE),
+(22, '1', FALSE),
+
+(23, '1/2', TRUE),
+(23, '1/4', FALSE),
+(23, '1', FALSE),
+(23, '3/4', FALSE),
+
+(24, '1/6', FALSE),
+(24, '5/6', TRUE),
+(24, '1/2', FALSE),
+(24, '2/3', FALSE),
+
+(25, '1/2', TRUE),
+(25, '5/8', FALSE),
+(25, '3/8', FALSE),
+(25, '1/4', FALSE),
+
+(26, '1/2', TRUE),
+(26, '1', FALSE),
+(26, '1/4', FALSE),
+(26, '3/4', FALSE),
+
+(27, '2/3', TRUE),
+(27, '1/3', FALSE),
+(27, '1/2', FALSE),
+(27, '1', FALSE),
+
+(28, '1/2', TRUE),
+(28, '3/4', FALSE),
+(28, '1/4', FALSE),
+(28, '1', FALSE),
+
+(29, '3/4', TRUE),
+(29, '1/2', FALSE),
+(29, '1/3', FALSE),
+(29, '1/4', FALSE),
+
+(30, '1/4', TRUE),
+(30, '1/2', FALSE),
+(30, '1/3', FALSE),
+(30, '2/4', FALSE);
 
 -- test values for statistics quiz
 INSERT INTO multiple_choice_scores (student_id, classroom_id, minigame_id, score) VALUES
