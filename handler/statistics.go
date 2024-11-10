@@ -232,7 +232,6 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-
 func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	minigameIDStr := r.URL.Query().Get("minigameID")
@@ -333,6 +332,7 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 						data: {
 							labels: label, 
 							datasets: [{
+								label: 'number of responses',
 								data: count, 
 								%s
 								borderWidth: 1

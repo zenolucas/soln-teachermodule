@@ -21,6 +21,20 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 		return render(w, r, minigame.Worded("4"))
 	} else if minigameIDStr == "5" {
 		return render(w, r, minigame.Quiz("5"))
+	} else if minigameIDStr == "6" {
+		return render(w, r, minigame.Fractions("6"))
+	} else if minigameIDStr == "7" {
+		return render(w, r, minigame.Fractions("7"))
+	} else if minigameIDStr == "8" {
+		return render(w, r, minigame.Fractions("8"))
+	} else if minigameIDStr == "9" {
+		return render(w, r, minigame.Fractions("9"))
+	} else if minigameIDStr == "10" {
+		return render(w, r, minigame.Worded("10"))
+	} else if minigameIDStr == "11" {
+		return render(w, r, minigame.Quiz("11"))
+	} else if minigameIDStr == "12" {
+		return render(w, r, minigame.Quiz("12"))
 	} else {
 		http.Error(w, "invalid minigame id", http.StatusBadRequest)
 		return errors.New("bad request")
