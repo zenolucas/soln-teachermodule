@@ -71,7 +71,6 @@ func main() {
 
 		// statistics endpoints
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
-		auth.Get("/statistics/worded", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
 	})
 
