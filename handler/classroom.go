@@ -114,7 +114,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 				<th>%d</th>
 				<td>%s %s</td>
 				<td class="flex justify-end">
-					<a href="/student?userID=%s" class="btn btn-primary text-white mr-2">
+					<a href="/student/score?userID=%s" class="btn btn-primary text-white mr-2">
 						view scores
 					</a>
 					<form hx-post="/delete/student">

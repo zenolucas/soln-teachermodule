@@ -72,9 +72,10 @@ CREATE TABLE IF NOT EXISTS fraction_responses (
     minigame_id INT,
     question_id INT,
     student_id INT,
-    num_right_attempts INT,
-    num_wrong_attempts INT
+    num_right_attempts INT DEFAULT 0,
+    num_wrong_attempts INT DEFAULT 0
 );
+
 CREATE TABLE IF NOT EXISTS multiple_choice_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY, 
     minigame_id INT,

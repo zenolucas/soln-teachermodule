@@ -50,6 +50,7 @@ func main() {
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))
 		auth.Get("/getclassrooms_menu", handler.Make(handler.HandleGetClassroomsMenu))
 		auth.Post("/students", handler.Make(handler.HandleGetStudents))
+		auth.Get("/student/score", handler.Make(handler.HandleStudentScoreIndex))
 		auth.Post("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
 		auth.Post("/addstudents", handler.Make(handler.HandleAddStudents))
 		auth.Post("/delete/student", handler.Make(handler.HandleUnenrollStudent))
@@ -76,7 +77,9 @@ func main() {
 		auth.Get("/statistics/quiz/score", handler.Make(handler.HandleGetQuizScores))
 	})
 
-	// these endpoints are out here because when grouped with auth middleware, the server breaks
+	router.Get("/statistics/student/fraction", handler.Make(handler.HandleGetStudentFractionScore))
+	router.Get("/statistics/student/worded", handler.Make(handler.HandleGetStudentWordedScore))
+	router.Get("/statistics/student/quiz", handler.Make(handler.HandleGetStudentQuizScore))
 	router.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
 	router.Get("/statistics/fraction/question/data", handler.Make(handler.HandleFractionResponseStatistics))
 	router.Get("/statistics/worded/question/chart", handler.Make(handler.HandleWordedQuestionCharts))
