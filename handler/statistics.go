@@ -555,8 +555,6 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	fmt.Print("in handle get quiz scores, minigameID is : ", minigameID)
-
 	// get classroomID from session
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
