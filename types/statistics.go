@@ -14,3 +14,9 @@ type QuizResponseStatistics struct {
 	Choice string `json:"choice"`
 	Count  string `json:"count"`
 }
+
+type StudentQuizScore struct {
+	FirstName		string
+	LastName		string
+	Score 			int
+}

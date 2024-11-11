@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"soln-teachermodule/database"
+	"soln-teachermodule/types"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -43,7 +44,7 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		StudentID   int    `json:"student_id"`
 		ErrorText   string `json:"error_text"`
 	}
-	
+
 	var response LoginResponse
 
 	log.Printf("Received data: %+v", data.Password)
@@ -201,5 +202,42 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(questions)
+	return nil
+}
+
+func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil
+	}
+	defer r.Body.Close()
+
+	type Data struct {
+		StudentID int `json:"student_id"`
+	}
+
+	var data Data
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return err
+	}
+
+	var response types.SaveData
+
+	response, error := database.GetSavedData(data.StudentID)
+	if error != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 	return nil
 }

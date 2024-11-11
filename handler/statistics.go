@@ -549,3 +549,34 @@ func HandleUpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error 
 	json.NewEncoder(w).Encode(response)
 	return nil
 }
+
+func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
+	var studentScores []types.StudentQuizScore
+
+	// get classroomID from session
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	classroomID := session.Values["classroomID"].(int)
+
+	studentScores, err := database.GetStudentScores(classroomID)
+	if err != nil {
+		return err
+	}
+
+	for i, students := range studentScores {
+		fmt.Fprintf(w, `
+			<tr>
+				<th>%d</th>
+				<td>%s %s</td>
+				<td class="flex justify-end">
+				%d
+				</td>
+			</tr>	
+		`, i, students.FirstName, students.LastName, students.Score)
+	}
+
+	print("is this even triggered")
+	print(studentScores)
+
+	return nil
+}
