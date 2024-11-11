@@ -187,7 +187,7 @@ INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator,
 (4, "what is 8/5 + 3/5", 8, 5, 3, 5),
 (10, "what is 6/10 - 3/10?", 6, 10, 3, 10),
 (10, "what is 8/10 - 2/10?", 8, 10, 2, 10),
-(10, "what is 3/5 + 1/5", 3, 5, 1, 5);
+(10, "what is 3/5 - 1/5", 3, 5, 1, 5);
 
 -- sample data for quiz, minigame 5
 INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
