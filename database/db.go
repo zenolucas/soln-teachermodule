@@ -844,8 +844,8 @@ func GetSavedData(studentID int) (types.SaveData, error) {
 	}
 
 	// Retrieve all badges
-	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball FROM save_states WHERE student_id = ?", studentID)
-	err = row.Scan(&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom, &badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall)
+	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, badge_original_robot FROM save_states WHERE student_id = ?", studentID)
+	err = row.Scan(&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom, &badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall, &badges.Shell, &badges.OriginalRobot)
 	if err != nil {
 		return save_data, err
 	}
