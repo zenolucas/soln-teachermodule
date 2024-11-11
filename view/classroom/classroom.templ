@@ -19,13 +19,61 @@ templ Classroom(classroomID string) {
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked="true" />
 			<div role="tabpanel" class="tab-content p-10">
-				overview
-
+				<div class="hero bg-base-200 min-h-screen">
+					<div class="hero-content flex-col lg:flex-row">
+						<div>
+						<h1 class="text-5xl font-bold">Welcome to the</h1>
+						<h1 class="text-5xl font-bold">Sol'n Teacher Portal</h1>
+						<p class="py-6 text-2xl">
+							Sol’n is a pixel-based game designed to be a supplementary tool to teach Grade 6 students at Saint Louis University Basic Education School fundamental Math concepts, starting with fractions.
+							The game aims to enhance students' interest and deepen their understanding of the subject. 
+						</p>
+						<p class="text-2xl mt-8">
+							We thank you for taking the time to be a part of this project!
+						</p>
+						</div>
+						<img src="http://localhost:3000/public/images/bg/lighthouse.png" width="544" height="353" class="rounded-lg mb-8" />
+					</div>
+				</div>
+				<div class="hero bg-base-200 min-h-screen mt-8">
+					<div class="hero-content flex-col lg:flex-row">
+						<div>
+							<h1 class="text-5xl font-bold">Fraction Minigames</h1>
+							<p class="py-6 text-2xl">
+								Characters throughout the world present students with minigames related to fractions. 
+								Teachers can modify the questions in the levels tab.
+							</p>
+						</div>
+						<img src="http://localhost:3000/public/images/bg/fraction-addition.gif" width="544" height="353" class="rounded-lg mb-8" />
+					</div>
+				</div>
+				<div class="hero bg-base-200 min-h-screen mt-8">
+					<div class="hero-content flex-col lg:flex-row">
+						<div>
+							<h1 class="text-5xl font-bold">Quizzes (Boss Levels)</h1>
+							<p class="py-6 text-2xl">
+								At the end of the world there is a boss level which simulates a multiple choice test. The game contains 3 boss levels (one in each world). You can edit the quiz questions in the levels tab.
+							</p>
+						</div>
+						<img src="http://localhost:3000/public/images/bg/quiz.gif" width="544" height="353" class="rounded-lg mb-8" />
+					</div>
+				</div>
+				<div class="hero bg-base-200 min-h-screen mt-8">
+					<div class="hero-content flex-col lg:flex-row">
+						<div>
+							<h1 class="text-5xl font-bold">View Statistics</h1>
+							<p class="py-6 text-2xl">
+								When the student is connected to the network, their responses are recorded and can be viewed as statistics in the Levels tab.
+							</p>
+						</div>
+						<img src="http://localhost:3000/public/images/bg/statistics.png" width="544" height="353" class="rounded-lg mb-8" />
+					</div>
+				</div>
 			</div>
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Levels" />
 			<div role="tabpanel" class="tab-content p-10">
 				<h1 class="text-5xl font-bold">World 1 - Addition of Fractions</h1>
-				<p class="py-6">
+				<p class="py-6 text-xl">
 					In the first world, the player will be introduced to a series of dialogues and mini-games centered around adding fractions. These challenges will require them to find common denominators, simplify fractions, and accurately perform addition, as well as helping them visualize fractions through interactive scenarios, building the foundation needed to advance further in the game.
 				</p>
 				<div class="hero bg-base-200 mb-4">
@@ -34,7 +82,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Saisai Moving Rocks Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
 								<a href="/minigame?minigameID=1" target="_blank" rel="noopener noreferrer" class="btn btn-primary text-white">Edit Questions</a>
@@ -48,7 +96,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Robot Ambush Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<a href="/minigame?minigameID=2" class="btn btn-primary text-white">Edit Questions</a>
@@ -62,7 +110,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Racket Steals Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level simulates word problems, where players are presented with a problem statement. They must analyze the statement, input the fractions, and solve for the correct answer.
 							</p>
 							<a href="/minigame?minigameID=3" class="btn btn-primary text-white">Edit Questions</a>
@@ -76,7 +124,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Racket the Blacksmith Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level simulates word problems, where players are presented with a problem statement. They must analyze the statement, input the fractions, and solve for the correct answer.
 							</p>
 							<a href="/minigame?minigameID=4" class="btn btn-primary text-white">Edit Questions</a>
@@ -90,7 +138,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Snekkers Quiz Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
 							<a href="/minigame?minigameID=5" class="btn btn-primary text-white">Edit Questions</a>
@@ -99,7 +147,7 @@ templ Classroom(classroomID string) {
 					</div>
 				</div>
 				<h1 class="text-5xl font-bold">World 2 - Subtraction of Fractions</h1>
-				<p class="py-6">
+				<p class="py-6 text-xl">
 				For the next world, the player will now be challenged with a series of mini-games that will focus on tasks and puzzles related to subtracting fractions, requiring them to apply their knowledge of finding common denominators, simplifying results, and correctly performing subtraction between fractions in order to progress further in the game.
 				</p>
 				<div class="hero bg-base-200 mb-4">
@@ -108,7 +156,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Waterlogged Room 1</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<a href="/minigame?minigameID=6" class="btn btn-primary text-white">Edit Questions</a>
@@ -122,7 +170,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Chip Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<a href="/minigame?minigameID=7" class="btn btn-primary text-white">Edit Questions</a>
@@ -136,7 +184,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Waterlogged Room 2</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<a href="/minigame?minigameID=8" class="btn btn-primary text-white">Edit Questions</a>
@@ -150,7 +198,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Waterlogged Room 3</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
 							<a href="/minigame?minigameID=9" class="btn btn-primary text-white">Edit Questions</a>
@@ -165,7 +213,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Rat Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
 							<a href="/minigame?minigameID=10" class="btn btn-primary text-white">Edit Questions</a>
@@ -179,7 +227,7 @@ templ Classroom(classroomID string) {
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
 							<h1 class="text-2xl font-bold">Crab Quiz Scene</h1>
-							<p class="py-6">
+							<p class="py-6 text-xl">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
 							<a href="/minigame?minigameID=11" class="btn btn-primary text-white">Edit Questions</a>
@@ -187,18 +235,18 @@ templ Classroom(classroomID string) {
 						</div>
 					</div>
 				</div>
-				<h1 class="text-5xl font-bold">World 3 - Addition of Fractions</h1>
-				<p class="py-6">
-					In the first world, the player will be introduced to a series of dialogues and mini-games centered around adding fractions. These challenges will require them to find common denominators, simplify fractions, and accurately perform addition, as well as helping them visualize fractions through interactive scenarios, building the foundation needed to advance further in the game.
+				<h1 class="text-5xl font-bold">World 3 - The Final Level</h1>
+				<p class="py-6 text-xl">
+				In world 3, the player is faced with one final boss where he must face a quiz of everything the player has encountered so far.
 				</p>
 				<div class="hero bg-base-200 mb-4">
 					<div class="hero-content flex-col lg:flex-row">
-						<img src="http://localhost:3000/public/images/assets/saisai.png"
+						<img src="http://localhost:3000/public/images/assets/final_boss.png"
 							class="max-w-sm rounded-lg shadow-2xl" />
 						<div>
-							<h1 class="text-2xl font-bold">Saisai Moving Rocks Scene</h1>
-							<p class="py-6">
-								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
+							<h1 class="text-2xl font-bold">Final Boss</h1>
+							<p class="py-6 text-xl">
+							The final test before the hero saves the world. This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
 								<a href="/minigame?minigameID=12" target="_blank" rel="noopener noreferrer" class="btn btn-primary text-white">Edit Questions</a>
 								<a href="/statistics/quiz?minigameID=12" class="btn btn-primary text-white">View Statistics</a>
