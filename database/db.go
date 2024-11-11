@@ -149,7 +149,7 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return errors.New("Invalid Request Method") 
+		return errors.New("Invalid Request Method")
 	}
 
 	body, err := io.ReadAll(r.Body)
@@ -173,16 +173,16 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err 
+		return err
 	}
 	fmt.Print("we got data: ", data)
 
 	_, err = db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
 	if err != nil {
-		return err 
+		return err
 	}
 
-	return nil 
+	return nil
 }
 
 func GetStudents(classroomID int) ([]types.Student, error) {
@@ -839,4 +839,49 @@ func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID 
 		return err
 	}
 	return nil
+}
+
+func GetSavedData(studentID int) (types.SaveData, error) {
+	var save_data types.SaveData
+	var badges types.Badges
+
+	// Get all saved data except badges
+	row := db.QueryRow("SELECT student_id, current_floor, current_quest, saved_scene, vector_x, vector_y, first_time_init_floor1, first_time_init_floor2, first_time_init_floor3 FROM save_states WHERE student_id = ?", studentID)
+	err := row.Scan(&save_data.StudentID, &save_data.CurrentFloor, &save_data.CurrentQuest, &save_data.SavedScene, &save_data.VectorX, &save_data.VectorY, &save_data.FirstTimeInitFloor1, &save_data.FirstTimeInitFloor2, &save_data.FirstTimeInitFloor3)
+	if err != nil {
+		return save_data, err
+	}
+
+	// Retrieve all badges
+	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball FROM save_states WHERE student_id = ?", studentID)
+	err = row.Scan(&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom, &badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall)
+	if err != nil {
+		return save_data, err
+	}
+
+	save_data.PlayerBadges = badges
+
+	fmt.Print("saved data is: ", save_data)
+
+	return save_data, nil
+}
+
+func GetStudentScores(classroomID int) ([]types.StudentQuizScore, error) {
+	var studentScores []types.StudentQuizScore
+
+	rows, err := db.Query("SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? ORDER BY mcs.score DESC", classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var student types.StudentQuizScore
+		if err := rows.Scan(&student.FirstName, &student.LastName, &student.Score); err != nil {
+			return nil, fmt.Errorf("GetStudentScores: %v", err)
+		}
+		studentScores = append(studentScores, student)
+	}
+
+	return studentScores, nil
 }

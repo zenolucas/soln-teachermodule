@@ -96,6 +96,24 @@ templ QuizStatistics(classroomID string, minigameID string) {
             });
         }
     </script>
+
+    <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+        // student scores table
+        <table class="table table-zebra text-xl">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="text-xl">Name</th>
+                    <th class="text-xl">Score</th>
+                </tr>
+            </thead>
+            <form hx-get="/statistics/quiz/score" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+                <input type="hidden" name="classroomID" value={ classroomID } />
+            </form>
+            <tbody id="getstudents">
+            </tbody>
+        </table>
+    </div>
 </div>
 }
 }

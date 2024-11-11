@@ -30,6 +30,31 @@ CREATE TABLE IF NOT EXISTS enrollments (
     UNIQUE KEY unique_enrollment (classroom_id, student_id)
 );
 
+CREATE TABLE IF NOT EXISTS save_states (
+    save_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT, 
+    current_floor INT,
+    current_quest VARCHAR(100),
+    saved_scene VARCHAR(100),
+    vector_x FLOAT,
+    vector_y FLOAT,
+    badge_rock BOOLEAN DEFAULT FALSE,
+    badge_bowl BOOLEAN DEFAULT FALSE,
+    badge_carrot BOOLEAN DEFAULT FALSE,
+    badge_cake BOOLEAN DEFAULT FALSE,
+    badge_sword BOOLEAN DEFAULT FALSE,
+    badge_mushroom BOOLEAN DEFAULT FALSE,
+    badge_bucket1 BOOLEAN DEFAULT FALSE,
+    badge_flask BOOLEAN DEFAULT FALSE,
+    badge_bucket2 BOOLEAN DEFAULT FALSE,
+    badge_bucket3 BOOLEAN DEFAULT FALSE,
+    badge_crystal_ball BOOLEAN DEFAULT FALSE,
+    first_time_init_floor1 BOOLEAN DEFAULT FALSE,
+    first_time_init_floor2 BOOLEAN DEFAULT FALSE,
+    first_time_init_floor3 BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (student_id) REFERENCES users(user_id)
+);
+
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     minigame_id INT,
@@ -93,10 +118,29 @@ INSERT INTO users (username, usertype, password) VALUES
 ('user2', 'teacher', 'pw');
 
 -- insert student data
+-- insert student data
 INSERT INTO users (username, firstname, lastname, usertype, class_number, section, password) VALUES
 ('user3', 'John', 'Johnson', 'student', '1', '1', 'pw'),
 ('user4', 'Mike', 'Tyson', 'student', '1', '1', 'pw'),
-('user5', 'Joe', 'Seph', 'student', '1', '2', 'pw');
+('user5', 'Joe', 'Seph', 'student', '1', '2', 'pw'),
+('user6', 'Emily', 'Davis', 'student', '1', '2', 'pw'),
+('user7', 'Sarah', 'Smith', 'student', '1', '3', 'pw'),
+('user8', 'David', 'Lee', 'student', '1', '3', 'pw'),
+('user9', 'Anna', 'Brown', 'student', '1', '4', 'pw'),
+('user10', 'Chris', 'Wilson', 'student', '1', '4', 'pw'),
+('user11', 'Sophia', 'Martinez', 'student', '1', '5', 'pw'),
+('user12', 'James', 'Garcia', 'student', '1', '5', 'pw'),
+('user13', 'Liam', 'Rodriguez', 'student', '1', '6', 'pw'),
+('user14', 'Olivia', 'Hernandez', 'student', '1', '6', 'pw'),
+('user15', 'Jackson', 'Lopez', 'student', '1', '7', 'pw'),
+('user16', 'Mia', 'Gonzalez', 'student', '1', '7', 'pw'),
+('user17', 'Ethan', 'Perez', 'student', '1', '8', 'pw'),
+('user18', 'Isabella', 'Martinez', 'student', '1', '8', 'pw'),
+('user19', 'Benjamin', 'Taylor', 'student', '1', '9', 'pw'),
+('user20', 'Charlotte', 'Anderson', 'student', '1', '9', 'pw'),
+('user21', 'Lucas', 'Thomas', 'student', '1', '10', 'pw'),
+('user22', 'Amelia', 'Jackson', 'student', '1', '10', 'pw');
+
 
 -- Insert initial data into classrooms table
 INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
@@ -140,7 +184,10 @@ INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator,
 (3, "what is 9/5 + 4/5", 9, 5, 4, 5),
 (4, "what is 3/4 + 3/4?", 3, 4, 3, 4),
 (4, "what is 8/10 + 2/5?", 8, 10, 2, 5),
-(4, "what is 8/5 + 3/5", 8, 5, 3, 5);
+(4, "what is 8/5 + 3/5", 8, 5, 3, 5),
+(10, "what is 6/10 - 3/10?", 6, 10, 3, 10),
+(10, "what is 8/10 - 2/10?", 8, 10, 2, 10),
+(10, "what is 3/5 + 1/5", 3, 5, 1, 5);
 
 -- sample data for quiz, minigame 5
 INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
@@ -335,10 +382,29 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (30, '1/3', FALSE),
 (30, '2/4', FALSE);
 
--- test values for statistics quiz
+-- test values for statistics quiz, minigame id 5
 INSERT INTO multiple_choice_scores (student_id, classroom_id, minigame_id, score) VALUES
-(3, 1, 5, 1),
-(4, 1, 5, 2);
+(3, 1, 5, 7),
+(4, 1, 5, 5),
+(5, 1, 5, 8),
+(6, 1, 5, 6),
+(7, 1, 5, 9),
+(8, 1, 5, 4),
+(9, 1, 5, 3),
+(10, 1, 5, 7),
+(11, 1, 5, 10),
+(12, 1, 5, 6),
+(13, 1, 5, 8),
+(14, 1, 5, 5),
+(15, 1, 5, 7),
+(16, 1, 5, 6),
+(17, 1, 5, 4),
+(18, 1, 5, 9),
+(19, 1, 5, 2),
+(20, 1, 5, 8),
+(21, 1, 5, 6),
+(22, 1, 5, 10);
+
 
 -- sample response values for simple fraction questions with minigame ID 1
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
@@ -363,3 +429,14 @@ INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_
 (1, 4, 10, 3, 2, 1),
 (1, 4, 11, 3, 3, 1),
 (1, 4, 12, 3, 4, 1);
+
+
+-- SAMPLE VALUE FOR SAVED STATES
+INSERT INTO save_states (
+    student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
+    badge_rock, badge_bowl, badge_carrot, badge_cake
+) VALUES (
+    1, 1, 'share_pie_with_racket', 'res://scenes/levels/Floor1.tscn', 1232.74, 1043.073,
+    TRUE, TRUE, TRUE, TRUE
+);
+

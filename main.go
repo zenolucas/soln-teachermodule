@@ -38,6 +38,7 @@ func main() {
 	router.Post("/game/add/statistics/quiz", handler.Make(handler.HandlePostQuizScore))
 	router.Post("/game/add/statistics/quiz/response", handler.Make(handler.HandleQuizResponse))
 	router.Post("/game/update/saisai/statistics", handler.Make(handler.HandleUpdateSaisaiStatistics))
+	router.Post("/game/getsavedata", handler.Make(handler.HandleGetSaveData))
 
 	// then everything below will be grouped, and have the user authenticated first
 	// else be redirected to login.
@@ -72,6 +73,7 @@ func main() {
 		// statistics endpoints
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
+		auth.Get("/statistics/quiz/score", handler.Make(handler.HandleGetQuizScores))
 	})
 
 	// these endpoints are out here because when grouped with auth middleware, the server breaks
