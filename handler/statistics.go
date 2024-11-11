@@ -581,3 +581,99 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 
 	return nil
 }
+
+func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
+	studentIDStr := r.URL.Query().Get("userID")
+	studentID, _ := strconv.Atoi(studentIDStr)
+
+	// get student
+	student, err := database.GetStudent(studentID)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr))
+}
+
+// different score formats
+// 1. fraction
+// 2. worded
+// 3. quiz
+func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error {
+	studentIDStr := r.URL.Query().Get("userID")
+	studentID, _ := strconv.Atoi(studentIDStr)
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	var statistics []types.StudentFractionStatistics
+
+	statistics, err := database.GetStudentFractionStatistics(studentID, minigameID)
+	if err != nil {
+		return err
+	}
+
+	for _, statistic := range statistics {
+		fmt.Fprintf(w, `
+			<tr>
+				<td>%d/%d + %d/%d ?</td>
+				<td class="text-center">%d</td>
+				<td class="text-center">%d</td>
+			</tr>	
+		`, statistic.Fraction1_Numerator, statistic.Fraction1_Denominator, statistic.Fraction2_Numerator, statistic.Fraction2_Denominator, statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
+	}
+
+	return nil
+}
+
+func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
+	studentIDStr := r.URL.Query().Get("userID")
+	studentID, _ := strconv.Atoi(studentIDStr)
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	var statistics []types.StudentFractionStatistics
+
+	statistics, err := database.GetStudentWordedStatistics(studentID, minigameID)
+	if err != nil {
+		return err
+	}
+
+	for _, statistic := range statistics {
+		fmt.Fprintf(w, `
+			<tr>
+				<td>%s</td>
+				<td class="text-center">%d</td>
+				<td class="text-center">%d</td>
+			</tr>	
+		`, statistic.QuestionText, statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
+	}
+
+	return nil
+}
+
+func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
+	studentIDStr := r.URL.Query().Get("userID")
+	studentID, _ := strconv.Atoi(studentIDStr)
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	var statistics []types.StudentQuizStatistics
+
+	statistics, err := database.GetStudentQuizStatistics(studentID, minigameID)
+	if err != nil {
+		return err
+	}
+
+	for _, statistic := range statistics {
+		fmt.Fprintf(w, `
+			<tr>
+				<td>%s</td>
+				<td class="text-center">%s</td>
+				<td class="text-center">%s</td>
+				<td class="text-center">%d</td>
+			</tr>	
+		`, statistic.QuestionText, statistic.CorrectAnswer, statistic.UserAnswer, statistic.Score)
+	}
+
+	return nil
+}

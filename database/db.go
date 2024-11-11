@@ -11,6 +11,7 @@ import (
 	"os"
 	"soln-teachermodule/types"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -131,6 +132,16 @@ func GetStudentID(username string) (int, error) {
 	}
 
 	return studentID, nil
+}
+
+func GetStudent(userID int) (types.Student, error) {
+	var student types.Student
+
+	err := db.QueryRow("SELECT firstname, lastname FROM users WHERE user_id = ?", userID).Scan(&student.Firstname, &student.Lastname)
+	if err != nil {
+		return student, err
+	}
+	return student, nil
 }
 
 func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
@@ -875,4 +886,161 @@ func GetStudentScores(classroomID int, minigameID int) ([]types.StudentQuizScore
 	}
 
 	return studentScores, nil
+}
+
+func GetStudentFractionStatistics(userID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+	var statistics []types.StudentFractionStatistics
+
+	rows, err := db.Query("SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ?", userID, minigameID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.StudentFractionStatistics
+		if err := rows.Scan(&statistic.Fraction1_Numerator, &statistic.Fraction1_Denominator, &statistic.Fraction2_Numerator, &statistic.Fraction2_Denominator, &statistic.WrongAttemptsCount, &statistic.RightAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetStudentScores: %v", err)
+		}
+		statistics = append(statistics, statistic)
+	}
+
+	return statistics, nil
+}
+
+func GetStudentWordedStatistics(userID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+	var statistics []types.StudentFractionStatistics
+
+	rows, err := db.Query("SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ?", userID, minigameID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var statistic types.StudentFractionStatistics
+		if err := rows.Scan(&statistic.QuestionText, &statistic.WrongAttemptsCount, &statistic.RightAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetStudentScores: %v", err)
+		}
+		statistics = append(statistics, statistic)
+	}
+
+	// fmt.Print(statistics)
+
+	return statistics, nil
+}
+
+func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizStatistics, error) {
+	var statistics []types.StudentQuizStatistics
+
+	// Step 1: Get all questions for the given minigameID
+	questionsQuery := `SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?`
+	questionRows, err := db.Query(questionsQuery, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer questionRows.Close()
+
+	var questions []struct {
+		QuestionID   int
+		QuestionText string
+	}
+
+	for questionRows.Next() {
+		var q struct {
+			QuestionID   int
+			QuestionText string
+		}
+		if err := questionRows.Scan(&q.QuestionID, &q.QuestionText); err != nil {
+			return nil, fmt.Errorf("failed to scan question: %v", err)
+		}
+		questions = append(questions, q)
+	}
+
+	// Step 2: Generate placeholders and get correct answers
+	var questionIDs []int
+	for _, q := range questions {
+		questionIDs = append(questionIDs, q.QuestionID)
+	}
+
+	// Generate placeholders for the IN clause based on the number of question IDs
+	placeholders := make([]string, len(questionIDs))
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+	placeholdersStr := strings.Join(placeholders, ",")
+
+	// Query for correct answers using the dynamically generated placeholders
+	correctAnswersQuery := fmt.Sprintf(
+		`SELECT mcc.question_id, mcc.choice_text 
+		FROM multiple_choice_choices mcc
+		WHERE mcc.is_correct = TRUE AND mcc.question_id IN (%s)`, placeholdersStr)
+
+	correctAnswersRows, err := db.Query(correctAnswersQuery, convertToInterfaceSlice(questionIDs)...)
+	if err != nil {
+		return nil, err
+	}
+	defer correctAnswersRows.Close()
+
+	var correctAnswers = make(map[int]string)
+	for correctAnswersRows.Next() {
+		var questionID int
+		var choiceText string
+		if err := correctAnswersRows.Scan(&questionID, &choiceText); err != nil {
+			return nil, fmt.Errorf("failed to scan correct answer: %v", err)
+		}
+		correctAnswers[questionID] = choiceText
+	}
+
+	// Step 3: Get the user's answers for those questions
+	userAnswersQuery := `
+		SELECT mcr.question_id, mcc.choice_text 
+		FROM multiple_choice_responses mcr
+		JOIN multiple_choice_choices mcc ON mcr.choice_id = mcc.choice_id
+		WHERE mcr.student_id = ? AND mcr.minigame_id = ?`
+
+	userAnswersRows, err := db.Query(userAnswersQuery, userID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer userAnswersRows.Close()
+
+	var userAnswers = make(map[int]string)
+	for userAnswersRows.Next() {
+		var questionID int
+		var choiceText string
+		if err := userAnswersRows.Scan(&questionID, &choiceText); err != nil {
+			return nil, fmt.Errorf("failed to scan user answer: %v", err)
+		}
+		userAnswers[questionID] = choiceText
+	}
+
+	// Step 4: Combine the results and calculate the score
+	for _, question := range questions {
+		userAnswer := userAnswers[question.QuestionID]
+		correctAnswer := correctAnswers[question.QuestionID]
+		score := 0
+		if userAnswer == correctAnswer {
+			score = 1
+		}
+
+		statistic := types.StudentQuizStatistics{
+			QuestionText: question.QuestionText,
+			CorrectAnswer: correctAnswer,
+			UserAnswer: userAnswer,
+			Score: score,
+		}
+		statistics = append(statistics, statistic)
+	}
+
+	return statistics, nil
+}
+
+// Helper function to convert []int to []interface{}
+func convertToInterfaceSlice(slice []int) []interface{} {
+	interfaceSlice := make([]interface{}, len(slice))
+	for i, v := range slice {
+		interfaceSlice[i] = v
+	}
+	return interfaceSlice
 }
