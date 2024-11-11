@@ -529,7 +529,7 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func HandleUpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error {
+func HandleAddStatisticsFraction(w http.ResponseWriter, r *http.Request) error {
 	type StatisticsResponse struct {
 		Success bool `json:"success"`
 	}
@@ -552,13 +552,17 @@ func HandleUpdateSaisaiStatistics(w http.ResponseWriter, r *http.Request) error 
 
 func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	var studentScores []types.StudentQuizScore
+	minigameIDStr := r.URL.Query().Get("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
+	fmt.Print("in handle get quiz scores, minigameID is : ", minigameID)
 
 	// get classroomID from session
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 
-	studentScores, err := database.GetStudentScores(classroomID)
+	studentScores, err := database.GetStudentScores(classroomID, minigameID)
 	if err != nil {
 		return err
 	}
@@ -575,7 +579,6 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 		`, i, students.FirstName, students.LastName, students.Score)
 	}
 
-	print("is this even triggered")
 	print(studentScores)
 
 	return nil

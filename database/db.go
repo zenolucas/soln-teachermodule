@@ -707,12 +707,12 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		ClassroomID        int
-		StudentID          int
-		QuestionID         int
-		MinigameID         int
-		Num_Right_Attempts int
-		Num_Wrong_Attempts int
+		ClassroomID        int `json:"classroom_id"`
+		StudentID          int `json:"student_id"`
+		QuestionID         int `json:"question_id"`
+		MinigameID         int `json:"minigame_id"`
+		Num_Right_Attempts int `json:"num_right_attempts"`
+		Num_Wrong_Attempts int `json:"num_wrong_attempts"`
 	}
 
 	var data Data
@@ -724,7 +724,7 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {
 		return err
 	}
@@ -866,10 +866,10 @@ func GetSavedData(studentID int) (types.SaveData, error) {
 	return save_data, nil
 }
 
-func GetStudentScores(classroomID int) ([]types.StudentQuizScore, error) {
+func GetStudentScores(classroomID int, minigameID int) ([]types.StudentQuizScore, error) {
 	var studentScores []types.StudentQuizScore
 
-	rows, err := db.Query("SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? ORDER BY mcs.score DESC", classroomID)
+	rows, err := db.Query("SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? AND mcs.minigame_id = ? ORDER BY mcs.score DESC", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}

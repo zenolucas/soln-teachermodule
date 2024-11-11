@@ -107,7 +107,7 @@ templ QuizStatistics(classroomID string, minigameID string) {
                     <th class="text-xl">Score</th>
                 </tr>
             </thead>
-            <form hx-get="/statistics/quiz/score" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+            <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/quiz/score?minigameID=%s", minigameID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
                 <input type="hidden" name="classroomID" value={ classroomID } />
             </form>
             <tbody id="getstudents">
