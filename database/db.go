@@ -675,16 +675,7 @@ func DeleteMCQuestions(minigameID int, questionID int) error {
 }
 
 func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) error {
-	_, err := db.Exec("INSERT INTO quiz_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func AddQuizQuestionStatistics(classroomID int, minigameID int, questionID int, username string, choice int) error {
-	_, err := db.Exec("INSERT INTO quiz_question_statistics (classroom_id, minigame_id, question_id, username, choice) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, username, choice)
+	_, err := db.Exec("INSERT INTO multiple_choice_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
 	if err != nil {
 		return err
 	}
