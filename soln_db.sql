@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS save_states (
     badge_bucket2 BOOLEAN DEFAULT FALSE,
     badge_bucket3 BOOLEAN DEFAULT FALSE,
     badge_crystal_ball BOOLEAN DEFAULT FALSE,
+    badge_original_robot BOOLEAN DEFAULT FALSE,
     first_time_init_floor1 BOOLEAN DEFAULT FALSE,
     first_time_init_floor2 BOOLEAN DEFAULT FALSE,
     first_time_init_floor3 BOOLEAN DEFAULT FALSE,
@@ -121,25 +122,26 @@ INSERT INTO users (username, usertype, password) VALUES
 -- insert student data
 INSERT INTO users (username, firstname, lastname, usertype, class_number, section, password) VALUES
 ('user3', 'John', 'Johnson', 'student', '1', '1', 'pw'),
-('user4', 'Mike', 'Tyson', 'student', '1', '1', 'pw'),
-('user5', 'Joe', 'Seph', 'student', '1', '2', 'pw'),
-('user6', 'Emily', 'Davis', 'student', '1', '2', 'pw'),
-('user7', 'Sarah', 'Smith', 'student', '1', '3', 'pw'),
-('user8', 'David', 'Lee', 'student', '1', '3', 'pw'),
-('user9', 'Anna', 'Brown', 'student', '1', '4', 'pw'),
-('user10', 'Chris', 'Wilson', 'student', '1', '4', 'pw'),
-('user11', 'Sophia', 'Martinez', 'student', '1', '5', 'pw'),
-('user12', 'James', 'Garcia', 'student', '1', '5', 'pw'),
-('user13', 'Liam', 'Rodriguez', 'student', '1', '6', 'pw'),
-('user14', 'Olivia', 'Hernandez', 'student', '1', '6', 'pw'),
-('user15', 'Jackson', 'Lopez', 'student', '1', '7', 'pw'),
-('user16', 'Mia', 'Gonzalez', 'student', '1', '7', 'pw'),
-('user17', 'Ethan', 'Perez', 'student', '1', '8', 'pw'),
-('user18', 'Isabella', 'Martinez', 'student', '1', '8', 'pw'),
-('user19', 'Benjamin', 'Taylor', 'student', '1', '9', 'pw'),
-('user20', 'Charlotte', 'Anderson', 'student', '1', '9', 'pw'),
-('user21', 'Lucas', 'Thomas', 'student', '1', '10', 'pw'),
-('user22', 'Amelia', 'Jackson', 'student', '1', '10', 'pw');
+('user4', 'Mike', 'Tyson', 'student', '2', '1', 'pw'),
+('user5', 'Joe', 'Seph', 'student', '3', '1', 'pw'),
+('user6', 'Emily', 'Davis', 'student', '4', '1', 'pw'),
+('user7', 'Sarah', 'Smith', 'student', '5', '1', 'pw'),
+('user8', 'David', 'Lee', 'student', '6', '1', 'pw'),
+('user9', 'Anna', 'Brown', 'student', '7', '1', 'pw'),
+('user10', 'Chris', 'Wilson', 'student', '8', '1', 'pw'),
+('user11', 'Sophia', 'Martinez', 'student', '9', '1', 'pw'),
+('user12', 'James', 'Garcia', 'student', '10', '1', 'pw'),
+('user13', 'Liam', 'Rodriguez', 'student', '11', '1', 'pw'),
+('user14', 'Olivia', 'Hernandez', 'student', '12', '1', 'pw'),
+('user15', 'Jackson', 'Lopez', 'student', '13', '1', 'pw'),
+('user16', 'Mia', 'Gonzalez', 'student', '14', '1', 'pw'),
+('user17', 'Ethan', 'Perez', 'student', '15', '1', 'pw'),
+('user18', 'Isabella', 'Martinez', 'student', '16', '1', 'pw'),
+('user19', 'Benjamin', 'Taylor', 'student', '17', '1', 'pw'),
+('user20', 'Charlotte', 'Anderson', 'student', '18', '1', 'pw'),
+('user21', 'Lucas', 'Thomas', 'student', '19', '1', 'pw'),
+('user22', 'Amelia', 'Jackson', 'student', '20', '1', 'pw');
+
 
 
 -- Insert initial data into classrooms table
@@ -436,7 +438,7 @@ INSERT INTO save_states (
     student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
     badge_rock, badge_bowl, badge_carrot, badge_cake
 ) VALUES (
-    1, 1, 'share_pie_with_racket', 'res://scenes/levels/Floor1.tscn', 1232.74, 1043.073,
+    3, 1, 'share_pie_with_racket', 'res://scenes/levels/Floor1.tscn', 1232.74, 1043.073,
     TRUE, TRUE, TRUE, TRUE
 );
 
