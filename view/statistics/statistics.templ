@@ -6,7 +6,7 @@ import "fmt"
 templ FractionStatistics(classroomID string, minigameID string) {
 @layout.App(true, false) {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-5xl font-bold mt-2 mb-4">Fraction Addition Statistics</h1>
+        <h1 class="text-5xl font-bold mt-2 mb-4">Simple Fraction Statistics</h1>
 
         <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/fraction/question/chart?minigameID=%s", minigameID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
         </form>
