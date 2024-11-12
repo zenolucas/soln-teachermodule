@@ -96,6 +96,7 @@ func AuthenticateGameUser(username string, password string) bool {
 
 	if password != storedPassword {
 		fmt.Print("authentication Error: incorrect username or password")
+		return false
 	}
 	fmt.Println("Login Success! Hello ", username, "!")
 	// Authentication successful
@@ -933,7 +934,7 @@ func GetStudentWordedStatistics(userID int, minigameID int) ([]types.StudentFrac
 func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizStatistics, error) {
 	var statistics []types.StudentQuizStatistics
 
-	// Step 1: Get all questions for the given minigameID
+	// Get all questions for the given minigameID
 	questionsQuery := `SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?`
 	questionRows, err := db.Query(questionsQuery, minigameID)
 	if err != nil {
@@ -957,7 +958,7 @@ func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizSt
 		questions = append(questions, q)
 	}
 
-	// Step 2: Generate placeholders and get correct answers
+	// Generate placeholders and get correct answers
 	var questionIDs []int
 	for _, q := range questions {
 		questionIDs = append(questionIDs, q.QuestionID)
@@ -992,7 +993,7 @@ func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizSt
 		correctAnswers[questionID] = choiceText
 	}
 
-	// Step 3: Get the user's answers for those questions
+	// Get the user's answers for those questions
 	userAnswersQuery := `
 		SELECT mcr.question_id, mcc.choice_text 
 		FROM multiple_choice_responses mcr
@@ -1015,7 +1016,7 @@ func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizSt
 		userAnswers[questionID] = choiceText
 	}
 
-	// Step 4: Combine the results and calculate the score
+	// Combine the results and calculate the score
 	for _, question := range questions {
 		userAnswer := userAnswers[question.QuestionID]
 		correctAnswer := correctAnswers[question.QuestionID]
@@ -1043,4 +1044,34 @@ func convertToInterfaceSlice(slice []int) []interface{} {
 		interfaceSlice[i] = v
 	}
 	return interfaceSlice
+}
+
+func SaveData(data types.SaveData) error {
+
+	_, err := db.Exec(`
+		INSERT INTO save_states (
+			student_id, current_floor, current_quest, saved_scene, vector_x, vector_y, 
+			badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, 
+			badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, 
+			badge_original_robot, first_time_init_floor1, first_time_init_floor2, 
+			first_time_init_floor3, disable_dead_robot_quest, disable_raket_stealing_quest, 
+			disable_fresh_dialogue_quest, disable_water_logged_1_quest, disable_water_logged_2_quest, 
+			disable_water_logged_3_quest, disable_chip_quest, disable_rat_wizard_training_quest
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`,
+		data.StudentID, data.CurrentFloor, data.CurrentQuest, data.SavedScene, data.VectorX, data.VectorY,
+		data.PlayerBadges.ShinyRock, data.PlayerBadges.Bowl, data.PlayerBadges.Carrot, data.PlayerBadges.Cake,
+		data.PlayerBadges.Sword, data.PlayerBadges.Mushroom, data.PlayerBadges.Bucket1, data.PlayerBadges.Flask,
+		data.PlayerBadges.Bucket2, data.PlayerBadges.Bucket3, data.PlayerBadges.CrystalBall,
+		data.PlayerBadges.OriginalRobot, data.FirstTimeInitFloor1, data.FirstTimeInitFloor2,
+		data.FirstTimeInitFloor3, data.DisableDeadRobotQuest, data.DisableRaketStealingQuest, data.DisableFreshDialogueQuest,
+		data.DisableWaterLogged1Quest, data.DisableWaterLogged2Quest, data.DisableWaterLogged3Quest,
+		data.DisableChipQuest, data.DisableRatWizardTrainingQuest,
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print("Insert success!")
+	return nil
 }
