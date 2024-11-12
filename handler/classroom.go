@@ -86,7 +86,7 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 	for _, classroom := range classrooms {
 		fmt.Fprintf(w, `
 		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
-				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - %s</div>
+				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - Section %s</div>
 		`, classroom.ClassroomID, classroom.ClassroomName, classroom.Section)
 	}
 
@@ -165,9 +165,9 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<tr>
 				<td> <input type="checkbox" name="userID" value="%s" class="itemCheckbox"></input></td>
-				<td>%s</td>
+				<td>%s %s</td>
 			</tr>	
-		`, student.UserID, student.Username)
+		`, student.UserID, student.Firstname, student.Lastname)
 	}
 
 	return nil

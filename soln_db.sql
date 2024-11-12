@@ -147,8 +147,9 @@ INSERT INTO users (username, firstname, lastname, usertype, class_number, sectio
 
 -- Insert initial data into classrooms table
 INSERT INTO classrooms (classroom_name, section, description, teacher_id) VALUES
-('Math101', '1', 'Lorem Ipsum', 1),
-('Remedial Class 1', '2', 'Lorem Ipsum', 2);
+('Classroom 1', '1', 'Lorem Ipsum', 1),
+('Classroom 2', '2', 'Lorem Ipsum', 1),
+('Classroom 3', '3', 'Lorem Ipsum', 2);
 
 -- Insert initial data into enrollments table
 INSERT INTO enrollments (classroom_id, student_id) VALUES 
@@ -411,27 +412,27 @@ INSERT INTO multiple_choice_scores (student_id, classroom_id, minigame_id, score
 
 -- sample response values for simple fraction questions with minigame ID 1
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
-(1, 1, 1, 3, 2, 1),
-(1, 1, 2, 3, 3, 1),
-(1, 1, 3, 3, 4, 1);
+(1, 1, 1, 3, 1, 3),
+(1, 1, 2, 3, 1, 1),
+(1, 1, 3, 3, 1, 2);
 
 -- sample response values for simple fraction questions with minigame ID 2
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
-(1, 2, 4, 3, 2, 1),
-(1, 2, 5, 3, 3, 1),
-(1, 2, 6, 3, 4, 1);
+(1, 2, 4, 3, 1, 1),
+(1, 2, 5, 3, 1, 1),
+(1, 2, 6, 3, 1, 3);
 
 -- sample response values for worded fraction questions with minigame ID 3
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
-(1, 3, 7, 3, 2, 1),
-(1, 3, 8, 3, 3, 1),
-(1, 3, 9, 3, 4, 1);
+(1, 3, 7, 3, 1, 2),
+(1, 3, 8, 3, 1, 1),
+(1, 3, 9, 3, 1, 2);
 
 -- sample response values for worded fraction questions with minigame ID 4
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES 
-(1, 4, 10, 3, 2, 1),
-(1, 4, 11, 3, 3, 1),
-(1, 4, 12, 3, 4, 1);
+(1, 4, 10, 3, 1, 1),
+(1, 4, 11, 3, 1, 3),
+(1, 4, 12, 3, 1, 2);
 
 
 -- SAMPLE VALUE FOR SAVED STATES
