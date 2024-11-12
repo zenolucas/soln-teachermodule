@@ -19,7 +19,7 @@ templ Classroom(classroomID string) {
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked="true" />
 			<div role="tabpanel" class="tab-content p-10">
-				<div class="hero bg-base-200 min-h-screen">
+				<div class="hero bg-base-200">
 					<div class="hero-content flex-col lg:flex-row">
 						<div>
 						<h1 class="text-5xl font-bold">Welcome to the</h1>
@@ -35,19 +35,19 @@ templ Classroom(classroomID string) {
 						<img src="http://localhost:3000/public/images/bg/lighthouse.png" width="544" height="353" class="rounded-lg mb-8" />
 					</div>
 				</div>
-				<div class="hero bg-base-200 min-h-screen mt-8">
+				<div class="hero bg-base-200 mt-8">
 					<div class="hero-content flex-col lg:flex-row">
 						<div>
 							<h1 class="text-5xl font-bold">Fraction Minigames</h1>
 							<p class="py-6 text-2xl">
 								Characters throughout the world present students with minigames related to fractions. 
-								You can modify the questions inside these minigames in the levels tab.
+								You can modify the questions inside these minigames in the minigames tab.
 							</p>
 						</div>
 						<img src="http://localhost:3000/public/images/bg/fraction-addition.gif" width="544" height="353" class="rounded-lg mb-8" />
 					</div>
 				</div>
-				<div class="hero bg-base-200 min-h-screen mt-8">
+				<div class="hero bg-base-200 mt-8">
 					<div class="hero-content flex-col lg:flex-row">
 						<div>
 							<h1 class="text-5xl font-bold">Quizzes (Boss Levels)</h1>
@@ -58,7 +58,7 @@ templ Classroom(classroomID string) {
 						<img src="http://localhost:3000/public/images/bg/quiz.gif" width="544" height="353" class="rounded-lg mb-8" />
 					</div>
 				</div>
-				<div class="hero bg-base-200 min-h-screen mt-8">
+				<div class="hero bg-base-200 mt-8">
 					<div class="hero-content flex-col lg:flex-row">
 						<div>
 							<h1 class="text-5xl font-bold">View Statistics</h1>
@@ -70,7 +70,7 @@ templ Classroom(classroomID string) {
 					</div>
 				</div>
 			</div>
-			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Levels" />
+			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Minigames" />
 			<div role="tabpanel" class="tab-content p-10">
 				<h1 class="text-5xl font-bold">World 1 - Addition of Fractions</h1>
 				<p class="py-6 text-xl">
@@ -85,7 +85,7 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
-								<a href="/minigame?minigameID=1" target="_blank" rel="noopener noreferrer" class="btn btn-primary text-white">Edit Questions</a>
+								<a href="/minigame?minigameID=1" class="btn btn-primary text-white">Edit Questions</a>
 								<a href="/statistics/fraction?minigameID=1" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>

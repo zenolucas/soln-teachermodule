@@ -230,7 +230,7 @@ func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 	}
 
 	// get students given classroomID
-	rows, err := db.Query("SELECT user_id, username FROM users WHERE section = ? AND usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, "student", classroomID)
+	rows, err := db.Query("SELECT user_id, firstname, lastname FROM users WHERE section = ? AND usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, "student", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 
 	for rows.Next() {
 		var student types.Student
-		if err := rows.Scan(&student.UserID, &student.Username); err != nil {
+		if err := rows.Scan(&student.UserID, &student.Firstname, &student.Lastname); err != nil {
 			return nil, fmt.Errorf("GetUnenrolledStudents: %v", err)
 		}
 		students = append(students, student)
@@ -1025,10 +1025,10 @@ func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizSt
 		}
 
 		statistic := types.StudentQuizStatistics{
-			QuestionText: question.QuestionText,
+			QuestionText:  question.QuestionText,
 			CorrectAnswer: correctAnswer,
-			UserAnswer: userAnswer,
-			Score: score,
+			UserAnswer:    userAnswer,
+			Score:         score,
 		}
 		statistics = append(statistics, statistic)
 	}
