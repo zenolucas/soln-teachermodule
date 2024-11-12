@@ -2,10 +2,10 @@ package handler
 
 import (
 	"net/http"
-	"os"
+	// "os"
 	"strings"
 
-	"github.com/gorilla/sessions"
+	// "github.com/gorilla/sessions"
 )
 
 func WithAuth(next http.Handler) http.Handler {
@@ -15,17 +15,17 @@ func WithAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-		session, _ := store.Get(r, sessionUserKey)
+		// COMMENTED OUT TO HOPEFULLY FIX BUG CRASH IN UBUNTU SERVER
+		// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+		// session, _ := store.Get(r, sessionUserKey)
+
+		// if !session.Values["authenticated"].(bool) {
+		// 	path := r.URL.Path
+		// 	hxRedirect(w, r, "/?to"+path)
+		// 	return
+		// }
 
 		// fmt.Print("authenticated is : ", session.Values["authenticated"])
-
-		if !session.Values["authenticated"].(bool) {
-			path := r.URL.Path
-			hxRedirect(w, r, "/?to"+path)
-			return
-		}
-
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
