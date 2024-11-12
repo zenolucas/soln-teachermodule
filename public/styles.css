@@ -2754,6 +2754,12 @@ input.tab:checked + .tab-content,
   }
 }
 
+.no-animation {
+  --btn-focus-scale: 1;
+  --animation-btn: 0;
+  --animation-input: 0;
+}
+
 .artboard.phone-1.horizontal,
       .artboard.phone-1.artboard-horizontal {
   width: 568px;
@@ -3074,6 +3080,10 @@ input.tab:checked + .tab-content,
   margin-bottom: 1rem;
 }
 
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
 .ml-6 {
   margin-left: 1.5rem;
 }
@@ -3160,6 +3170,10 @@ input.tab:checked + .tab-content,
 
 .h-\[calc\(100vh-65px\)\] {
   height: calc(100vh - 65px);
+}
+
+.min-h-screen {
+  min-height: 100vh;
 }
 
 .w-1\/4 {
