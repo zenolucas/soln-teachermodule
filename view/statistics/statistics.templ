@@ -349,16 +349,6 @@ templ StudentScores(firstname string, lastname string, userID string) {
                 </tbody>
             </table>
         </div>
-
-
-
-
-
-        <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s", userID)))} hx-swap="outerHTML" hx-target="#scores-container1" hx-trigger="load">
-        </form>
-        <div id="scores-container1">
-        </div>
-
     </div>
     }
 }

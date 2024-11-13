@@ -53,8 +53,17 @@ CREATE TABLE IF NOT EXISTS save_states (
     first_time_init_floor1 BOOLEAN DEFAULT FALSE,
     first_time_init_floor2 BOOLEAN DEFAULT FALSE,
     first_time_init_floor3 BOOLEAN DEFAULT FALSE,
+    disable_dead_robot_quest BOOLEAN DEFAULT FALSE,
+    disable_raket_stealing_quest BOOLEAN DEFAULT FALSE,
+    disable_fresh_dialogue_quest BOOLEAN DEFAULT FALSE,
+    disable_water_logged_1_quest BOOLEAN DEFAULT FALSE,
+    disable_water_logged_2_quest BOOLEAN DEFAULT FALSE,
+    disable_water_logged_3_quest BOOLEAN DEFAULT FALSE,
+    disable_chip_quest BOOLEAN DEFAULT FALSE,
+    disable_rat_wizard_training_quest BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
+
 
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -116,7 +125,7 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
 
 -- Insert sample teacher data into users table
 INSERT INTO users (username, usertype, password) VALUES
-('user1', 'teacher', 'pw'),
+('teacher1', 'teacher', 'password'),
 ('user2', 'teacher', 'pw');
 
 -- insert student data
