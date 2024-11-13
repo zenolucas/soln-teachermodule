@@ -206,6 +206,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
+	fmt.Print("getsavedata is triggered!")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -236,6 +237,45 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+	return nil
+}
+
+func HandlePostSaveData(w http.ResponseWriter, r *http.Request) error {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil
+	}
+	defer r.Body.Close()
+
+	type Response struct {
+		Success bool `json:"success"`
+	}
+
+	var data types.SaveData
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		return err
+	}
+
+	fmt.Print(data)
+
+	err = database.SaveData(data)
+	if err != nil {
+		return err
+	}
+
+	response := Response{Success: true}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
