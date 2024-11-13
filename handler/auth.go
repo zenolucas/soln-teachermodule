@@ -49,6 +49,13 @@ func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	session, _ := store.Get(r, sessionUserKey)
+
+	store.Options = &sessions.Options{
+		Path: "/",
+		MaxAge: 3600 * 8,
+		HttpOnly: true,
+	}
+
 	session.Values["authenticated"] = true
 	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
 	return session.Save(r, w)
