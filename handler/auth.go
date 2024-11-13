@@ -19,7 +19,7 @@ const (
 	sessionAccessTokenKey = "access_token"
 )
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+var store = sessions.NewCookieStore([]byte("adfadgsdfgsdfhopethisworks"))
 
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, auth.Login())
@@ -51,8 +51,8 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	session, _ := store.Get(r, sessionUserKey)
 
 	store.Options = &sessions.Options{
-		Path: "/",
-		MaxAge: 3600 * 8,
+		Path:     "/",
+		MaxAge:   3600 * 8,
 		HttpOnly: true,
 	}
 
