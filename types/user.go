@@ -22,16 +22,24 @@ type Student struct {
 }
 
 type SaveData struct {
-	StudentID           int     `json:"student_id"`
-	PlayerBadges        Badges  `json:"player_badges"`
-	CurrentFloor        string  `json:"current_floor"`
-	CurrentQuest        string  `json:"current_quest"`
-	SavedScene          string  `json:"saved_scene"`
-	VectorX             float32 `json:"vector_x"`
-	VectorY             float32 `json:"vector_y"`
-	FirstTimeInitFloor1 bool    `json:"first_time_init_floor1"`
-	FirstTimeInitFloor2 bool    `json:"first_time_init_floor2"`
-	FirstTimeInitFloor3 bool    `json:"first_time_init_floor3"`
+	StudentID                     int     `json:"student_id"`
+	PlayerBadges                  Badges  `json:"player_badges"`
+	CurrentFloor                  int     `json:"current_floor"`
+	CurrentQuest                  string  `json:"current_quest"`
+	SavedScene                    string  `json:"saved_scene"`
+	VectorX                       float32 `json:"vector_x"`
+	VectorY                       float32 `json:"vector_y"`
+	DisableDeadRobotQuest         bool    `json:"disable_dead_robot_quest"`
+	DisableRaketStealingQuest     bool    `json:"disable_raket_stealing_quest"`
+	DisableFreshDialogueQuest     bool    `json:"disable_fresh_dialogue_quest"`
+	DisableWaterLogged1Quest      bool    `json:"disable_water_logged_1_quest"`
+	DisableWaterLogged2Quest      bool    `json:"disable_water_logged_2_quest"`
+	DisableWaterLogged3Quest      bool    `json:"disable_water_logged_3_quest"`
+	DisableChipQuest              bool    `json:"disable_chip_quest"`
+	DisableRatWizardTrainingQuest bool    `json:"disable_rat_wizard_training_quest"`
+	FirstTimeInitFloor1           bool    `json:"first_time_init_floor1"`
+	FirstTimeInitFloor2           bool    `json:"first_time_init_floor2"`
+	FirstTimeInitFloor3           bool    `json:"first_time_init_floor3"`
 }
 
 type Badges struct {
