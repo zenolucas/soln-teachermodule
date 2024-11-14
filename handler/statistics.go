@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	// "os"
 	"strconv"
 
 	"soln-teachermodule/database"
@@ -15,14 +15,14 @@ import (
 	// "soln-teachermodule/types"
 	"soln-teachermodule/view/statistics"
 
-	"github.com/gorilla/sessions"
+	// "github.com/gorilla/sessions"
 )
 
 func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// get classroomID from session
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 	classroomIDStr := strconv.Itoa(classroomID)
@@ -64,7 +64,7 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID from session values
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 
@@ -168,7 +168,7 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 
 func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID from session values
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 
@@ -301,7 +301,7 @@ func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) e
 
 func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID from session values
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 
@@ -556,7 +556,7 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	// get classroomID from session
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	classroomID := session.Values["classroomID"].(int)
 

@@ -2,10 +2,7 @@ package handler
 
 import (
 	"net/http"
-	"os"
 	"strings"
-
-	"github.com/gorilla/sessions"
 )
 
 func WithAuth(next http.Handler) http.Handler {
@@ -15,7 +12,6 @@ func WithAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 		session, _ := store.Get(r, sessionUserKey)
 
 		if !session.Values["authenticated"].(bool) {

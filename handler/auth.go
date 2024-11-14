@@ -1,12 +1,9 @@
 package handler
 
 import (
-	// "crypto/rand"
-	// "encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/auth"
 
@@ -15,8 +12,7 @@ import (
 )
 
 const (
-	sessionUserKey        = "teacher"
-	sessionAccessTokenKey = "access_token"
+	sessionUserKey = "teacher"
 )
 
 var store = sessions.NewCookieStore([]byte("adfadgsdfgsdfhopethisworks"))
@@ -103,7 +99,7 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["authenticated"] = false
 	session.Save(r, w)
