@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
+	// "os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
 	"soln-teachermodule/view/home"
 	"strconv"
 
-	"github.com/gorilla/sessions"
+	// "github.com/gorilla/sessions"
 )
 
 func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
@@ -28,7 +28,7 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	classroomID, _ := strconv.Atoi(room.ClassroomID)
 
 	// save classroomID in session
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["classroomID"] = classroomID
 	err := session.Save(r, w)
@@ -42,7 +42,7 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	teacherID := session.Values["teacherID"].(int)
 	var classrooms []types.Classroom
@@ -73,7 +73,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
 	teacherID := session.Values["teacherID"].(int)
 	var classrooms []types.Classroom
