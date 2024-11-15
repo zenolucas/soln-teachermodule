@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
 	// "os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
 	"soln-teachermodule/view/home"
 	"strconv"
-
 	// "github.com/gorilla/sessions"
 )
 
@@ -56,7 +56,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 		<div class="glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8">
 				<figure>
-					<img src="http://hexoff.soln.com:3000/public/images/bg/soln-card-image.png" alt="image" />
+					<img src="/public/images/bg/soln-card-image.png" alt="image" />
 				</figure>
 				<div class="card-body">
 					<h2 class="card-title">%s - %s</h2>
