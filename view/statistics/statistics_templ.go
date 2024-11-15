@@ -32,7 +32,7 @@ func FractionStatistics(classroomID string, minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-4\"><h1 class=\"text-5xl font-bold mt-2 mb-4\">Simple Fraction Statistics</h1><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 1)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -40,7 +40,7 @@ func FractionStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"outerHTML\" hx-target=\"#question-chart-container\" hx-trigger=\"load\"></form><div id=\"question-chart-container\"></div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 2)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -79,7 +79,7 @@ func WordedStatistics(classroomID string, minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-4\"><h1 class=\"text-5xl font-bold mt-2 mb-4\">Worded Questions Statistics</h1><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -87,7 +87,7 @@ func WordedStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"outerHTML\" hx-target=\"#question-chart-container\" hx-trigger=\"load\"></form><div id=\"question-chart-container\"></div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -126,7 +126,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-4\"><h1 class=\"text-5xl font-bold mt-2 mb-4\">Quiz Statistics</h1><div><a href=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -135,7 +135,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"btn btn-secondary btn-active text-white\">Class Statistics</a> <a href=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 6)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -144,7 +144,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"btn btn-secondary text-white\">Question Statistics</a></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><canvas id=\"myStatisticsChart\" width=\"300\" height=\"200\"></canvas></div><script classroomID=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 7)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -152,7 +152,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" minigameID=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 8)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -160,7 +160,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\">\n        async function getClassStatistics() {\n            const classroomID = document.currentScript.getAttribute(\"classroomID\")\n            const minigameID = document.currentScript.getAttribute(\"minigameID\")\n            const response = await fetch(`http://localhost:3000/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);\n            const results = await response.json();\n            console.log(results)\n            return results\n        }\n\n        getClassStatistics().then(results => {\n            const count = results.map(item => item.Count);\n            const score = results.map(item => item.Score);\n            renderChart(score, count);\n        });\n\n        function renderChart(score, count) {\n            Chart.defaults.font.size = 30;  // Set the default font size globally\n            var ctx = document.getElementById('myStatisticsChart').getContext('2d');\n            var myChart = new Chart(ctx, {\n                type: 'bar',  // Keep type as 'bar'\n                data: {\n                    labels: score, // Score ranges\n                    datasets: [{\n                        label: 'number of students',\n                        data: count,  // Scores data\n                        borderWidth: 1\n                    }]\n                },\n                options: {\n                    indexAxis: 'x',\n                    scales: {\n                        x: {\n                            beginAtZero: true  // X-axis starts at 0\n                        },\n                        y: {\n                            ticks: {\n                                stepSize: 1\n                            }\n                        }\n                    },\n                    plugins: {\n                        legend: {\n                            display: false\n                        }\n                    }\n                }\n            });\n        }\n    </script><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><table class=\"table table-zebra text-xl\"><thead><tr><th></th><th class=\"text-xl\">Name</th><th class=\"text-xl\">Score</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 9)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -168,7 +168,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#getstudents\"><input type=\"hidden\" name=\"classroomID\" value=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 10)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -176,7 +176,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></form><tbody id=\"getstudents\"></tbody></table></div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 11)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -216,7 +216,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-4\"><h1 class=\"text-5xl font-bold mt-2 mb-4\">Question Statistics</h1><div><a href=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 12)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -225,7 +225,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"btn btn-secondary text-white\">Class Statistics</a> <a href=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 13)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -234,7 +234,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"btn btn-secondary btn-active text-white\">Question Statistics</a></div><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 14)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -242,7 +242,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"outerHTML\" hx-target=\"#question-chart-container\" hx-trigger=\"load\"></form><div id=\"question-chart-container\"></div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 15)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -281,7 +281,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex justify-center items-center flex-col w-full h-140 mt-4\"><h1 class=\"text-5xl font-bold mt-2 mb-4\">")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 16)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -294,7 +294,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" ")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 17)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -307,7 +307,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(" Statistics</h1><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 1 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 18)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -315,7 +315,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame1\"></form><tbody id=\"minigame1\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 2 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 19)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -323,7 +323,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame2\"></form><tbody id=\"minigame2\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 3 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 20)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -331,7 +331,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame3\"></form><tbody id=\"minigame3\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 4 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 21)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -339,7 +339,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame4\"></form><tbody id=\"minigame4\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 5 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Correct Answer</th><th class=\"text-xl text-center\">User Answer</th><th class=\"text-xl text-center\">Score</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 22)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -347,7 +347,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame5\"></form><tbody id=\"minigame5\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 6 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 23)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -355,7 +355,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame6\"></form><tbody id=\"minigame6\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 7 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 24)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -363,7 +363,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame7\"></form><tbody id=\"minigame7\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 8 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 25)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -371,7 +371,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame8\"></form><tbody id=\"minigame8\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 9 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 26)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -379,7 +379,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame9\"></form><tbody id=\"minigame9\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 10 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Number of Wrong Attempts</th><th class=\"text-xl text-center\">Number of Correct Attempts</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 27)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -387,7 +387,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame10\"></form><tbody id=\"minigame10\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 11 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Correct Answer</th><th class=\"text-xl text-center\">User Answer</th><th class=\"text-xl text-center\">Score</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 28)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -395,7 +395,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame11\"></form><tbody id=\"minigame11\"></tbody></table></div><div class=\"w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4\"><p class=\"text-2xl\">Minigame 12 Statistics</p><table class=\"table table-zebra text-xl\"><thead><tr><th class=\"text-xl\">Question</th><th class=\"text-xl text-center\">Correct Answer</th><th class=\"text-xl text-center\">User Answer</th><th class=\"text-xl text-center\">Score</th></tr></thead><form hx-get=\"")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 29)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -403,15 +403,7 @@ func StudentScores(firstname string, lastname string, userID string) templ.Compo
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-trigger=\"load\" hx-swap=\"outerHTML\" hx-target=\"#minigame12\"></form><tbody id=\"minigame12\"></tbody></table></div><form hx-get=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s", userID)))))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-swap=\"outerHTML\" hx-target=\"#scores-container1\" hx-trigger=\"load\"></form><div id=\"scores-container1\"></div></div>")
+			templ_7745c5c3_Err = templ.WriteWatchModeString(templ_7745c5c3_Buffer, 30)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

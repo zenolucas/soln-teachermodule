@@ -15,7 +15,7 @@ const (
 	sessionUserKey = "teacher"
 )
 
-var store = sessions.NewCookieStore([]byte("adfadgsdfgsdfhopethisworks"))
+var store = sessions.NewCookieStore([]byte("0D~N4)H1iIOC6gx+e|[J3IJA[U%H~n)"))
 
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, auth.Login())
