@@ -105,6 +105,6 @@ func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
 	session, _ := store.Get(r, sessionUserKey)
 	session.Values["authenticated"] = false
 	session.Save(r, w)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 	return nil
 }
