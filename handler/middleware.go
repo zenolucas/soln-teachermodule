@@ -16,7 +16,7 @@ func WithAuth(next http.Handler) http.Handler {
 
 		if !session.Values["authenticated"].(bool) {
 			path := r.URL.Path
-			hxRedirect(w, r, "/?to"+path)
+			hxRedirect(w, r, "/login?to"+path)
 			return
 		}
 
