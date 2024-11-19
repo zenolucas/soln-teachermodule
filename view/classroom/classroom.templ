@@ -1,6 +1,7 @@
 package classroom
 
 import "soln-teachermodule/view/layout"
+import "fmt"
 
 templ Classroom(classroomID string) {
 @layout.App(true, false) {
@@ -85,8 +86,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
-								<a href="/minigame?minigameID=1" class="btn btn-primary text-white">Edit Questions</a>
-								<a href="/statistics/fraction?minigameID=1" class="btn btn-primary text-white">View Statistics</a>
+								<a target="_blank" href={ templ.URL(fmt.Sprintf("/minigame?minigameID=1&classroomID=%s", classroomID))} class="btn btn-primary text-white">Edit Questions</a>
+								<a target="_blank" href={ templ.URL(fmt.Sprintf("/statistics/fraction?minigameID=1&classroomID=%s", classroomID))} class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -99,8 +100,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This mini-game presents the player with a simple addition problem where the fractions are provided, and the player must input the answer.
 							</p>
-							<a href="/minigame?minigameID=2" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=2" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=2" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=2" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -113,8 +114,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level simulates word problems, where players are presented with a problem statement. They must analyze the statement, input the fractions, and solve for the correct answer.
 							</p>
-							<a href="/minigame?minigameID=3" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=3" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=3" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=3" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -127,8 +128,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level simulates word problems, where players are presented with a problem statement. They must analyze the statement, input the fractions, and solve for the correct answer.
 							</p>
-							<a href="/minigame?minigameID=4" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=4" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=4" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=4" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -141,8 +142,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
-							<a href="/minigame?minigameID=5" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/quiz?minigameID=5" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=5" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/quiz?minigameID=5" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -159,8 +160,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
-							<a href="/minigame?minigameID=6" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=6" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=6" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=6" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -173,8 +174,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
-							<a href="/minigame?minigameID=7" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=7" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=7" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=7" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -187,8 +188,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
-							<a href="/minigame?minigameID=8" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=8" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=8" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=8" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -201,8 +202,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level presents the player with a simple subtraction problem where the fractions are provided, and the player must input the answer.
 							</p>
-							<a href="/minigame?minigameID=9" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=9" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=9" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=9" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -216,8 +217,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level simulates word problems, where players are presented with a problem statement. They must analyze the statement, input the fractions, and solve for the correct answer.
 							</p>
-							<a href="/minigame?minigameID=10" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/fraction?minigameID=10" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=10" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/fraction?minigameID=10" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -230,8 +231,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 								This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
-							<a href="/minigame?minigameID=11" class="btn btn-primary text-white">Edit Questions</a>
-							<a href="/statistics/quiz?minigameID=11" class="btn btn-primary text-white">View Statistics</a>
+							<a target="_blank" href="/minigame?minigameID=11" class="btn btn-primary text-white">Edit Questions</a>
+							<a target="_blank" href="/statistics/quiz?minigameID=11" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
@@ -248,8 +249,8 @@ templ Classroom(classroomID string) {
 							<p class="py-6 text-xl">
 							The final test before the hero saves the world. This level simulates a multiple-choice test format, where players are presented with a question and four answer choices, and they must select one correct option.
 							</p>
-								<a href="/minigame?minigameID=12" target="_blank" rel="noopener noreferrer" class="btn btn-primary text-white">Edit Questions</a>
-								<a href="/statistics/quiz?minigameID=12" class="btn btn-primary text-white">View Statistics</a>
+								<a target="_blank" href="/minigame?minigameID=12" target="_blank" rel="noopener noreferrer" class="btn btn-primary text-white">Edit Questions</a>
+								<a target="_blank" href="/statistics/quiz?minigameID=12" class="btn btn-primary text-white">View Statistics</a>
 						</div>
 					</div>
 				</div>
