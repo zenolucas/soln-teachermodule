@@ -1,0 +1,116 @@
+
+how to options
+
+<select class="select select-bordered w-full max-w-xs">
+	<option>Option 1</option> 
+	<option>Option 2</option>
+	<option>Option 3</option>
+	<option>Option 4</option>
+</select>
+
+how to card
+<div class="card bg-base-100 w-96 shadow-xl h-80">
+					<figure>
+						<img
+							src="https://gstatic.com/classroom/themes/Math.jpg"
+							alt="Shoes"
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">Shoes!</h2>
+						<p>If a dog chews shoes whose shoes does he choose?</p>
+						<div class="card-actions justify-end">
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+				<div class="card bg-base-100 w-96 shadow-xl h-80">
+					<figure>
+						<img
+							src="https://gstatic.com/classroom/themes/Math.jpg"
+							alt="Shoes"
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">Shoes!</h2>
+						<p>If a dog chews shoes whose shoes does he choose?</p>
+						<div class="card-actions justify-end">
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+				<div class="card bg-base-100 w-96 shadow-xl h-80">
+					<figure>
+						<img
+							src="https://gstatic.com/classroom/themes/Math.jpg"
+							alt="Shoes"
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">Shoes!</h2>
+						<p>If a dog chews shoes whose shoes does he choose?</p>
+						<div class="card-actions justify-end">
+							<button class="btn btn-primary">Open</button>
+						</div>
+					</div>
+				</div>
+
+
+Tabs w/ banner
+
+<div role="tablist" class="tabs tabs-lifted tabs-lg ml-4">
+					<input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Overview" checked="checked" />
+					<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						<div class="hero min-h-48" style="background-image: url(http://localhost:3000/public/images/bg/soln-banner.png); rounded-lg">
+							<div class="hero-overlay bg-opacity-60"></div>
+							<div class="hero-content text-neutral-content flex-col lg:flex-row items-start">
+								<div class="max-w-md">
+									<h1 class="mb-5 text-5xl font-bold">Hello there</h1>
+									<p class="mb-5">
+										Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem
+										quasi. In deleniti eaque aut repudiandae et a id nisi.
+									</p>
+									<button class="btn btn-primary">Get Started</button>
+								</div>
+							</div>
+						</div>
+					</div>
+					<input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Levels"/>
+					<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						Levels
+					</div>
+					<input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Players"/>
+					<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						Players
+					</div>
+					<input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="Statistics"/>
+					<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						Statistics
+					</div>
+				</div>
+
+
+how to hero
+
+				<div class="hero min-h-48 mx-1"	style="background-image: url(http://localhost:3000/public/images/bg/soln-banner.png);">
+					<div class="hero-overlay bg-opacity-60"></div>
+					<div class="hero-content text-neutral-content flex-col lg:flex-row items-start">
+						<div class="max-w-md">
+							<h1 class="mb-5 text-5xl font-bold">Hello there</h1>
+							<p class="mb-5">
+								Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi
+								exercitationem
+								quasi. In deleniti eaque aut repudiandae et a id nisi.
+							</p>
+							<button class="btn btn-primary">Get Started</button>
+						</div>
+					</div>
+				</div>
+		
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	fmt.Print("classroomID is : ", session.Values["classroomID"])	
+
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	session, _ := store.Get(r, sessionUserKey)
+	session.Values["classroomID"] = classroomID

@@ -1,7 +1,7 @@
 ## Sol'n Teacher Portal
 
 Welcome to the Sol'n Teacher Portal! This web application is a part of the Sol'n educational game project designed to help Grade 6 students at Saint Louis University Basic Education School learn fractions. Teachers use this portal to create and manage interactive fraction-based minigames and quizzes for students. The portal seamlessly connects to the Sol'n student game application, providing a unified experience for both teachers and students.
-
+j
 # Features
 
     Teacher Management: Allows teachers to create, edit, and delete fraction minigames and quizzes.

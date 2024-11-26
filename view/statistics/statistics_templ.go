@@ -36,7 +36,7 @@ func FractionStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/fraction/question/chart?minigameID=%s", minigameID)))))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/fraction/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID)))))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -83,7 +83,7 @@ func WordedStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/worded/question/chart?minigameID=%s", minigameID)))))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/worded/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID)))))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -130,7 +130,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s", minigameID))
+			var templ_7745c5c3_Var7 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var7)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -139,7 +139,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s", minigameID))
+			var templ_7745c5c3_Var8 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var8)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -164,7 +164,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/quiz/score?minigameID=%s", minigameID)))))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/quiz/score?minigameID=%s&classroomID=%s", minigameID, classroomID)))))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -197,7 +197,7 @@ func QuizStatistics(classroomID string, minigameID string) templ.Component {
 }
 
 // let this be for Quiz Question Statistics
-func QuestionStatistics(minigameID string) templ.Component {
+func QuestionStatistics(minigameID string, classroomID string) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -220,7 +220,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var11 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s", minigameID))
+			var templ_7745c5c3_Var11 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var11)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -229,7 +229,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s", minigameID))
+			var templ_7745c5c3_Var12 templ.SafeURL = templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var12)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -238,7 +238,7 @@ func QuestionStatistics(minigameID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s", minigameID)))))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ.URL(fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID)))))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
