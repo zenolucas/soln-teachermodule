@@ -44,10 +44,16 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
+	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	fractions, err := database.GetFractionQuestions(minigameID)
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	fmt.Print("minigameID = ", minigameID)
+	fmt.Print("classroomID= ", classroomID)
+
+	fractions, err := database.GetFractionQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -59,12 +65,14 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 				<form action="/delete/fractions" method="POST">
 					<input type="hidden" name="question_id" value="%d" />
 					<input type="hidden" name="minigame_id" value= "%d" />
+					<input type="hidden" name="classroom_id" value= "%d" />
 					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 				</form>
 			</div>
 			<form action="/update/fractions" method="POST">
 				<input type="hidden" name="question_id" value= "%d" />
 				<input type="hidden" name="minigame_id" value= "%d" />
+				<input type="hidden" name="classroom_id" value= "%d" />
 				<div class="flex gap-4 mt-4">
 					<div class="label mr-4">
 						<span class="label-text text-white">Fraction 1 Numerator:</span>
@@ -92,52 +100,62 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, fraction.QuestionID, minigameID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 
 	return nil
 }
 
 func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigame_id")
-	err := database.AddFractionQuestions(w, r)
+	// get minigameID
+	minigameID := r.FormValue("minigameID")
+	// get classroomID
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	err := database.AddFractionQuestions(w, r, classroomID)
 	if err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
-	// get minigameID here
+	// get classroomID
+	classroomIDStr := r.FormValue("classroom_id")
+	// get minigameID
 	minigameID := r.FormValue("minigame_id")
 	if err := database.UpdateFractions(w, r); err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
 	minigameID := r.FormValue("minigame_id")
 	questionID := r.FormValue("question_id")
+	classroomIDStr := r.FormValue("classroom_id")
 	fmt.Print("we got minigameID", minigameID)
 	fmt.Print("we got questionID", questionID)
 	if err := database.DeleteFractions(minigameID, questionID); err != nil {
 		return err
 	}
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
-	fmt.Print("we got: ", minigameIDStr)
+	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	fractions, err := database.GetWordedQuestions(minigameID)
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	fractions, err := database.GetWordedQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -148,13 +166,15 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			<div class="flex justify-end">
 				<form action="/delete/worded" method="POST">
 					<input type="hidden" name="question_id" value="%d" />
-					<input type="hidden" name="minigame_id" value= "%d" />
+					<input type="hidden" name="minigameID" value= "%d" />
+					<input type="hidden" name="classroomID" value= "%d" />
 					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 				</form>
 			</div>
 			<form action="/update/worded" method="POST">
 				<input type="hidden" name="question_id" value= "%d" />
-				<input type="hidden" name="minigame_id" value= "%d" />
+				<input type="hidden" name="minigameID" value= "%d" />
+				<input type="hidden" name="classroomID" value= "%d" />
 				<div class="flex gap-4 mt-4 mb-4">
 					<div class="label mr-16">
 						<span class="label-text text-white">Question Text</span>
@@ -188,50 +208,62 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, fraction.QuestionID, minigameID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 	return nil
 }
 
 func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigame_id")
-	err := database.AddWordedQuestions(w, r)
+	// get minigameID
+	minigameIDStr := r.FormValue("minigameID")
+	// get classroomID
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	err := database.AddWordedQuestions(w, r, classroomID)
 	if err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	// get minigameID here
-	minigameID := r.FormValue("minigame_id")
+	minigameIDStr := r.FormValue("minigameID")
+	// get classroomID
+	classroomIDStr := r.FormValue("classroomID")
 	if err := database.UpdateWordedQuestions(w, r); err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
+	minigameIDStr := r.FormValue("minigameID")
 	questionIDStr := r.FormValue("question_id")
+	classroomIDStr := r.FormValue("classroomID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
 	if err := database.DeleteWorded(minigameID, questionID); err != nil {
 		return err
 	}
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
+	// get minigameID
+	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	// get classroomID
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
-	questions, err := database.GetQuizQuestions(minigameID)
+	questions, err := database.GetQuizQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -241,14 +273,16 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
 				<form action="/delete/mcquestions" method="POST">
-					<input type="hidden" name="question_id" value="%d" />
-					<input type="hidden" name="minigame_id" value= "%d" />
+					<input type="hidden" name="questionID" value="%d" />
+					<input type="hidden" name="minigameID" value= "%d" />
+					<input type="hidden" name="classroomID" value= "%d" />
 					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 				</form>
 			</div>
 			<form action="/update/mcquestions" method="POST">
-				<input type="hidden" name="minigame_id" value="%d" />
-				<input type="hidden" name="question_id" value= "%d" />
+				<input type="hidden" name="minigameID" value="%d" />
+				<input type="hidden" name="questionID" value= "%d" />
+				<input type="hidden" name="classroomID" value= "%d" />
 				<span class="label-text text-white">Question %d:</span>
 				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-3/4 text-lg" />
 				<div class="flex gap-4 mt-4">
@@ -293,7 +327,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, question.QuestionID, minigameID, minigameID, question.QuestionID, i+1, question.QuestionText,
+		`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, i+1, question.QuestionText,
 			question.Choices[0].ChoiceText, question.Choices[0].ChoiceID,
 			question.Choices[1].ChoiceText, question.Choices[1].ChoiceID,
 			question.Choices[2].ChoiceText, question.Choices[2].ChoiceID,
@@ -315,29 +349,36 @@ func getCorrectAnswer(isCorrect bool) string {
 }
 
 func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigame_id")
-	err := database.AddMCQuestions(w, r)
+	// get minigameID
+	minigameIDStr := r.FormValue("minigameID")
+	// get classroomID
+	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	err := database.AddMCQuestions(w, r, classroomID)
 	if err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigame_id")
+	minigameIDStr := r.FormValue("minigameID")
+	classroomIDStr := r.FormValue("classroomID")
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }
 
 func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
-	questionIDStr := r.FormValue("question_id")
+	minigameIDStr := r.FormValue("minigameID")
+	questionIDStr := r.FormValue("questionID")
+	classroomIDStr := r.FormValue("classroomID")
 
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
@@ -346,6 +387,6 @@ func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr)
+	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
 	return nil
 }

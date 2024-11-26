@@ -95,9 +95,9 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	// get string value of classroomID
-	classroomIDString := r.FormValue("classroomID")
+	classroomIDStr := r.FormValue("classroomID")
 	// convert to int
-	classroomID, err := strconv.Atoi(classroomIDString)
+	classroomID, err := strconv.Atoi(classroomIDStr)
 	if err != nil {
 		return err
 	}
@@ -114,32 +114,33 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 				<th>%d</th>
 				<td>%s %s</td>
 				<td class="flex justify-end">
-					<a href="/student/score?userID=%s" class="btn btn-primary text-white mr-2">
+					<a target="_blank" href="/student/score?userID=%s" class="btn btn-primary text-white mr-2">
 						view scores
 					</a>
 					<form hx-post="/delete/student">
 						<input type="hidden" name="studentID" value="%s" />
+						<input type="hidden" name="classroomID" value="%s" />
 						<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 					</form>
 				</td>
 			</tr>	
-		`, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID)
+		`, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID, classroomIDStr)
 	}
 	return nil
 }
 
 func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.FormValue("studentID")
+	classroomIDStr := r.FormValue("classroomID")
 	studentID, _ := strconv.Atoi(studentIDStr)
 	fmt.Print("we got studentID ")
 	if err := database.UnenrollStudent(studentID); err != nil {
 		return err
 	}
 	fmt.Print("delete success!")
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"]
+
 	url := "/classroom?classroom_id="
-	url += classroomID.(string)
+	url += classroomIDStr
 	hxRedirect(w, r, url)
 	return nil
 }
@@ -184,6 +185,7 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 	studentIDs := r.Form["userID"]
 
 	database.AddStudents(studentIDs, classroomID)
+
 	return nil
 }
 

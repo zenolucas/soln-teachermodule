@@ -20,12 +20,8 @@ import (
 
 func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	// get classroomID from session
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"].(int)
-	classroomIDStr := strconv.Itoa(classroomID)
+	// get classroomID
+	classroomIDStr := r.URL.Query().Get("classroomID")
 
 	// get minigameID
 	minigameID := r.URL.Query().Get("minigameID")
@@ -63,18 +59,16 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	// get classroomID from session values
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"].(int)
-
 	// get minigameID
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	// get classroomID
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
-	questions, err := database.GetFractionQuestions(minigameID)
+	questions, err := database.GetFractionQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -157,8 +151,6 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 
-	fmt.Print("on fractionrepsonsestats: we got : ", statistics)
-
 	// Set headers and send the response
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -167,18 +159,16 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 }
 
 func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	// get classroomID from session values
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"].(int)
-
-	// get minigameID
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
+	// get minigameID
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
-	questions, err := database.GetWordedQuestions(minigameID)
+	questions, err := database.GetWordedQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -261,8 +251,6 @@ func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
-	fmt.Print("on fractionrepsonsestats: we got : ", statistics)
-
 	// Set headers and send the response
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -296,22 +284,22 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 
 func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
-	return render(w, r, statistics.QuestionStatistics(minigameIDStr))
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	return render(w, r, statistics.QuestionStatistics(minigameIDStr, classroomIDStr))
 }
 
 func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	// get classroomID from session values
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"].(int)
-
 	// get minigameID
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
+	// get classroomID
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.MultipleChoiceQuestion
-	questions, err := database.GetQuizQuestions(minigameID)
+	questions, err := database.GetQuizQuestions(minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -555,10 +543,9 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	// get classroomID from session
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	classroomID := session.Values["classroomID"].(int)
+	// get classroomID
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	studentScores, err := database.GetStudentScores(classroomID, minigameID)
 	if err != nil {
