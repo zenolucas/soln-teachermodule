@@ -8,7 +8,8 @@ templ Fractions(minigameID string, classroomID string) {
 <div>
 </div>
 <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
-     <input type="hidden" name="minigame_id" value={ minigameID } />
+     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Simple Fraction Questions</h1>
@@ -19,14 +20,15 @@ templ Fractions(minigameID string, classroomID string) {
      </div>
 </div>
 
-@CreateFractionQuestionForm(FractionQuestionParams{}, minigameID)
+@CreateFractionQuestionForm(FractionQuestionParams{}, minigameID, classroomID)
 }
 }
 
 templ Worded(minigameID string, classroomID string) {
 @layout.App(true, false) {
 <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
-     <input type="hidden" name="minigame_id" value={ minigameID } />
+     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Worded Fraction Questions</h1>
@@ -35,26 +37,27 @@ templ Worded(minigameID string, classroomID string) {
      </div>
 </div>
 
-@CreateWordedQuestionForm(WordedQuestionParams{}, minigameID)
+@CreateWordedQuestionForm(WordedQuestionParams{}, minigameID, classroomID)
 }
 }
 
 templ Quiz(minigameID string, classroomID string) {
 @layout.App(true, false) {
 <form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
-     <input type="hidden" name="minigame_id" value={ minigameID } />
+     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Quiz Questions (Multiple Choice)</h1>
+     <div class="flex justify-center mt-4">
+          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
+     </div>
      <div id="questions-container">
      </div>
 </div>
 
-<div class="flex justify-center mt-4">
-     <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
-</div>
 
-@CreateMCQuestionForm(QuestionParams{}, minigameID)
+@CreateMCQuestionForm(QuestionParams{}, minigameID, classroomID)
 }
 }
 
@@ -65,9 +68,10 @@ type FractionQuestionParams struct {
      Fraction2_Denominator string
 }
 
-templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string) {
+templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string, classroomID string) {
      <form hx-post="/add/fractionquestions" hx-swap="outerHTML">
-          <input type="hidden" name="minigame_id" value={ minigameID } />
+          <input type="hidden" name="minigameID" value={ minigameID } />
+          <input type="hidden" name="classroomID" value={ classroomID } />
           <input type="checkbox" id="my_modal_6" class="modal-toggle" />
           <div class="modal" role="dialog">
                <div class="modal-box">
@@ -109,9 +113,10 @@ type WordedQuestionParams struct {
      Fraction2_Denominator string
 }
 
-templ CreateWordedQuestionForm(data WordedQuestionParams, minigameID string) {
+templ CreateWordedQuestionForm(data WordedQuestionParams, minigameID string, classroomID string) {
      <form hx-post="/add/wordedquestions" hx-swap="outerHTML">
-          <input type="hidden" name="minigame_id" value={ minigameID } />
+          <input type="hidden" name="minigameID" value={ minigameID } />
+          <input type="hidden" name="classroomID" value={ classroomID } />
           <input type="checkbox" id="my_modal_6" class="modal-toggle" />
           <div class="modal" role="dialog">
                <div class="modal-box">
@@ -159,9 +164,10 @@ Option3 string
 Option4 string
 }
 
-templ CreateMCQuestionForm(data QuestionParams, minigameID string) {
+templ CreateMCQuestionForm(data QuestionParams, minigameID string, classroomID string) {
 <form hx-post="/add/mcquestions" hx-swap="outerHTML">
-     <input type="hidden" name="minigame_id" value={ minigameID } />
+     <input type="hidden" name="minigameID" value={ minigameID } />
+     <input type="hidden" name="classroomID" value={ classroomID } />
      <input type="checkbox" id="my_modal_6" class="modal-toggle" />
      <div class="modal" role="dialog">
           <div class="modal-box">

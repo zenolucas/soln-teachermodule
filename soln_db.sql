@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS save_states (
 
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
+    classroom_id INT,
     minigame_id INT,
     question_text VARCHAR(500),
     fraction1_numerator INT NOT NULL,
@@ -87,6 +88,7 @@ CREATE TABLE IF NOT EXISTS fraction_responses (
 
 CREATE TABLE IF NOT EXISTS multiple_choice_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY, 
+    classroom_id INT,
     minigame_id INT,
     question_text VARCHAR(500) NOT NULL
 );
@@ -125,7 +127,7 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
 
 -- Insert sample teacher data into users table
 INSERT INTO users (username, usertype, password) VALUES
-('teacher1', 'teacher', 'password'),
+('teacher', 'teacher', 'teacher'),
 ('user2', 'teacher', 'pw');
 
 -- insert student data
@@ -167,53 +169,53 @@ INSERT INTO enrollments (classroom_id, student_id) VALUES
 (2, 5);
 
 -- insert data for simple fraction questions
-INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(1, 5, 4, 3, 4),
-(1, 7, 10, 1, 5),
-(1, 9, 5, 4, 5),
-(2, 1, 2, 1, 2),
-(2, 1, 3, 3, 1), 
-(2, 2, 2, 2, 2);
+INSERT INTO fraction_questions (minigame_id, classroom_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(1, 1, 5, 4, 3, 4),
+(1, 1, 7, 10, 1, 5),
+(1, 1, 9, 5, 4, 5),
+(2, 1, 1, 2, 1, 2),
+(2, 1, 1, 3, 3, 1), 
+(2, 1, 2, 2, 2, 2);
 
 -- insert sample data for minigames 6, 7, 8, 9 
-INSERT INTO fraction_questions (minigame_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(6, 2, 4, 1, 4),
-(6, 3, 4, 2, 4),
-(6, 4, 5, 3, 5),
-(7, 2, 3, 1, 3),
-(7, 3, 3, 2, 3), 
-(7, 2, 7, 1, 7),
-(8, 2, 4, 1, 4),
-(8, 2, 3, 1, 3), 
-(8, 2, 4, 1, 4),
-(9, 4, 9, 3, 9),
-(9, 4, 5, 3, 5), 
-(9, 5, 7, 4, 7);
+INSERT INTO fraction_questions (minigame_id, classroom_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(6, 1, 2, 4, 1, 4),
+(6, 1, 3, 4, 2, 4),
+(6, 1, 4, 5, 3, 5),
+(7, 1, 2, 3, 1, 3),
+(7, 1, 3, 3, 2, 3), 
+(7, 1, 2, 7, 1, 7),
+(8, 1, 2, 4, 1, 4),
+(8, 1, 2, 3, 1, 3), 
+(8, 1, 2, 4, 1, 4),
+(9, 1, 4, 9, 3, 9),
+(9, 1, 4, 5, 3, 5), 
+(9, 1, 5, 7, 4, 7);
 
 -- insert data for worded fraction questions
-INSERT INTO fraction_questions (minigame_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
-(3, "what is 2/4 + 2/4?", 2, 4, 2, 4),
-(3, "what is 7/10 + 1/5?", 7, 10, 1, 5),
-(3, "what is 9/5 + 4/5", 9, 5, 4, 5),
-(4, "what is 3/4 + 3/4?", 3, 4, 3, 4),
-(4, "what is 8/10 + 2/5?", 8, 10, 2, 5),
-(4, "what is 8/5 + 3/5", 8, 5, 3, 5),
-(10, "what is 6/10 - 3/10?", 6, 10, 3, 10),
-(10, "what is 8/10 - 2/10?", 8, 10, 2, 10),
-(10, "what is 3/5 - 1/5", 3, 5, 1, 5);
+INSERT INTO fraction_questions (minigame_id, classroom_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator) VALUES
+(3, 1, "what is 2/4 + 2/4?", 2, 4, 2, 4),
+(3, 1, "what is 7/10 + 1/5?", 7, 10, 1, 5),
+(3, 1, "what is 9/5 + 4/5", 9, 5, 4, 5),
+(4, 1, "what is 3/4 + 3/4?", 3, 4, 3, 4),
+(4, 1, "what is 8/10 + 2/5?", 8, 10, 2, 5),
+(4, 1, "what is 8/5 + 3/5", 8, 5, 3, 5),
+(10, 1, "what is 6/10 - 3/10?", 6, 10, 3, 10),
+(10, 1, "what is 8/10 - 2/10?", 8, 10, 2, 10),
+(10, 1, "what is 3/5 - 1/5", 3, 5, 1, 5);
 
 -- sample data for quiz, minigame 5
-INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES 
-(5, 'What is 1/2 + 1/2 ?'),
-(5, 'What is 1/3 + 1/3 ?'),
-(5, 'What is 1/4 + 1/4 ?'),
-(5, 'What is 1/5 + 1/5 ?'),
-(5, 'What is 1/6 + 1/6 ?'),
-(5, 'What is 1/7 + 1/7 ?'),
-(5, 'What is 1/8 + 1/8 ?'),
-(5, 'What is 1/9 + 1/9 ?'),
-(5, 'What is 1/10 + 1/10 ?'),
-(5, 'What is 1/2 + 1/4 ?');
+INSERT INTO multiple_choice_questions (minigame_id, classroom_id, question_text) VALUES 
+(5, 1, 'What is 1/2 + 1/2 ?'),
+(5, 1, 'What is 1/3 + 1/3 ?'),
+(5, 1, 'What is 1/4 + 1/4 ?'),
+(5, 1, 'What is 1/5 + 1/5 ?'),
+(5, 1, 'What is 1/6 + 1/6 ?'),
+(5, 1, 'What is 1/7 + 1/7 ?'),
+(5, 1, 'What is 1/8 + 1/8 ?'),
+(5, 1, 'What is 1/9 + 1/9 ?'),
+(5, 1, 'What is 1/10 + 1/10 ?'),
+(5, 1, 'What is 1/2 + 1/4 ?');
 
 INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES 
 (1, '1/2', FALSE),
@@ -267,17 +269,17 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 (10, '2/3', FALSE);
 
 -- sample data for quiz, minigame 11 
-INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES
-(11, 'What is 1/2 - 1/4?'),
-(11, 'What is 2/3 - 1/3?'),
-(11, 'What is 4/5 - 1/5?'),
-(11, 'What is 2/3 - 1/6?'),
-(11, 'What is 5/8 - 1/8?'),
-(11, 'What is 2/2 - 1/2?'),
-(11, 'What is 5/6 - 1/3?'),
-(11, 'What is 3/4 - 1/4?'),
-(11, 'What is 7/10 - 3/10?'),
-(11, 'What is 3/4 - 1/2?');
+INSERT INTO multiple_choice_questions (minigame_id, classroom_id, question_text) VALUES
+(11, 1, 'What is 1/2 - 1/4?'),
+(11, 1, 'What is 2/3 - 1/3?'),
+(11, 1, 'What is 4/5 - 1/5?'),
+(11, 1, 'What is 2/3 - 1/6?'),
+(11, 1, 'What is 5/8 - 1/8?'),
+(11, 1, 'What is 2/2 - 1/2?'),
+(11, 1, 'What is 5/6 - 1/3?'),
+(11, 1, 'What is 3/4 - 1/4?'),
+(11, 1, 'What is 7/10 - 3/10?'),
+(11, 1, 'What is 3/4 - 1/2?');
 
 INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES
 (11, '1/2', FALSE),
@@ -332,17 +334,17 @@ INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUE
 
 
 -- sample data for quiz, minigame 12
-INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES
-(12, 'What is 1/2 + 1/4?'),
-(12, 'What is 2/3 - 1/3?'),
-(12, 'What is 1/4 + 1/4?'),
-(12, 'What is 2/3 + 1/6?'),
-(12, 'What is 5/8 - 1/8?'),
-(12, 'What is 2/2 - 1/2?'),
-(12, 'What is 1/3 + 1/3?'),
-(12, 'What is 3/4 - 1/4?'),
-(12, 'What is 1/2 + 1/4?'),
-(12, 'What is 3/4 - 1/2?');
+INSERT INTO multiple_choice_questions (minigame_id, classroom_id, question_text) VALUES
+(12, 1, 'What is 1/2 + 1/4?'),
+(12, 1, 'What is 2/3 - 1/3?'),
+(12, 1, 'What is 1/4 + 1/4?'),
+(12, 1, 'What is 2/3 + 1/6?'),
+(12, 1, 'What is 5/8 - 1/8?'),
+(12, 1, 'What is 2/2 - 1/2?'),
+(12, 1, 'What is 1/3 + 1/3?'),
+(12, 1, 'What is 3/4 - 1/4?'),
+(12, 1, 'What is 1/2 + 1/4?'),
+(12, 1, 'What is 3/4 - 1/2?');
 
 INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES
 (21, '1/2', FALSE),

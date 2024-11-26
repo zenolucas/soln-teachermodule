@@ -113,7 +113,8 @@ func HandleGetGameFractions(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID int `json"MinigameID"`
+		MinigameID  int `json:"minigameID"`
+		ClassroomID int `json:"classroomID"`
 	}
 
 	var data Data
@@ -125,7 +126,7 @@ func HandleGetGameFractions(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("at get fractions, we got minigame id ", data.MinigameID)
 
-	fractions, err := database.GetFractionQuestions(data.MinigameID)
+	fractions, err := database.GetFractionQuestions(data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -149,7 +150,8 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID int `json"MinigameID"`
+		MinigameID  int `json:"minigame_id"`
+		ClassroomID int `json:"classroom_id"`
 	}
 
 	var data Data
@@ -161,7 +163,7 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("we got minigameID ", data.MinigameID)
 
-	questions, err := database.GetWordedQuestions(data.MinigameID)
+	questions, err := database.GetWordedQuestions(data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -185,7 +187,8 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID int `json"MinigameID"`
+		MinigameID  int `json:"minigame_id"`
+		ClassroomID int `json:"classroom_id"`
 	}
 
 	var data Data
@@ -195,7 +198,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	questions, err := database.GetQuizQuestions(data.MinigameID)
+	questions, err := database.GetQuizQuestions(data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}

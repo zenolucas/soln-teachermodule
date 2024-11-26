@@ -351,12 +351,10 @@ func GetClassrooms(teacherID int) ([]types.Classroom, error) {
 	return classrooms, nil
 }
 
-func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
+func GetFractionQuestions(minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
 	var fractions []types.FractionQuestion
 
-	fmt.Print("we got minigame ID right? ", minigame_id)
-
-	rows, err := db.Query("SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
@@ -375,8 +373,8 @@ func GetFractionQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	return fractions, nil
 }
 
-func AddFractionQuestions(w http.ResponseWriter, r *http.Request) error {
-	MinigameIDStr := r.FormValue("minigame_id")
+func AddFractionQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
+	MinigameIDStr := r.FormValue("minigameID")
 	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
 	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
 	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
@@ -388,8 +386,8 @@ func AddFractionQuestions(w http.ResponseWriter, r *http.Request) error {
 	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
 	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?, ?)",
-		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID)
+	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?)",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -431,7 +429,7 @@ func DeleteFractions(minigameID string, questionID string) error {
 	return nil
 }
 
-func GetWordedQuestions(minigame_id int) ([]types.FractionQuestion, error) {
+func GetWordedQuestions(minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
 	var questions []types.FractionQuestion
 
 	// get questiontext and correct answer
@@ -452,22 +450,24 @@ func GetWordedQuestions(minigame_id int) ([]types.FractionQuestion, error) {
 	return questions, nil
 }
 
-func AddWordedQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
+func AddWordedQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
+	// get minigameID
+	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+
 	questionText := r.FormValue("question_text")
 	fraction1NumeratorStr := r.FormValue("fraction1_numerator")
 	fraction1DenominatorStr := r.FormValue("fraction1_denominator")
 	fraction2NumeratorStr := r.FormValue("fraction2_numerator")
 	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
 
-	minigameID, _ := strconv.Atoi(minigameIDStr)
 	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
 	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
 	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
 	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID)
+	_, err := db.Exec("INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -510,11 +510,10 @@ func DeleteWorded(minigameID int, questionID int) error {
 	return nil
 }
 
-func GetQuizQuestions(minigameID int) ([]types.MultipleChoiceQuestion, error) {
+func GetQuizQuestions(minigame_id int, classroom_id int) ([]types.MultipleChoiceQuestion, error) {
 	var questions []types.MultipleChoiceQuestion
-	fmt.Print("we got minigame ID: ", minigameID)
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?", minigameID)
+	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
@@ -551,9 +550,9 @@ func GetQuizQuestions(minigameID int) ([]types.MultipleChoiceQuestion, error) {
 	return questions, nil
 }
 
-func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	MinigameIDStr := r.FormValue("minigame_id")
-	minigameID, _ := strconv.Atoi(MinigameIDStr)
+func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
+	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	question := types.MultipleChoiceQuestion{
 		QuestionText: r.FormValue("question_text"),
@@ -568,7 +567,7 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	correctAnswer := r.FormValue("correct_answer")
 
 	// first insert question_text without the correct_answer id
-	result, err := db.Exec(`INSERT INTO multiple_choice_questions (minigame_id, question_text) VALUES (?, ?)`, minigameID, question.QuestionText)
+	result, err := db.Exec(`INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, question.QuestionText)
 	if err != nil {
 		return err
 	}
@@ -594,12 +593,12 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			}
 		}
 	}
-
-	// insert choice_id of correct_answer into table
-	_, err = db.Exec(`INSERT INTO multiple_choice_questions (correct_answer) VALUES (?)`, correct_answer_id)
-	if err != nil {
-		return err
-	}
+	// // insert choice_id of correct_answer into table
+	// _, err = db.Exec(`INSERT INTO multiple_choice_questions (correct_answer) VALUES (?)`, correct_answer_id)
+	// if err != nil {
+	// 	return err
+	// }
+	fmt.Print(correct_answer_id)
 
 	return nil
 }
