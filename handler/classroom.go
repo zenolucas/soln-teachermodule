@@ -165,11 +165,35 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 	for _, student := range students {
 		fmt.Fprintf(w, `
 			<tr>
-				<td> <input type="checkbox" name="userID" value="%s" class="itemCheckbox"></input></td>
+				<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item"/></td>
 				<td>%s %s</td>
 			</tr>	
 		`, student.UserID, student.Firstname, student.Lastname)
 	}
+
+	fmt.Fprintf(w, `
+	  <script>
+	    // script for the select all checkbox
+		// Get references to the "Select All" checkbox and the individual checkboxes
+		const selectAllCheckbox = document.getElementById('select-all');
+		const checkboxes = document.querySelectorAll('.checkbox-item');
+
+		// Function to handle the "Select All" checkbox toggle
+		selectAllCheckbox.addEventListener('change', () => {
+		checkboxes.forEach(checkbox => {
+			checkbox.checked = selectAllCheckbox.checked;
+		});
+		});
+
+		// Function to update "Select All" based on individual checkbox state
+		checkboxes.forEach(checkbox => {
+		checkbox.addEventListener('change', () => {
+			selectAllCheckbox.checked = [...checkboxes].every(cb => cb.checked);
+		});
+		});
+	</script>
+	
+	`)
 
 	return nil
 }
