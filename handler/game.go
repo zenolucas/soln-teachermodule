@@ -87,11 +87,13 @@ func HandleGameRegister(w http.ResponseWriter, r *http.Request) error {
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			response = RegisterResponse{Success: false, ErrorText: "username is already taken"}
 		} else {
+			fmt.Print(err)
 			response = RegisterResponse{Success: false, ErrorText: "register error"}
 		}
 	} else {
 		response = RegisterResponse{Success: true}
 	}
+
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

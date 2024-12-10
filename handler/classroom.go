@@ -210,6 +210,9 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 
 	database.AddStudents(studentIDs, classroomID)
 
+	url := "/classroom?classroom_id="
+	url += classroomIDStr
+	hxRedirect(w, r, url)
 	return nil
 }
 
