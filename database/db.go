@@ -189,7 +189,27 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got data: ", data)
 
-	_, err = db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
+	result, err := db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
+	if err != nil {
+		return err
+	}
+
+	studentID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	// after creating account, create save state 
+	err = CreateSaveState(studentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateSaveState(studentID int64) error {
+	_, err := db.Exec("INSERT INTO save_states (student_id) VALUES (?)", studentID) 
 	if err != nil {
 		return err
 	}
