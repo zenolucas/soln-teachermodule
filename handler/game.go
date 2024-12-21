@@ -94,7 +94,6 @@ func HandleGameRegister(w http.ResponseWriter, r *http.Request) error {
 		response = RegisterResponse{Success: true}
 	}
 
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -127,6 +126,7 @@ func HandleGetGameFractions(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	fmt.Print("at get fractions, we got minigame id ", data.MinigameID)
+	fmt.Print("at get fractions, we got classroom id ", data.ClassroomID)
 
 	fractions, err := database.GetFractionQuestions(data.MinigameID, data.ClassroomID)
 	if err != nil {
@@ -152,8 +152,8 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID  int `json:"minigame_id"`
-		ClassroomID int `json:"classroom_id"`
+		MinigameID  int `json:"minigameID"`
+		ClassroomID int `json:"classroomID"`
 	}
 
 	var data Data
@@ -189,8 +189,8 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID  int `json:"minigame_id"`
-		ClassroomID int `json:"classroom_id"`
+		MinigameID  int `json:"minigameID"`
+		ClassroomID int `json:"classroomID"`
 	}
 
 	var data Data
@@ -211,7 +211,6 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
-	fmt.Print("getsavedata is triggered!")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -237,10 +236,16 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 
 	var response types.SaveData
 
-	response, error := database.GetSavedData(data.StudentID)
-	if error != nil {
-		return err
+	response, saveError := database.GetSavedData(data.StudentID)
+	if saveError != nil {
+		fmt.Print("a get saved data error has occurred!")
+		fmt.Print(saveError)
+		return saveError
 	}
+
+	fmt.Print("getsavedata is triggered!")
+
+	fmt.Print(response)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -248,7 +253,7 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func HandlePostSaveData(w http.ResponseWriter, r *http.Request) error {
+func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

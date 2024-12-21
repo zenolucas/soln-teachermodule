@@ -199,7 +199,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// after creating account, create save state 
+	// after creating account, create save state
 	err = CreateSaveState(studentID)
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 }
 
 func CreateSaveState(studentID int64) error {
-	_, err := db.Exec("INSERT INTO save_states (student_id) VALUES (?)", studentID) 
+	_, err := db.Exec("INSERT INTO save_states (student_id) VALUES (?)", studentID)
 	if err != nil {
 		return err
 	}
@@ -875,8 +875,15 @@ func GetSavedData(studentID int) (types.SaveData, error) {
 	}
 
 	// Retrieve all badges
-	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, badge_original_robot FROM save_states WHERE student_id = ?", studentID)
+	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, badge_shell, badge_original_robot FROM save_states WHERE student_id = ?", studentID)
 	err = row.Scan(&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom, &badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall, &badges.Shell, &badges.OriginalRobot)
+	if err != nil {
+		return save_data, err
+	}
+
+	// retrieve actionables
+	row = db.QueryRow("SELECT rock_removed, disable_rock_removed, raket_sneaking_quest_complete, unlock_cave_collision, raket_sword_complete, raket_quest_progress, disable_dead_robot_quest, do_raket_blacksmith_animation, sword_bottom, sword_guard, sword_lower_blade, sword_middle_blade, sword_top_blade, disable_raket_stealing_quest, disable_fresh_dialogue_quest, disable_water_logged_1_quest, disable_water_logged_2_quest, disable_water_logged_3_quest, disable_chip_quest, disable_rat_wizard_training_quest FROM save_states WHERE student_id = ?", studentID)
+	err = row.Scan(&save_data.RockRemoved, &save_data.DisableRockRemoved, &save_data.RaketSneakingQuestComplete, &save_data.UnlockCaveCollision, &save_data.RaketSwordComplete, &save_data.RaketQuestProgress, &save_data.DisableDeadRobotQuest, &save_data.DoRaketBlacksmithAnimation, &save_data.SwordBottom, &save_data.SwordGuard, &save_data.SwordLowerBlade, &save_data.SwordMiddleBlade, &save_data.SwordTopBlade, &save_data.DisableRaketStealingQuest, &save_data.DisableFreshDialogueQuest, &save_data.DisableWaterLogged1Quest, &save_data.DisableWaterLogged2Quest, &save_data.DisableWaterLogged3Quest, &save_data.DisableChipQuest, &save_data.DisableRatWizardTrainingQuest)
 	if err != nil {
 		return save_data, err
 	}
@@ -1068,29 +1075,69 @@ func convertToInterfaceSlice(slice []int) []interface{} {
 func SaveData(data types.SaveData) error {
 
 	_, err := db.Exec(`
-		INSERT INTO save_states (
-			student_id, current_floor, current_quest, saved_scene, vector_x, vector_y, 
-			badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, 
-			badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, 
-			badge_original_robot, first_time_init_floor1, first_time_init_floor2, 
-			first_time_init_floor3, disable_dead_robot_quest, disable_raket_stealing_quest, 
-			disable_fresh_dialogue_quest, disable_water_logged_1_quest, disable_water_logged_2_quest, 
-			disable_water_logged_3_quest, disable_chip_quest, disable_rat_wizard_training_quest
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`,
-		data.StudentID, data.CurrentFloor, data.CurrentQuest, data.SavedScene, data.VectorX, data.VectorY,
+    UPDATE save_states
+    SET 
+        current_floor = ?, 
+        current_quest = ?, 
+        saved_scene = ?, 
+        vector_x = ?, 
+        vector_y = ?, 
+        rock_removed = ?,
+        disable_rock_removed = ?,
+        raket_sneaking_quest_complete = ?,
+        unlock_cave_collision = ?,
+        raket_sword_complete = ?,
+        raket_quest_progress = ?,
+        do_raket_blacksmith_animation = ?,
+        sword_bottom = ?,
+        sword_guard = ?,
+        sword_lower_blade = ?,
+        sword_middle_blade = ?,
+        sword_top_blade = ?,
+        badge_rock = ?, 
+        badge_bowl = ?, 
+        badge_carrot = ?, 
+        badge_cake = ?, 
+        badge_sword = ?, 
+        badge_mushroom = ?, 
+        badge_bucket1 = ?, 
+        badge_flask = ?, 
+        badge_bucket2 = ?, 
+        badge_bucket3 = ?, 
+        badge_crystal_ball = ?, 
+        badge_shell = ?,
+        badge_original_robot = ?, 
+        first_time_init_floor1 = ?, 
+        first_time_init_floor2 = ?, 
+        first_time_init_floor3 = ?, 
+        disable_dead_robot_quest = ?, 
+        disable_raket_stealing_quest = ?, 
+        disable_fresh_dialogue_quest = ?, 
+        disable_water_logged_1_quest = ?, 
+        disable_water_logged_2_quest = ?, 
+        disable_water_logged_3_quest = ?, 
+        disable_chip_quest = ?, 
+        disable_rat_wizard_training_quest = ?
+    WHERE student_id = ?
+`,
+		data.CurrentFloor, data.CurrentQuest, data.SavedScene, data.VectorX, data.VectorY,
+		data.RockRemoved, data.DisableRockRemoved, data.RaketSneakingQuestComplete, data.UnlockCaveCollision,
+		data.RaketSwordComplete, data.RaketQuestProgress, data.DoRaketBlacksmithAnimation, data.SwordBottom,
+		data.SwordGuard, data.SwordLowerBlade, data.SwordMiddleBlade, data.SwordTopBlade,
 		data.PlayerBadges.ShinyRock, data.PlayerBadges.Bowl, data.PlayerBadges.Carrot, data.PlayerBadges.Cake,
 		data.PlayerBadges.Sword, data.PlayerBadges.Mushroom, data.PlayerBadges.Bucket1, data.PlayerBadges.Flask,
-		data.PlayerBadges.Bucket2, data.PlayerBadges.Bucket3, data.PlayerBadges.CrystalBall,
-		data.PlayerBadges.OriginalRobot, data.FirstTimeInitFloor1, data.FirstTimeInitFloor2,
-		data.FirstTimeInitFloor3, data.DisableDeadRobotQuest, data.DisableRaketStealingQuest, data.DisableFreshDialogueQuest,
+		data.PlayerBadges.Bucket2, data.PlayerBadges.Bucket3, data.PlayerBadges.CrystalBall, data.PlayerBadges.Shell,
+		data.PlayerBadges.OriginalRobot, data.FirstTimeInitFloor1, data.FirstTimeInitFloor2, data.FirstTimeInitFloor3,
+		data.DisableDeadRobotQuest, data.DisableRaketStealingQuest, data.DisableFreshDialogueQuest,
 		data.DisableWaterLogged1Quest, data.DisableWaterLogged2Quest, data.DisableWaterLogged3Quest,
 		data.DisableChipQuest, data.DisableRatWizardTrainingQuest,
+		data.StudentID,
 	)
+
 	if err != nil {
 		return err
 	}
 
-	fmt.Print("Insert success!")
+	fmt.Print("Update Save State Success!")
 	return nil
 }
