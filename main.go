@@ -40,7 +40,7 @@ func main() {
 	router.Post("/game/add/statistics/quiz/response", handler.Make(handler.HandleQuizResponse))
 	router.Post("/game/add/statistics/fraction", handler.Make(handler.HandleAddStatisticsFraction))
 	router.Post("/game/getsavedata", handler.Make(handler.HandleGetSaveData))
-	router.Post("/game/postsavedata", handler.Make(handler.HandlePostSaveData))
+	router.Post("/game/postsavedata", handler.Make(handler.HandleUpdateSaveData))
 
 	// then everything below will be grouped with the Auth middleware, and have the user authenticated first
 	// else be redirected to login.

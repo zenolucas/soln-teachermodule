@@ -311,29 +311,6 @@ templ AddStudentsForm(classroomID string) {
 				<tbody id="getunenrolledstudents">
 				</tbody>
 			</table>
-
-			// <script>
-			// 	// Get references to the "Select All" checkbox and the individual checkboxes
-
-
-			// 	const selectAllCheckbox = document.getElementById('select-all');
-			// 	const checkboxes = document.querySelectorAll('.checkbox-item');
-
-			// 	// Function to handle the "Select All" checkbox toggle
-			// 	selectAllCheckbox.addEventListener('change', () => {
-			// 	checkboxes.forEach(checkbox => {
-			// 		checkbox.checked = selectAllCheckbox.checked;
-			// 	});
-			// 	});
-
-			// 	// Function to update "Select All" based on individual checkbox state
-			// 	checkboxes.forEach(checkbox => {
-			// 	checkbox.addEventListener('change', () => {
-			// 		selectAllCheckbox.checked = [...checkboxes].every(cb => cb.checked);
-			// 	});
-			// 	});
-			// </script>
-
 			<div class="modal-action">
 				<label for="modal_add_students" class="btn">Cancel</label>
 				<button type="submit" name="classroomID" value={ classroomID } class="btn btn-secondary">Add</button>
