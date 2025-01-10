@@ -5,13 +5,11 @@ j
 # Features
 
     Teacher Management: Allows teachers to create, edit, and delete fraction minigames and quizzes.
-    Classroom Management: Assign specific quizzes to students and track student progress.
+    Classroom Management: Edit questions from minigames connected to the student module
 
 ![Screenshot from 2025-01-10 09-54-56](https://github.com/user-attachments/assets/da853fed-595b-49db-9a2b-c5047256c4b7)
 ![Screenshot from 2025-01-10 09-55-09](https://github.com/user-attachments/assets/929b3e21-4ccf-4dff-8bb8-171fa202bea8)
 
-    
-    User Authentication: Secure login system with session-based authentication.
     Real-time Student Updates: View live results and performance data from students’ interactions in the Sol'n game.
     
 ![Screenshot from 2025-01-10 09-55-38](https://github.com/user-attachments/assets/7f9b6442-8055-4a15-9e01-03c3b492b76c)
@@ -38,13 +36,9 @@ Install Dependencies: Ensure Go is installed, then install dependencies using:
 
     Set Up the Database:
         Create a MySQL database for Sol'n.
-        Run the SQL script provided in the database directory to set up tables, including users for managing teachers and students.
+        Run the SQL script provided in the database directory to set up db user and db tables.
 
-    Configure Environment Variables: Copy .env.example to .env and set up the environment variables (e.g., DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET).
-
-Session and Token Management: Configure session settings in .env for session storage and expiration:
-
-    SESSION_SECRET=your_secret_key
+    Configure Environment Variables: create .env file and set up the environment variables ( DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET).
 
 Usage
 
