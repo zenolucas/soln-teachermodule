@@ -6,8 +6,16 @@ j
 
     Teacher Management: Allows teachers to create, edit, and delete fraction minigames and quizzes.
     Classroom Management: Assign specific quizzes to students and track student progress.
+
+![Screenshot from 2025-01-10 09-54-56](https://github.com/user-attachments/assets/da853fed-595b-49db-9a2b-c5047256c4b7)
+![Screenshot from 2025-01-10 09-55-09](https://github.com/user-attachments/assets/929b3e21-4ccf-4dff-8bb8-171fa202bea8)
+
+    
     User Authentication: Secure login system with session-based authentication.
     Real-time Student Updates: View live results and performance data from students’ interactions in the Sol'n game.
+    
+![Screenshot from 2025-01-10 09-55-38](https://github.com/user-attachments/assets/7f9b6442-8055-4a15-9e01-03c3b492b76c)
+
     Usability Assessment: Collects post-assessment data for evaluating the portal's usability.
 
 # Technologies Used
