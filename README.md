@@ -16,8 +16,6 @@ j
     
 ![Screenshot from 2025-01-10 09-55-38](https://github.com/user-attachments/assets/7f9b6442-8055-4a15-9e01-03c3b492b76c)
 
-    Usability Assessment: Collects post-assessment data for evaluating the portal's usability.
-
 # Technologies Used
 
     Backend: Go (Golang)
