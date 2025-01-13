@@ -45,7 +45,7 @@ Install Dependencies: Ensure Go is installed, then install dependencies using:
         Create a MySQL database for Sol'n.
         Run the SQL script provided in the database directory to set up db user and db tables.
 
-    Configure Environment Variables: create .env file and set up the environment variables ( DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET).
+    Configure Environment Variables: create .env file and set up the environment variables (HTTP_LISTEN_ADDRESS, DB_USER, DB_PASSWORD, DB_NAME, SESSION_SECRET).
 
 Usage
 
@@ -53,12 +53,7 @@ Usage
 
     go run main.go
 
-    The portal will be available at http://localhost:3000.
-
-    Teacher Portal Interface:
-        Login with your teacher credentials.
-        Manage Minigames and Quizzes: Access the dashboard to create fraction-based minigames.
-        Track Student Progress: View detailed reports on student performance in quizzes and minigames.
+    The portal will be available at http://localhost: [ insert port number / HTTP_LISTEN_ADDRESS ]
 
 Contributing
 
