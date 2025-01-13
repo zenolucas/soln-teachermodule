@@ -14,6 +14,13 @@ j
     
 ![Screenshot from 2025-01-10 09-55-38](https://github.com/user-attachments/assets/7f9b6442-8055-4a15-9e01-03c3b492b76c)
 
+# What 'game' is the portal connected to, I hear you ask?
+Sol'n is a 2D videogame made in the Godot game engine, designed to help elementary students practice operations with fractions.
+![fraction-addition](https://github.com/user-attachments/assets/7aeb414d-a19a-4f81-8ec9-437202ee7167)
+Teachers may also use the game to implement quizzes and assess student's current knowledge of fractions.
+![quiz](https://github.com/user-attachments/assets/94053e66-61c2-40b2-9ad7-57ff1ae65569)
+
+
 # Technologies Used
 
     Backend: Go (Golang)
