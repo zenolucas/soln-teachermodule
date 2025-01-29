@@ -94,8 +94,14 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
-	// get string value of classroomID
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println("Error parsing form:", err)
+		return err
+	}
 	classroomIDStr := r.FormValue("classroomID")
+	fmt.Println("Parsed classroomIDStr:", classroomIDStr)
+
 	// convert to int
 	classroomID, err := strconv.Atoi(classroomIDStr)
 	if err != nil {
@@ -130,6 +136,11 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println("Error parsing form:", err)
+		return err
+	}
 	studentIDStr := r.FormValue("studentID")
 	classroomIDStr := r.FormValue("classroomID")
 	studentID, _ := strconv.Atoi(studentIDStr)

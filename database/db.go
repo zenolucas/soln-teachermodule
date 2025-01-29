@@ -496,8 +496,16 @@ func AddWordedQuestions(w http.ResponseWriter, r *http.Request, classroomID int)
 }
 
 func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigame_id")
-	questionIDStr := r.FormValue("question_id")
+	// parse form to fix bug where the values in request aren't retrieved.
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println("Error parsing form:", err)
+		return err
+	}
+
+	minigameIDStr := r.FormValue("minigameID")
+	classroomIDStr := r.FormValue("classroomID")
+	questionIDStr := r.FormValue("questionID")
 	questionText := r.FormValue("question_text")
 	fraction1NumeratorStr := r.FormValue("fraction1_numerator")
 	fraction1DenominatorStr := r.FormValue("fraction1_denominator")
@@ -505,14 +513,15 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
 
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
 	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
 	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
 	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
 	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
 
-	_, err := db.Exec("UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
-		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID)
+	_, err = db.Exec("UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?",
+		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -632,7 +641,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	// construct choices[]
 	choices := constructChoices(r, correctAnswer)
 
-	questionIDStr := r.FormValue("question_id")
+	questionIDStr := r.FormValue("questionID")
 	questionID, _ := strconv.Atoi(questionIDStr)
 
 	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
