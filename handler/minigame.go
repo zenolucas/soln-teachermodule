@@ -165,14 +165,14 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
 				<form action="/delete/worded" method="POST">
-					<input type="hidden" name="question_id" value="%d" />
+					<input type="hidden" name="questionID" value="%d" />
 					<input type="hidden" name="minigameID" value= "%d" />
 					<input type="hidden" name="classroomID" value= "%d" />
 					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 				</form>
 			</div>
 			<form action="/update/worded" method="POST">
-				<input type="hidden" name="question_id" value= "%d" />
+				<input type="hidden" name="questionID" value= "%d" />
 				<input type="hidden" name="minigameID" value= "%d" />
 				<input type="hidden" name="classroomID" value= "%d" />
 				<div class="flex gap-4 mt-4 mb-4">
@@ -234,6 +234,7 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
 	// get classroomID
 	classroomIDStr := r.FormValue("classroomID")
+
 	if err := database.UpdateWordedQuestions(w, r); err != nil {
 		return err
 	}
@@ -256,6 +257,8 @@ func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
+
+	// fmt.Print("GET MC QUESTIONS IS TRIGGERED")
 	// get minigameID
 	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
