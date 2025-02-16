@@ -3,12 +3,16 @@ package util
 import (
 	"strings"
 	"unicode"
+	"regexp"
 )
 
 
-func IsValidUsername(username string) bool {
-	// validate username, must not have spaces, and limited characters only.
-	return true 
+func ValidateUsername(username string) (string, bool) {
+	matched, _ := regexp.MatchString(`^[a-zA-Z0-9_]+$`, username)
+	if !matched {
+		return "Username must contain only letters, numbers, and underscores, with no spaces.", false
+	}
+	return "", true
 }
 
 // validatePassword checks if the password is strong and meets the criteria:
