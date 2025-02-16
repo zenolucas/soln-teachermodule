@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"soln-teachermodule/database"
+	"soln-teachermodule/util"
 	"soln-teachermodule/view/auth"
-
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 )
@@ -76,7 +76,21 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 		ConfirmPassword: r.FormValue("confirmPassword"),
 	}
 
-	// TODO: username is already taken error
+	fmt.Println("username is : ", credentials.Username)
+
+	errorMessage, validCredentials := util.ValidateUsername(credentials.Username)
+	if validCredentials {
+	errorMessage, validCredentials = util.ValidatePassword(credentials.Password)
+		if !validCredentials {
+			return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{
+				RegisterErrors: errorMessage,
+			}))
+		}
+	} else {
+		return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{
+			RegisterErrors: errorMessage,
+		}))
+	}
 
 	if credentials.Password == credentials.ConfirmPassword {
 		if err := database.RegisterAccount(w, r); err != nil {
