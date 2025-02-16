@@ -6,7 +6,8 @@ import (
 	"regexp"
 )
 
-
+// ValidateUsername checks if a username contains only letters, numbers, and underscores, with no spaces.  
+// It returns an error message if invalid; otherwise, it returns an empty string and true. 
 func ValidateUsername(username string) (string, bool) {
 	matched, _ := regexp.MatchString(`^[a-zA-Z0-9_]+$`, username)
 	if !matched {
