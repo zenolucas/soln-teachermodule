@@ -184,19 +184,21 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		fmt.Print(err.Error())
 		return nil
 	}
 	defer r.Body.Close()
 
 	type Data struct {
-		MinigameID  int `json:"minigameID"`
-		ClassroomID int `json:"classroomID"`
+		MinigameID  int `json:"MinigameID"`
+		ClassroomID int `json:"ClassroomID"`
 	}
 
 	var data Data
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		fmt.Print(err.Error())
 		return nil
 	}
 
@@ -242,10 +244,6 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 		fmt.Print(saveError)
 		return saveError
 	}
-
-	fmt.Print("getsavedata is triggered!")
-
-	fmt.Print(response)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
