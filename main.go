@@ -93,5 +93,9 @@ func main() {
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)
-	log.Fatal(http.ListenAndServe(port, router))
+
+	// Wrap the entire router with CORS
+	wrapped := handler.WithCORS(router)
+
+	log.Fatal(http.ListenAndServe(port, wrapped))
 }
