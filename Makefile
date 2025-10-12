@@ -11,7 +11,7 @@ install:
 	@npm install -D daisyui@latest
 
 css:
-	@tailwindcss -i view/css/app.css -o public/styles.css --watch 
+	@npx tailwindcss -i view/css/app.css -o public/styles.css --watch 
 
 templ:
 	@templ generate --watch --proxy=http://localhost:3000

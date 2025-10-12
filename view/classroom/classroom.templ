@@ -263,6 +263,10 @@ templ Classroom(classroomID string) {
 						hx-target="#getunenrolledstudents">
 						<input type="hidden" name="classroomID" value={ classroomID } />
 					</form>
+
+					<div class="flex justify-center">
+						<label for="modal_add_students" class="btn btn-primary text-white">Add Students</label>
+					</div>
 					<table class="table table-zebra text-xl">
 						<thead>
 							<tr>
@@ -272,16 +276,14 @@ templ Classroom(classroomID string) {
 							</tr>
 						</thead>
 					<!-- get enrolled students -->
-						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents" 
+							hx-vals='{"classroomID": { classroomID }}'>
 							<input type="hidden" name="classroomID" value={ classroomID } />
 						</form>
 							<tbody id="getstudents">
 
 							</tbody>
 					</table>
-					<div class="flex justify-center">
-						<label for="modal_add_students" class="btn btn-primary text-white">Add Students</label>
-					</div>
 				</div>
 				@AddStudentsForm(classroomID)
 			</div>

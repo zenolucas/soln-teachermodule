@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	// "os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
 	"soln-teachermodule/view/home"
 	"strconv"
-	// "github.com/gorilla/sessions"
 )
 
 func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
