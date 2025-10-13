@@ -27,7 +27,6 @@ func WithCORS(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		fmt.Println("CORS middleware hit:", r.Method, r.URL.Path, "Origin:", r.Header.Get("Origin"))
 
 		next.ServeHTTP(w, r)
 	})
