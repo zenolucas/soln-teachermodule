@@ -244,14 +244,8 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 	var students []types.Student
 
-	// get section name given classroomID
-	section, err := GetSection(classroomID)
-	if err != nil {
-		return nil, err
-	}
-
 	// get students given classroomID
-	rows, err := db.Query("SELECT user_id, firstname, lastname FROM users WHERE section = ? AND usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", section, "student", classroomID)
+	rows, err := db.Query("SELECT user_id, firstname, lastname FROM users WHERE usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", "student", classroomID)
 	if err != nil {
 		return nil, err
 	}
