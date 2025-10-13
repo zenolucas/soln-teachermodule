@@ -18,6 +18,7 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
 	}
+	log.Println("HandleGameLogin hit:", r.Method, r.URL.Path)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

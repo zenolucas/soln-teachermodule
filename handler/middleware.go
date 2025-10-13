@@ -3,22 +3,31 @@ package handler
 import (
 	"net/http"
 	"strings"
+	"fmt"
 )
 
-// WithCORS adds CORS headers for local development
+// WithCORS adds CORS headers for local + dev tunnel environments
 func WithCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow from localhost:3000 (adjust if needed)
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		origin := r.Header.Get("Origin")
+
+		// Allow local and Dev Tunnel origins
+		if origin == "http://localhost:3000" ||
+			strings.HasPrefix(origin, "https://fzpj515d-") && strings.HasSuffix(origin, ".asse.devtunnels.ms") {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
+		// Common CORS headers
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		// Handle preflight requests
+		// Handle preflight requests (OPTIONS)
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		fmt.Println("CORS middleware hit:", r.Method, r.URL.Path, "Origin:", r.Header.Get("Origin"))
 
 		next.ServeHTTP(w, r)
 	})
