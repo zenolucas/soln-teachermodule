@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strings"
-	"fmt"
 )
 
 // WithCORS adds CORS headers for local + dev tunnel environments

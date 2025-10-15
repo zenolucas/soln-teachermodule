@@ -114,21 +114,26 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 
 	for i, student := range students {
 		fmt.Fprintf(w, `
-			<tr>
+			<tr id="student-%s">
 				<th>%d</th>
 				<td>%s %s</td>
 				<td class="flex justify-end">
 					<a target="_blank" href="/student/score?userID=%s" class="btn btn-primary text-white mr-2">
 						view scores
 					</a>
-					<form hx-post="/delete/student">
+					<form 
+						hx-post="/delete/student"
+						hx-target="#student-%s"
+						hx-swap="outerHTML swap:1s"
+						hx-confirm="Are you sure you want to remove this student?"	
+					>
 						<input type="hidden" name="studentID" value="%s" />
 						<input type="hidden" name="classroomID" value="%s" />
 						<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 					</form>
 				</td>
 			</tr>	
-		`, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID, classroomIDStr)
+		`, student.UserID, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID, student.UserID, classroomIDStr)
 	}
 	return nil
 }
@@ -140,7 +145,7 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	studentIDStr := r.FormValue("studentID")
-	classroomIDStr := r.FormValue("classroomID")
+	// classroomIDStr := r.FormValue("classroomID")
 	studentID, _ := strconv.Atoi(studentIDStr)
 	fmt.Print("we got studentID ")
 	if err := database.UnenrollStudent(studentID); err != nil {
@@ -148,9 +153,10 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("delete success!")
 
-	url := "/classroom?classroom_id="
-	url += classroomIDStr
-	hxRedirect(w, r, url)
+	// Returning empty content removes the row (because hx-swap="outerHTML")
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "")
 	return nil
 }
 
