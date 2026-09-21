@@ -20,9 +20,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Must run after InitializeDatabase, which loads .env - SESSION_SECRET needs to be
-	// visible to os.Getenv by this point.
+	// Must run after InitializeDatabase, which loads .env - SESSION_SECRET/
+	// GAME_TOKEN_SECRET need to be visible to os.Getenv by this point.
 	if err := handler.InitSessionStore(); err != nil {
+		log.Fatal(err)
+	}
+	if err := handler.InitGameTokenStore(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -83,19 +86,18 @@ func main() {
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz/score", handler.Make(handler.HandleGetQuizScores))
+		auth.Get("/statistics/student/fraction", handler.Make(handler.HandleGetStudentFractionScore))
+		auth.Get("/statistics/student/worded", handler.Make(handler.HandleGetStudentWordedScore))
+		auth.Get("/statistics/student/quiz", handler.Make(handler.HandleGetStudentQuizScore))
+		auth.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
+		auth.Get("/statistics/fraction/question/data", handler.Make(handler.HandleFractionResponseStatistics))
+		auth.Get("/statistics/worded/question/chart", handler.Make(handler.HandleWordedQuestionCharts))
+		auth.Get("/statistics/worded/question/data", handler.Make(handler.HandleWordedResponseStatistics))
+		auth.Get("/statistics/quiz/class", handler.Make(handler.HandleQuizClassStatistics))
+		auth.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
+		auth.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleQuizQuestionCharts))
+		auth.Get("/statistics/quiz/question/data", handler.Make(handler.HandleQuizResponseStatistics))
 	})
-
-	router.Get("/statistics/student/fraction", handler.Make(handler.HandleGetStudentFractionScore))
-	router.Get("/statistics/student/worded", handler.Make(handler.HandleGetStudentWordedScore))
-	router.Get("/statistics/student/quiz", handler.Make(handler.HandleGetStudentQuizScore))
-	router.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
-	router.Get("/statistics/fraction/question/data", handler.Make(handler.HandleFractionResponseStatistics))
-	router.Get("/statistics/worded/question/chart", handler.Make(handler.HandleWordedQuestionCharts))
-	router.Get("/statistics/worded/question/data", handler.Make(handler.HandleWordedResponseStatistics))
-	router.Get("/statistics/quiz/class", handler.Make(handler.HandleQuizClassStatistics))
-	router.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
-	router.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleQuizQuestionCharts))
-	router.Get("/statistics/quiz/question/data", handler.Make(handler.HandleQuizResponseStatistics))
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 	slog.Info("application running", "port", port)

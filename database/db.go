@@ -735,8 +735,23 @@ func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) e
 	return nil
 }
 
+// CountQuizQuestions returns how many questions a quiz minigame has, so a posted score
+// can be sanity-checked against it - a score higher than the question count can't be
+// legitimate (see SEC-04).
+func CountQuizQuestions(minigameID int, classroomID int) (int, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM multiple_choice_questions WHERE minigame_id = ? AND classroom_id = ?", minigameID, classroomID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // adds statistics for minigames 1 and 2 (simple fraction gameplay), also for substraction simple fraction gameplay
-func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
+// studentID comes from the caller, which resolves it from the game token issued at
+// /game/login rather than trusting one posted in the request body - a body-supplied
+// student_id would let any client record fraction-question attempts as any student.
+func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -751,7 +766,6 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 
 	type Data struct {
 		ClassroomID        int `json:"classroom_id"`
-		StudentID          int `json:"student_id"`
 		QuestionID         int `json:"question_id"`
 		MinigameID         int `json:"minigame_id"`
 		Num_Right_Attempts int `json:"num_right_attempts"`
@@ -767,7 +781,7 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {
 		return err
 	}
