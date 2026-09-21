@@ -317,17 +317,17 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 					<span class="label-text text-white">Correct Answer: </span>
 				</div>
 					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
-						<option value="%s" %s>Option 1</option> 
-						<option value="%s" %s>Option 2</option>
-						<option value="%s" %s>Option 3</option>
-						<option value="%s" %s>Option 4</option>
+						<option value="%d" %s>Option 1</option>
+						<option value="%d" %s>Option 2</option>
+						<option value="%d" %s>Option 3</option>
+						<option value="%d" %s>Option 4</option>
 					</select>
 				</div>
 
 				<div class="flex justify-end">
 					<button  type="submit" class="btn btn-primary text-white ">save changes</button>
 				</div>
-			</div>  	
+			</div>
 			</form>
 			</div>
 		`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, i+1, question.QuestionText,
@@ -335,10 +335,12 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			question.Choices[1].ChoiceText, question.Choices[1].ChoiceID,
 			question.Choices[2].ChoiceText, question.Choices[2].ChoiceID,
 			question.Choices[3].ChoiceText, question.Choices[3].ChoiceID,
-			question.Choices[0].ChoiceText, getCorrectAnswer(question.Choices[0].IsCorrect),
-			question.Choices[1].ChoiceText, getCorrectAnswer(question.Choices[1].IsCorrect),
-			question.Choices[2].ChoiceText, getCorrectAnswer(question.Choices[2].IsCorrect),
-			question.Choices[3].ChoiceText, getCorrectAnswer(question.Choices[3].IsCorrect))
+			// correct_answer's <option value> is the choice_id, not the choice text -
+			// text can collide between options, choice_id can't (see BUG-02 fix).
+			question.Choices[0].ChoiceID, getCorrectAnswer(question.Choices[0].IsCorrect),
+			question.Choices[1].ChoiceID, getCorrectAnswer(question.Choices[1].IsCorrect),
+			question.Choices[2].ChoiceID, getCorrectAnswer(question.Choices[2].IsCorrect),
+			question.Choices[3].ChoiceID, getCorrectAnswer(question.Choices[3].IsCorrect))
 	}
 	return err
 }
