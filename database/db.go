@@ -11,7 +11,6 @@ import (
 	"os"
 	"soln-teachermodule/types"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -739,33 +738,17 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// GetFractionResponseStatistics returns the count of right/wrong attempts for a single
+// question. Used for both simple-fraction and worded-fraction minigames - both question
+// types live in the same fraction_questions/fraction_responses tables, so one function
+// serves both (GetWordedResponseStatistics used to be a byte-identical duplicate of this).
 func GetFractionResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
 	var statistics []types.FractionClassStatistics
 
-	// get count of right and wrong responses
-	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var statistic types.FractionClassStatistics
-		if err := rows.Scan(&statistic.RightAttemptsCount, &statistic.WrongAttemptsCount); err != nil {
-			return nil, err
-		}
-		statistics = append(statistics, statistic)
-	}
-
-	return statistics, nil
-}
-
-func GetWordedResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
-	// we can reuse types.FractionClassStatistics because they're the same structure (number of right or wrong attempts)
-	var statistics []types.FractionClassStatistics
-
-	// get count of right and wrong responses
-	rows, err := db.Query("SELECT SUM(num_right_attempts), SUM(num_wrong_attempts) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	// COALESCE: a bare SUM() with no matching rows still returns exactly one row, with
+	// both columns NULL - which fails to Scan into an int. A freshly created question
+	// with zero responses so far hits this on every load without the COALESCE.
+	rows, err := db.Query("SELECT COALESCE(SUM(num_right_attempts), 0), COALESCE(SUM(num_wrong_attempts), 0) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -808,20 +791,20 @@ func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) 
 	var responseStatistics []types.QuizResponseStatistics
 
 	rows, err := db.Query(`
-			SELECT 
+			SELECT
 			c.choice_text,
 			COUNT(r.choice_id) AS response_count
-		FROM 
+		FROM
 			multiple_choice_choices AS c
-		LEFT JOIN 
+		LEFT JOIN
 			multiple_choice_responses AS r ON c.choice_id = r.choice_id
-			AND r.question_id = ? 
-			AND r.minigame_id = ? 
+			AND r.question_id = ?
+			AND r.minigame_id = ?
 			AND r.classroom_id = ?
-		WHERE 
+		WHERE
 			c.question_id = ?
-		GROUP BY 
-			c.choice_text;
+		GROUP BY
+			c.choice_id, c.choice_text;
 	`, questionID, minigameID, classroomID, questionID)
 
 	if err != nil {
@@ -945,116 +928,45 @@ func GetStudentWordedStatistics(userID int, minigameID int) ([]types.StudentFrac
 func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizStatistics, error) {
 	var statistics []types.StudentQuizStatistics
 
-	// Get all questions for the given minigameID
-	questionsQuery := `SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ?`
-	questionRows, err := db.Query(questionsQuery, minigameID)
+	// One query replaces what used to be three (questions, then correct answers via a
+	// dynamically-built IN (...), then the student's answers) plus a manual join in Go.
+	// The IN (...) version broke with a SQL syntax error whenever a minigame had zero
+	// questions (an empty placeholder list builds "IN ()"); grouping by question here
+	// sidesteps that failure mode entirely instead of needing a special case for it.
+	// COALESCE covers a question with no choice marked correct, and a question the
+	// student hasn't answered - both would otherwise scan as SQL NULL into a Go string.
+	rows, err := db.Query(`
+		SELECT
+			q.question_id,
+			q.question_text,
+			COALESCE(MAX(CASE WHEN c.is_correct THEN c.choice_text END), '') AS correct_answer,
+			COALESCE(MAX(CASE WHEN r.choice_id = c.choice_id THEN c.choice_text END), '') AS user_answer
+		FROM multiple_choice_questions q
+		JOIN multiple_choice_choices c ON c.question_id = q.question_id
+		LEFT JOIN multiple_choice_responses r ON r.question_id = q.question_id
+			AND r.student_id = ? AND r.minigame_id = ?
+		WHERE q.minigame_id = ?
+		GROUP BY q.question_id, q.question_text
+		ORDER BY q.question_id
+	`, userID, minigameID, minigameID)
 	if err != nil {
 		return nil, err
 	}
-	defer questionRows.Close()
+	defer rows.Close()
 
-	var questions []struct {
-		QuestionID   int
-		QuestionText string
-	}
-
-	for questionRows.Next() {
-		var q struct {
-			QuestionID   int
-			QuestionText string
-		}
-		if err := questionRows.Scan(&q.QuestionID, &q.QuestionText); err != nil {
-			return nil, fmt.Errorf("failed to scan question: %v", err)
-		}
-		questions = append(questions, q)
-	}
-
-	// Generate placeholders and get correct answers
-	var questionIDs []int
-	for _, q := range questions {
-		questionIDs = append(questionIDs, q.QuestionID)
-	}
-
-	// Generate placeholders for the IN clause based on the number of question IDs
-	placeholders := make([]string, len(questionIDs))
-	for i := range placeholders {
-		placeholders[i] = "?"
-	}
-	placeholdersStr := strings.Join(placeholders, ",")
-
-	// Query for correct answers using the dynamically generated placeholders
-	correctAnswersQuery := fmt.Sprintf(
-		`SELECT mcc.question_id, mcc.choice_text 
-		FROM multiple_choice_choices mcc
-		WHERE mcc.is_correct = TRUE AND mcc.question_id IN (%s)`, placeholdersStr)
-
-	correctAnswersRows, err := db.Query(correctAnswersQuery, convertToInterfaceSlice(questionIDs)...)
-	if err != nil {
-		return nil, err
-	}
-	defer correctAnswersRows.Close()
-
-	var correctAnswers = make(map[int]string)
-	for correctAnswersRows.Next() {
+	for rows.Next() {
 		var questionID int
-		var choiceText string
-		if err := correctAnswersRows.Scan(&questionID, &choiceText); err != nil {
-			return nil, fmt.Errorf("failed to scan correct answer: %v", err)
+		var statistic types.StudentQuizStatistics
+		if err := rows.Scan(&questionID, &statistic.QuestionText, &statistic.CorrectAnswer, &statistic.UserAnswer); err != nil {
+			return nil, fmt.Errorf("failed to scan student quiz statistic: %v", err)
 		}
-		correctAnswers[questionID] = choiceText
-	}
-
-	// Get the user's answers for those questions
-	userAnswersQuery := `
-		SELECT mcr.question_id, mcc.choice_text 
-		FROM multiple_choice_responses mcr
-		JOIN multiple_choice_choices mcc ON mcr.choice_id = mcc.choice_id
-		WHERE mcr.student_id = ? AND mcr.minigame_id = ?`
-
-	userAnswersRows, err := db.Query(userAnswersQuery, userID, minigameID)
-	if err != nil {
-		return nil, err
-	}
-	defer userAnswersRows.Close()
-
-	var userAnswers = make(map[int]string)
-	for userAnswersRows.Next() {
-		var questionID int
-		var choiceText string
-		if err := userAnswersRows.Scan(&questionID, &choiceText); err != nil {
-			return nil, fmt.Errorf("failed to scan user answer: %v", err)
-		}
-		userAnswers[questionID] = choiceText
-	}
-
-	// Combine the results and calculate the score
-	for _, question := range questions {
-		userAnswer := userAnswers[question.QuestionID]
-		correctAnswer := correctAnswers[question.QuestionID]
-		score := 0
-		if userAnswer == correctAnswer {
-			score = 1
-		}
-
-		statistic := types.StudentQuizStatistics{
-			QuestionText:  question.QuestionText,
-			CorrectAnswer: correctAnswer,
-			UserAnswer:    userAnswer,
-			Score:         score,
+		if statistic.UserAnswer == statistic.CorrectAnswer {
+			statistic.Score = 1
 		}
 		statistics = append(statistics, statistic)
 	}
 
 	return statistics, nil
-}
-
-// Helper function to convert []int to []interface{}
-func convertToInterfaceSlice(slice []int) []interface{} {
-	interfaceSlice := make([]interface{}, len(slice))
-	for i, v := range slice {
-		interfaceSlice[i] = v
-	}
-	return interfaceSlice
 }
 
 func SaveData(data types.SaveData) error {

@@ -245,7 +245,7 @@ func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) erro
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
 
-	statistics, err := database.GetWordedResponseStatistics(classroomID, minigameID, questionID)
+	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
