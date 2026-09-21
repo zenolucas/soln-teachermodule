@@ -145,10 +145,11 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	studentIDStr := r.FormValue("studentID")
-	// classroomIDStr := r.FormValue("classroomID")
+	classroomIDStr := r.FormValue("classroomID")
 	studentID, _ := strconv.Atoi(studentIDStr)
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 	fmt.Print("we got studentID ")
-	if err := database.UnenrollStudent(studentID); err != nil {
+	if err := database.UnenrollStudent(studentID, classroomID); err != nil {
 		return err
 	}
 	fmt.Print("delete success!")
