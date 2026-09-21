@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
 
 CREATE TABLE IF NOT EXISTS save_states (
     save_id INT AUTO_INCREMENT PRIMARY KEY,
-    student_id INT, 
+    student_id INT NOT NULL UNIQUE,
     current_floor INT DEFAULT 1,
     current_quest VARCHAR(100) DEFAULT 'starting',
     saved_scene VARCHAR(100) DEFAULT 'res://scenes/levels/Floor1.tscn',
@@ -80,23 +80,27 @@ CREATE TABLE IF NOT EXISTS save_states (
 
 CREATE TABLE IF NOT EXISTS fraction_questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
-    classroom_id INT,
-    minigame_id INT,
+    classroom_id INT NOT NULL,
+    minigame_id INT NOT NULL,
     question_text VARCHAR(500),
     fraction1_numerator INT NOT NULL,
     fraction1_denominator INT NOT NULL,
     fraction2_numerator INT NOT NULL,
-    fraction2_denominator INT NOT NULL
+    fraction2_denominator INT NOT NULL,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id)
 );
 
 CREATE TABLE IF NOT EXISTS fraction_responses (
     statistic_id INT AUTO_INCREMENT PRIMARY KEY,
-    classroom_id INT,
-    minigame_id INT,
-    question_id INT,
-    student_id INT,
+    classroom_id INT NOT NULL,
+    minigame_id INT NOT NULL,
+    question_id INT NOT NULL,
+    student_id INT NOT NULL,
     num_right_attempts INT DEFAULT 0,
-    num_wrong_attempts INT DEFAULT 0
+    num_wrong_attempts INT DEFAULT 0,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
+    FOREIGN KEY (question_id) REFERENCES fraction_questions(question_id),
+    FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS multiple_choice_questions (
