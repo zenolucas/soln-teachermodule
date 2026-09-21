@@ -20,6 +20,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Must run after InitializeDatabase, which loads .env - SESSION_SECRET needs to be
+	// visible to os.Getenv by this point.
+	if err := handler.InitSessionStore(); err != nil {
+		log.Fatal(err)
+	}
+
 	router := chi.NewMux()
 
 	// handle static files in public folder

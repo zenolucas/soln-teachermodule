@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var db *sql.DB
@@ -70,48 +71,32 @@ func InitializeDatabase() error {
 }
 
 func AuthenticateWebUser(username string, password string) error {
-	var storedPassword string
+	var storedHash string
 	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "teacher")
-	if err := row.Scan(&storedPassword); err != nil {
+	if err := row.Scan(&storedHash); err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Print("authentication Error: incorrect username or password")
 			return fmt.Errorf("authentication Error: incorrect username or password")
-		} else {
-			fmt.Print("database Error: ", err)
-			return fmt.Errorf("database Error: %v", err)
 		}
+		return fmt.Errorf("database Error: %v", err)
 	}
 
-	if password != storedPassword {
-		fmt.Print("authentication Error: incorrect username or password")
+	// bcrypt.CompareHashAndPassword runs in constant time regardless of where the
+	// mismatch occurs, unlike the plain string comparison this replaced.
+	if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)); err != nil {
 		return fmt.Errorf("authentication Error: incorrect username or password")
 	}
-	fmt.Println("Login Success! Hello ", username, "!")
 	// Authentication successful
 	return nil
 }
 
 func AuthenticateGameUser(username string, password string) bool {
-
-	var storedPassword string
+	var storedHash string
 	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "student")
-	if err := row.Scan(&storedPassword); err != nil {
-		if err == sql.ErrNoRows {
-			fmt.Print("authentication Error: incorrect username or password")
-			return false
-		} else {
-			fmt.Print("database Error: ", err)
-			return false
-		}
-	}
-
-	if password != storedPassword {
-		fmt.Print("authentication Error: incorrect username or password")
+	if err := row.Scan(&storedHash); err != nil {
 		return false
 	}
-	fmt.Println("Login Success! Hello ", username, "!")
-	// Authentication successful
-	return true
+
+	return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
 }
 
 // gets classroomID of a student
@@ -167,7 +152,12 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 		Password: r.FormValue("password"),
 	}
 
-	_, err := db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, userCreds.Password, "teacher")
+	hash, err := bcrypt.GenerateFromPassword([]byte(userCreds.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, string(hash), "teacher")
 	if err != nil {
 		return err
 	}
@@ -203,9 +193,13 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
 		return err
 	}
-	fmt.Print("we got data: ", data)
 
-	result, err := db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, data.Password)
+	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	result, err := db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
 	if err != nil {
 		return err
 	}
