@@ -33,11 +33,6 @@ func WithCORS(next http.Handler) http.Handler {
 
 func WithAuth(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/public") {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		session, _ := store.Get(r, sessionUserKey)
 
 		// A first-time visitor has no "authenticated" value in the session at all, so

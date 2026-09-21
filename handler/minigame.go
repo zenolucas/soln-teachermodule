@@ -23,31 +23,14 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if minigameIDStr == "1" {
-		return render(w, r, minigame.Fractions("1", classroomIDStr))
-	} else if minigameIDStr == "2" {
-		return render(w, r, minigame.Fractions("2", classroomIDStr))
-	} else if minigameIDStr == "3" {
-		return render(w, r, minigame.Worded("3", classroomIDStr))
-	} else if minigameIDStr == "4" {
-		return render(w, r, minigame.Worded("4", classroomIDStr))
-	} else if minigameIDStr == "5" {
-		return render(w, r, minigame.Quiz("5", classroomIDStr))
-	} else if minigameIDStr == "6" {
-		return render(w, r, minigame.Fractions("6", classroomIDStr))
-	} else if minigameIDStr == "7" {
-		return render(w, r, minigame.Fractions("7", classroomIDStr))
-	} else if minigameIDStr == "8" {
-		return render(w, r, minigame.Fractions("8", classroomIDStr))
-	} else if minigameIDStr == "9" {
-		return render(w, r, minigame.Fractions("9", classroomIDStr))
-	} else if minigameIDStr == "10" {
-		return render(w, r, minigame.Worded("10", classroomIDStr))
-	} else if minigameIDStr == "11" {
-		return render(w, r, minigame.Quiz("11", classroomIDStr))
-	} else if minigameIDStr == "12" {
-		return render(w, r, minigame.Quiz("12", classroomIDStr))
-	} else {
+	switch minigameKinds[minigameIDStr] {
+	case kindFractions:
+		return render(w, r, minigame.Fractions(minigameIDStr, classroomIDStr))
+	case kindWorded:
+		return render(w, r, minigame.Worded(minigameIDStr, classroomIDStr))
+	case kindQuiz:
+		return render(w, r, minigame.Quiz(minigameIDStr, classroomIDStr))
+	default:
 		http.Error(w, "invalid minigame id", http.StatusBadRequest)
 		return errors.New("bad request")
 	}
@@ -413,7 +396,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			question.Choices[2].ChoiceID, getCorrectAnswer(question.Choices[2].IsCorrect),
 			question.Choices[3].ChoiceID, getCorrectAnswer(question.Choices[3].IsCorrect))
 	}
-	return err
+	return nil
 }
 
 // helper function to get correct answer for GetMCQuestion function above
