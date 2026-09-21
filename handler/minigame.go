@@ -242,7 +242,7 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 			</div>  	
 			</form>
 			</div>
-		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, fraction.QuestionText, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, esc(fraction.QuestionText), fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
 	}
 	return nil
 }
@@ -401,11 +401,11 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			</div>
 			</form>
 			</div>
-		`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, i+1, question.QuestionText,
-			question.Choices[0].ChoiceText, question.Choices[0].ChoiceID,
-			question.Choices[1].ChoiceText, question.Choices[1].ChoiceID,
-			question.Choices[2].ChoiceText, question.Choices[2].ChoiceID,
-			question.Choices[3].ChoiceText, question.Choices[3].ChoiceID,
+		`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, i+1, esc(question.QuestionText),
+			esc(question.Choices[0].ChoiceText), question.Choices[0].ChoiceID,
+			esc(question.Choices[1].ChoiceText), question.Choices[1].ChoiceID,
+			esc(question.Choices[2].ChoiceText), question.Choices[2].ChoiceID,
+			esc(question.Choices[3].ChoiceText), question.Choices[3].ChoiceID,
 			// correct_answer's <option value> is the choice_id, not the choice text -
 			// text can collide between options, choice_id can't (see BUG-02 fix).
 			question.Choices[0].ChoiceID, getCorrectAnswer(question.Choices[0].IsCorrect),

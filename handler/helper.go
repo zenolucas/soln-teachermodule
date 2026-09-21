@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
@@ -98,6 +100,26 @@ func formInt(r *http.Request, key string) (int, error) {
 		return 0, fmt.Errorf("invalid or missing %q: %w", key, err)
 	}
 	return n, nil
+}
+
+// esc escapes a string for safe interpolation into HTML markup built by hand with
+// fmt.Fprintf. These fragments (classroom names/descriptions, student names, question
+// text, all teacher- or registration-supplied) are the only part of the app that
+// doesn't use templ, which escapes automatically - until they're ported, every %s
+// argument that carries string data must go through this (see SEC-07). Safe to use on
+// IDs and other non-string-typed values too; escaping plain digits is a no-op.
+func esc(s string) string {
+	return html.EscapeString(s)
+}
+
+// escJS renders s as a JSON string literal (quotes included), safe to embed directly
+// inside a hand-built <script> block - a plain %s there could break out of the script
+// via a literal quote, backslash, or "</script>". encoding/json escapes '<', '>', and
+// '&' by default specifically to make its output safe to embed in HTML/script
+// contexts, which a plain fmt %q or manual quoting would not do (see SEC-07).
+func escJS(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
 }
 
 func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
