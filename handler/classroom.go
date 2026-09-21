@@ -118,22 +118,22 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 				<th>%d</th>
 				<td>%s %s</td>
 				<td class="flex justify-end">
-					<a target="_blank" href="/student/score?userID=%s" class="btn btn-primary text-white mr-2">
+					<a target="_blank" href="/student/score?userID=%s&classroomID=%s" class="btn btn-primary text-white mr-2">
 						view scores
 					</a>
-					<form 
+					<form
 						hx-post="/delete/student"
 						hx-target="#student-%s"
 						hx-swap="outerHTML swap:1s"
-						hx-confirm="Are you sure you want to remove this student?"	
+						hx-confirm="Are you sure you want to remove this student?"
 					>
 						<input type="hidden" name="studentID" value="%s" />
 						<input type="hidden" name="classroomID" value="%s" />
 						<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 					</form>
 				</td>
-			</tr>	
-		`, student.UserID, i+1, student.Firstname, student.Lastname, student.UserID, student.UserID, student.UserID, classroomIDStr)
+			</tr>
+		`, student.UserID, i+1, student.Firstname, student.Lastname, student.UserID, classroomIDStr, student.UserID, student.UserID, classroomIDStr)
 	}
 	return nil
 }
