@@ -140,32 +140,32 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
 
 -- Insert sample teacher data into users table
 INSERT INTO users (username, usertype, password) VALUES
-('teacher', 'teacher', 'teacher'),
-('user2', 'teacher', 'pw');
+('teacher', 'teacher', '$2a$10$ctgYzWWHK2xyB35nTrpJJOT.E1fxZeFkOJKGBwk6UjBDxTlRQBBlC'),
+('user2', 'teacher', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua');
 
 -- insert student data
 -- insert student data
 INSERT INTO users (username, firstname, lastname, usertype, class_number, section, password) VALUES
-('user3', 'John', 'Johnson', 'student', '1', '1', 'pw'),
-('user4', 'Mike', 'Tyson', 'student', '2', '1', 'pw'),
-('user5', 'Joe', 'Seph', 'student', '3', '1', 'pw'),
-('user6', 'Emily', 'Davis', 'student', '4', '1', 'pw'),
-('user7', 'Sarah', 'Smith', 'student', '5', '1', 'pw'),
-('user8', 'David', 'Lee', 'student', '6', '1', 'pw'),
-('user9', 'Anna', 'Brown', 'student', '7', '1', 'pw'),
-('user10', 'Chris', 'Wilson', 'student', '8', '1', 'pw'),
-('user11', 'Sophia', 'Martinez', 'student', '9', '1', 'pw'),
-('user12', 'James', 'Garcia', 'student', '10', '1', 'pw'),
-('user13', 'Liam', 'Rodriguez', 'student', '11', '1', 'pw'),
-('user14', 'Olivia', 'Hernandez', 'student', '12', '1', 'pw'),
-('user15', 'Jackson', 'Lopez', 'student', '13', '1', 'pw'),
-('user16', 'Mia', 'Gonzalez', 'student', '14', '1', 'pw'),
-('user17', 'Ethan', 'Perez', 'student', '15', '1', 'pw'),
-('user18', 'Isabella', 'Martinez', 'student', '16', '1', 'pw'),
-('user19', 'Benjamin', 'Taylor', 'student', '17', '1', 'pw'),
-('user20', 'Charlotte', 'Anderson', 'student', '18', '1', 'pw'),
-('user21', 'Lucas', 'Thomas', 'student', '19', '1', 'pw'),
-('user22', 'Amelia', 'Jackson', 'student', '20', '1', 'pw');
+('user3', 'John', 'Johnson', 'student', '1', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user4', 'Mike', 'Tyson', 'student', '2', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user5', 'Joe', 'Seph', 'student', '3', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user6', 'Emily', 'Davis', 'student', '4', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user7', 'Sarah', 'Smith', 'student', '5', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user8', 'David', 'Lee', 'student', '6', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user9', 'Anna', 'Brown', 'student', '7', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user10', 'Chris', 'Wilson', 'student', '8', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user11', 'Sophia', 'Martinez', 'student', '9', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user12', 'James', 'Garcia', 'student', '10', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user13', 'Liam', 'Rodriguez', 'student', '11', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user14', 'Olivia', 'Hernandez', 'student', '12', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user15', 'Jackson', 'Lopez', 'student', '13', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user16', 'Mia', 'Gonzalez', 'student', '14', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user17', 'Ethan', 'Perez', 'student', '15', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user18', 'Isabella', 'Martinez', 'student', '16', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user19', 'Benjamin', 'Taylor', 'student', '17', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user20', 'Charlotte', 'Anderson', 'student', '18', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user21', 'Lucas', 'Thomas', 'student', '19', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua'),
+('user22', 'Amelia', 'Jackson', 'student', '20', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua');
 
 
 
