@@ -14,16 +14,28 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 )
 
 var db *sql.DB
 
 const (
-	sessionUserKey        = "teacher"
 	sessionAccessTokenKey = "access_token"
 )
+
+// formInt reads a form value and parses it as an int, returning a descriptive error
+// instead of silently defaulting to 0 on missing or non-numeric input - a bare
+// strconv.Atoi with the error discarded is what let a bad or missing ID quietly turn
+// into a query against ID 0 (see BUG-03/BUG-16). This mirrors handler.formInt; it lives
+// here too because several Update* functions in this package read r.FormValue directly
+// rather than receiving already-parsed values from the handler layer.
+func formInt(r *http.Request, key string) (int, error) {
+	n, err := strconv.Atoi(r.FormValue(key))
+	if err != nil {
+		return 0, fmt.Errorf("invalid or missing %q: %w", key, err)
+	}
+	return n, nil
+}
 
 func InitializeDatabase() error {
 	if err := godotenv.Load(); err != nil {
@@ -289,18 +301,7 @@ func UnenrollStudent(studentID int, classroomID int) error {
 	return nil
 }
 
-func InsertClassroom(w http.ResponseWriter, r *http.Request) error {
-	classroom := types.Classroom{
-		ClassroomName: r.FormValue("classname"),
-		Section:       r.FormValue("section"),
-		Description:   r.FormValue("description"),
-	}
-
-	// then get teacherID from session
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	teacherID := session.Values["teacherID"].(int)
-
+func InsertClassroom(classroom types.Classroom, teacherID int) error {
 	_, err := db.Exec("INSERT INTO classrooms (classroom_name, section, description, teacher_ID) VALUES (?, ?, ?, ?)", classroom.ClassroomName, classroom.Section, classroom.Description, teacherID)
 	if err != nil {
 		return err
@@ -409,21 +410,32 @@ func AddFractionQuestions(w http.ResponseWriter, r *http.Request, classroomID in
 }
 
 func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
-	MinigameIDStr := r.FormValue("minigame_id")
-	QuestionIDStr := r.FormValue("question_id")
-	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
-	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
-	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
-	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+	MinigameID, err := formInt(r, "minigame_id")
+	if err != nil {
+		return err
+	}
+	QuestionID, err := formInt(r, "question_id")
+	if err != nil {
+		return err
+	}
+	Fraction1_Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	Fraction1_Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	Fraction2_Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	Fraction2_Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
 
-	MinigameID, _ := strconv.Atoi(MinigameIDStr)
-	QuestionID, _ := strconv.Atoi(QuestionIDStr)
-	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
-	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
-	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
-	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
-
-	_, err := db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+	_, err = db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
 		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
 	if err != nil {
 		return err
@@ -496,22 +508,36 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	minigameIDStr := r.FormValue("minigameID")
-	classroomIDStr := r.FormValue("classroomID")
-	questionIDStr := r.FormValue("questionID")
 	questionText := r.FormValue("question_text")
-	fraction1NumeratorStr := r.FormValue("fraction1_numerator")
-	fraction1DenominatorStr := r.FormValue("fraction1_denominator")
-	fraction2NumeratorStr := r.FormValue("fraction2_numerator")
-	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
 
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-	questionID, _ := strconv.Atoi(questionIDStr)
-	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
-	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
-	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
-	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
+	fraction1Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	fraction1Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	fraction2Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	fraction2Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
 
 	_, err = db.Exec("UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID, classroomID)
@@ -622,14 +648,22 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	// correct_answer holds the choice_id of the option the teacher picked (see the
 	// <select> in HandleGetMCQuestions), so compare by ID rather than by choice text -
 	// text comparison breaks if two options happen to have identical text.
-	correctAnswerID, _ := strconv.Atoi(r.FormValue("correct_answer"))
+	correctAnswerID, err := formInt(r, "correct_answer")
+	if err != nil {
+		return err
+	}
 	// construct choices[]
-	choices := constructChoices(r, correctAnswerID)
+	choices, err := constructChoices(r, correctAnswerID)
+	if err != nil {
+		return err
+	}
 
-	questionIDStr := r.FormValue("questionID")
-	questionID, _ := strconv.Atoi(questionIDStr)
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
 
-	_, err := db.Exec("UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
+	_, err = db.Exec("UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
 		question.QuestionText, questionID)
 	if err != nil {
 		return err
@@ -649,7 +683,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 // helper func to construct choices[]
-func constructChoices(r *http.Request, correctAnswerID int) []types.Choice {
+func constructChoices(r *http.Request, correctAnswerID int) ([]types.Choice, error) {
 	var choices []types.Choice
 
 	optionKeys := []string{"option1", "option2", "option3", "option4"}
@@ -658,12 +692,16 @@ func constructChoices(r *http.Request, correctAnswerID int) []types.Choice {
 	for i, key := range optionKeys {
 		var choice types.Choice
 		choice.ChoiceText = r.FormValue(key)
-		choice.ChoiceID, _ = strconv.Atoi(r.FormValue(choiceIDKeys[i]))
+		choiceID, err := formInt(r, choiceIDKeys[i])
+		if err != nil {
+			return nil, err
+		}
+		choice.ChoiceID = choiceID
 		choice.IsCorrect = choice.ChoiceID == correctAnswerID
 		choices = append(choices, choice)
 	}
 
-	return choices
+	return choices, nil
 }
 
 func DeleteMCQuestions(minigameID int, questionID int) error {
