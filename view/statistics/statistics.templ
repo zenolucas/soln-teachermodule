@@ -50,15 +50,15 @@ templ QuizStatistics(classroomID string, minigameID string) {
         async function getClassStatistics() {
             const classroomID = document.currentScript.getAttribute("classroomID")
             const minigameID = document.currentScript.getAttribute("minigameID")
-            const response = await fetch(`http://localhost:3000/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);
+            const response = await fetch(`/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);
             const results = await response.json();
             console.log(results)
             return results
         }
 
         getClassStatistics().then(results => {
-            const count = results.map(item => item.Count);
-            const score = results.map(item => item.Score);
+            const count = results.map(item => item.count);
+            const score = results.map(item => item.score);
             renderChart(score, count);
         });
 
