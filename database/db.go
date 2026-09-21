@@ -592,43 +592,65 @@ func DeleteWorded(minigameID int, questionID int, classroomID int) error {
 	return nil
 }
 
+// GetQuizQuestions used to run one query for the questions, then one more query per
+// question for its choices (11 round trips for 10 questions), with a defer inside the
+// per-question loop that kept every one of those choice result sets open until the
+// whole function returned. A single LEFT JOIN, grouped in Go by question_id, replaces
+// all of it with one round trip.
 func GetQuizQuestions(minigame_id int, classroom_id int) ([]types.MultipleChoiceQuestion, error) {
-	var questions []types.MultipleChoiceQuestion
-	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text FROM multiple_choice_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
+	rows, err := db.Query(`
+		SELECT q.question_id, q.question_text, c.choice_id, c.choice_text, c.is_correct
+		FROM multiple_choice_questions q
+		LEFT JOIN multiple_choice_choices c ON c.question_id = q.question_id
+		WHERE q.minigame_id = ? AND q.classroom_id = ?
+		ORDER BY q.question_id, c.choice_id
+	`, minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var questions []types.MultipleChoiceQuestion
+	// Maps question_id to its index in questions, so the repeated rows the LEFT
+	// JOIN produces (one per choice) append to the right question instead of each
+	// creating a new entry.
+	index := make(map[int]int)
+
 	for rows.Next() {
-		var question types.MultipleChoiceQuestion
-		if err := rows.Scan(&question.QuestionID, &question.QuestionText); err != nil {
+		var questionID int
+		var questionText string
+		var choiceID sql.NullInt64
+		var choiceText sql.NullString
+		var isCorrect sql.NullBool
+
+		if err := rows.Scan(&questionID, &questionText, &choiceID, &choiceText, &isCorrect); err != nil {
 			return nil, err
 		}
-		questions = append(questions, question)
+
+		i, ok := index[questionID]
+		if !ok {
+			questions = append(questions, types.MultipleChoiceQuestion{
+				QuestionID:   questionID,
+				QuestionText: questionText,
+			})
+			i = len(questions) - 1
+			index[questionID] = i
+		}
+
+		// choice_id is NULL only when a question has zero choices (the LEFT JOIN
+		// finds no match) - skip appending rather than adding a zero-valued choice.
+		if choiceID.Valid {
+			questions[i].Choices = append(questions[i].Choices, types.Choice{
+				ChoiceID:   int(choiceID.Int64),
+				ChoiceText: choiceText.String,
+				IsCorrect:  isCorrect.Bool,
+			})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	// then we get choices
-	for i, question := range questions {
-		var choices []types.Choice
-		choicesRow, err := db.Query("SELECT choice_id, choice_text, is_correct FROM multiple_choice_choices WHERE question_id = ?", question.QuestionID)
-		if err != nil {
-			return nil, err
-		}
-		defer choicesRow.Close()
-
-		for choicesRow.Next() {
-			var choice types.Choice
-			if err := choicesRow.Scan(&choice.ChoiceID, &choice.ChoiceText, &choice.IsCorrect); err != nil {
-				return nil, err
-			}
-			choices = append(choices, choice)
-		}
-		questions[i].Choices = choices
-	}
-
-	fmt.Println(questions)
 	return questions, nil
 }
 
@@ -925,34 +947,50 @@ func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID 
 	return nil
 }
 
+// GetSavedData used to run three separate QueryRow calls against the same save_states
+// row, one per disjoint column subset (base fields, badges, quest actionables) - all
+// three scan targets are in scope at once, so one query covering all of them replaces
+// all three round trips.
 func GetSavedData(studentID int) (types.SaveData, error) {
 	var save_data types.SaveData
 	var badges types.Badges
 
-	// Get all saved data except badges
-	row := db.QueryRow("SELECT student_id, current_floor, current_quest, saved_scene, vector_x, vector_y, first_time_init_floor1, first_time_init_floor2, first_time_init_floor3 FROM save_states WHERE student_id = ?", studentID)
-	err := row.Scan(&save_data.StudentID, &save_data.CurrentFloor, &save_data.CurrentQuest, &save_data.SavedScene, &save_data.VectorX, &save_data.VectorY, &save_data.FirstTimeInitFloor1, &save_data.FirstTimeInitFloor2, &save_data.FirstTimeInitFloor3)
-	if err != nil {
-		return save_data, err
-	}
-
-	// Retrieve all badges
-	row = db.QueryRow("SELECT badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom, badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball, badge_shell, badge_original_robot FROM save_states WHERE student_id = ?", studentID)
-	err = row.Scan(&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom, &badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall, &badges.Shell, &badges.OriginalRobot)
-	if err != nil {
-		return save_data, err
-	}
-
-	// retrieve actionables
-	row = db.QueryRow("SELECT rock_removed, disable_rock_removed, raket_sneaking_quest_complete, unlock_cave_collision, raket_sword_complete, raket_quest_progress, disable_dead_robot_quest, do_raket_blacksmith_animation, sword_bottom, sword_guard, sword_lower_blade, sword_middle_blade, sword_top_blade, disable_raket_stealing_quest, disable_fresh_dialogue_quest, disable_water_logged_1_quest, disable_water_logged_2_quest, disable_water_logged_3_quest, disable_chip_quest, disable_rat_wizard_training_quest FROM save_states WHERE student_id = ?", studentID)
-	err = row.Scan(&save_data.RockRemoved, &save_data.DisableRockRemoved, &save_data.RaketSneakingQuestComplete, &save_data.UnlockCaveCollision, &save_data.RaketSwordComplete, &save_data.RaketQuestProgress, &save_data.DisableDeadRobotQuest, &save_data.DoRaketBlacksmithAnimation, &save_data.SwordBottom, &save_data.SwordGuard, &save_data.SwordLowerBlade, &save_data.SwordMiddleBlade, &save_data.SwordTopBlade, &save_data.DisableRaketStealingQuest, &save_data.DisableFreshDialogueQuest, &save_data.DisableWaterLogged1Quest, &save_data.DisableWaterLogged2Quest, &save_data.DisableWaterLogged3Quest, &save_data.DisableChipQuest, &save_data.DisableRatWizardTrainingQuest)
+	row := db.QueryRow(`
+		SELECT student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
+			first_time_init_floor1, first_time_init_floor2, first_time_init_floor3,
+			badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom,
+			badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball,
+			badge_shell, badge_original_robot,
+			rock_removed, disable_rock_removed, raket_sneaking_quest_complete,
+			unlock_cave_collision, raket_sword_complete, raket_quest_progress,
+			disable_dead_robot_quest, do_raket_blacksmith_animation, sword_bottom,
+			sword_guard, sword_lower_blade, sword_middle_blade, sword_top_blade,
+			disable_raket_stealing_quest, disable_fresh_dialogue_quest,
+			disable_water_logged_1_quest, disable_water_logged_2_quest,
+			disable_water_logged_3_quest, disable_chip_quest,
+			disable_rat_wizard_training_quest
+		FROM save_states WHERE student_id = ?
+	`, studentID)
+	err := row.Scan(
+		&save_data.StudentID, &save_data.CurrentFloor, &save_data.CurrentQuest, &save_data.SavedScene, &save_data.VectorX, &save_data.VectorY,
+		&save_data.FirstTimeInitFloor1, &save_data.FirstTimeInitFloor2, &save_data.FirstTimeInitFloor3,
+		&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom,
+		&badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall,
+		&badges.Shell, &badges.OriginalRobot,
+		&save_data.RockRemoved, &save_data.DisableRockRemoved, &save_data.RaketSneakingQuestComplete,
+		&save_data.UnlockCaveCollision, &save_data.RaketSwordComplete, &save_data.RaketQuestProgress,
+		&save_data.DisableDeadRobotQuest, &save_data.DoRaketBlacksmithAnimation, &save_data.SwordBottom,
+		&save_data.SwordGuard, &save_data.SwordLowerBlade, &save_data.SwordMiddleBlade, &save_data.SwordTopBlade,
+		&save_data.DisableRaketStealingQuest, &save_data.DisableFreshDialogueQuest,
+		&save_data.DisableWaterLogged1Quest, &save_data.DisableWaterLogged2Quest,
+		&save_data.DisableWaterLogged3Quest, &save_data.DisableChipQuest,
+		&save_data.DisableRatWizardTrainingQuest,
+	)
 	if err != nil {
 		return save_data, err
 	}
 
 	save_data.PlayerBadges = badges
-
-	fmt.Print("saved data is: ", save_data)
 
 	return save_data, nil
 }
