@@ -1,5 +1,6 @@
 .env
 bin
+/soln-teachermodule
 *_templ.go*
 tmp
 # .air.toml
