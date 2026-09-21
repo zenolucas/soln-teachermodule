@@ -494,11 +494,24 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func DeleteFractions(ctx context.Context, minigameID string, questionID string, classroomID string) error {
+	// fraction_responses.question_id is a foreign key with the default RESTRICT, so the
+	// parent question can't be deleted while responses still reference it (see INFRA-04).
+	// Delete children first, in one transaction - same pattern as DeleteMCQuestions.
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM fraction_responses WHERE question_id = ?", questionID); err != nil {
+		return err
+	}
+
 	// classroom_id must be in the WHERE clause, not just checked by the caller against
 	// the session - otherwise a teacher who owns classroomID but supplies a questionID
 	// that actually belongs to a different classroom would delete someone else's
 	// question (see SEC-06).
-	result, err := db.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	result, err := tx.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -511,7 +524,7 @@ func DeleteFractions(ctx context.Context, minigameID string, questionID string, 
 		return fmt.Errorf("DeleteFractions: no question found with minigame_id=%s question_id=%s classroom_id=%s", minigameID, questionID, classroomID)
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func GetWordedQuestions(ctx context.Context, minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
@@ -609,11 +622,24 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 func DeleteWorded(ctx context.Context, minigameID int, questionID int, classroomID int) error {
+	// fraction_responses.question_id is a foreign key with the default RESTRICT, so the
+	// parent question can't be deleted while responses still reference it (see INFRA-04).
+	// Delete children first, in one transaction - same pattern as DeleteMCQuestions.
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM fraction_responses WHERE question_id = ?", questionID); err != nil {
+		return err
+	}
+
 	// classroom_id must be in the WHERE clause, not just checked by the caller against
 	// the session - otherwise a teacher who owns classroomID but supplies a questionID
 	// that actually belongs to a different classroom would delete someone else's
 	// question (see SEC-06).
-	result, err := db.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	result, err := tx.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -626,7 +652,7 @@ func DeleteWorded(ctx context.Context, minigameID int, questionID int, classroom
 		return fmt.Errorf("DeleteWorded: no question found with minigame_id=%d question_id=%d classroom_id=%d", minigameID, questionID, classroomID)
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 // GetQuizQuestions used to run one query for the questions, then one more query per
