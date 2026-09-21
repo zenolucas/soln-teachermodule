@@ -245,7 +245,7 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 
 func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
-	questionIDStr := r.FormValue("question_id")
+	questionIDStr := r.FormValue("questionID")
 	classroomIDStr := r.FormValue("classroomID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)

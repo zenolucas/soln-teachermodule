@@ -281,9 +281,9 @@ func AddStudents(studentIDs []string, classroomID int) error {
 	return nil
 }
 
-func UnenrollStudent(studentID int) error {
+func UnenrollStudent(studentID int, classroomID int) error {
 	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM enrollments WHERE student_id = ?", studentID)
+	_, err := db.Exec("DELETE FROM enrollments WHERE student_id = ? AND classroom_id = ?", studentID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -525,9 +525,17 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 
 func DeleteWorded(minigameID int, questionID int) error {
 	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
 	if err != nil {
 		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("DeleteWorded: no question found with minigame_id=%d question_id=%d", minigameID, questionID)
 	}
 
 	return nil
@@ -698,14 +706,26 @@ func getCorrectAnswer(option string, correctAnswer string) bool {
 }
 
 func DeleteMCQuestions(minigameID int, questionID int) error {
-	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+	// multiple_choice_choices.question_id and multiple_choice_responses.question_id/choice_id
+	// are foreign keys with the default RESTRICT, so the parent question can't be deleted
+	// while either still references it. Delete children first, in one transaction.
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
-	return nil
+	if _, err := tx.Exec("DELETE FROM multiple_choice_responses WHERE question_id = ?", questionID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM multiple_choice_choices WHERE question_id = ?", questionID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID); err != nil {
+		return err
+	}
 
+	return tx.Commit()
 }
 
 func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) error {
