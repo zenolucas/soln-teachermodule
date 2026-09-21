@@ -337,6 +337,19 @@ func GetSection(classroomID int) (string, error) {
 	return section, nil
 }
 
+// GetClassroomTeacherID returns the teacher_id that owns a classroom, so a caller can
+// verify the authenticated teacher actually owns the classroom they're about to act on
+// (see SEC-06 - without this, any authenticated teacher can view or modify any other
+// teacher's classroom just by changing a URL/form parameter).
+func GetClassroomTeacherID(classroomID int) (int, error) {
+	var teacherID int
+	err := db.QueryRow("SELECT teacher_id FROM classrooms WHERE classroom_id = ?", classroomID).Scan(&teacherID)
+	if err != nil {
+		return 0, err
+	}
+	return teacherID, nil
+}
+
 // Example function to save session token in the database
 func SaveSessionToken(userID int, sessionToken string) error {
 	query := `INSERT INTO sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)`
@@ -443,11 +456,22 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func DeleteFractions(minigameID string, questionID string) error {
-	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+func DeleteFractions(minigameID string, questionID string, classroomID string) error {
+	// classroom_id must be in the WHERE clause, not just checked by the caller against
+	// the session - otherwise a teacher who owns classroomID but supplies a questionID
+	// that actually belongs to a different classroom would delete someone else's
+	// question (see SEC-06).
+	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("DeleteFractions: no question found with minigame_id=%s question_id=%s classroom_id=%s", minigameID, questionID, classroomID)
 	}
 
 	return nil
@@ -547,9 +571,12 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func DeleteWorded(minigameID int, questionID int) error {
-	// Execute the DELETE query
-	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID)
+func DeleteWorded(minigameID int, questionID int, classroomID int) error {
+	// classroom_id must be in the WHERE clause, not just checked by the caller against
+	// the session - otherwise a teacher who owns classroomID but supplies a questionID
+	// that actually belongs to a different classroom would delete someone else's
+	// question (see SEC-06).
+	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -559,7 +586,7 @@ func DeleteWorded(minigameID int, questionID int) error {
 		return err
 	}
 	if rows == 0 {
-		return fmt.Errorf("DeleteWorded: no question found with minigame_id=%d question_id=%d", minigameID, questionID)
+		return fmt.Errorf("DeleteWorded: no question found with minigame_id=%d question_id=%d classroom_id=%d", minigameID, questionID, classroomID)
 	}
 
 	return nil
@@ -703,10 +730,18 @@ func constructChoices(r *http.Request, correctAnswerID int) ([]types.Choice, err
 	return choices, nil
 }
 
-func DeleteMCQuestions(minigameID int, questionID int) error {
+func DeleteMCQuestions(minigameID int, questionID int, classroomID int) error {
 	// multiple_choice_choices.question_id and multiple_choice_responses.question_id/choice_id
 	// are foreign keys with the default RESTRICT, so the parent question can't be deleted
 	// while either still references it. Delete children first, in one transaction.
+	//
+	// classroom_id must be in the final DELETE's WHERE clause, not just checked by the
+	// caller against the session - otherwise a teacher who owns classroomID but supplies
+	// a questionID that actually belongs to a different classroom would delete someone
+	// else's question (see SEC-06). Checking RowsAffected on that delete and rolling
+	// back (via the deferred tx.Rollback, since we return before tx.Commit) if it
+	// affected nothing means a classroom mismatch also undoes the child deletes above,
+	// rather than leaving them applied against a question that didn't end up deleted.
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -719,8 +754,16 @@ func DeleteMCQuestions(minigameID int, questionID int) error {
 	if _, err := tx.Exec("DELETE FROM multiple_choice_choices WHERE question_id = ?", questionID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ?", minigameID, questionID); err != nil {
+	result, err := tx.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	if err != nil {
 		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("DeleteMCQuestions: no question found with minigame_id=%d question_id=%d classroom_id=%d", minigameID, questionID, classroomID)
 	}
 
 	return tx.Commit()

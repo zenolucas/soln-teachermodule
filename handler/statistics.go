@@ -22,6 +22,11 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// get classroomID
 	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	// get minigameID
 	minigameID := r.URL.Query().Get("minigameID")
@@ -65,6 +70,10 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 	// get classroomID
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
@@ -145,6 +154,10 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
@@ -165,6 +178,10 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get minigameID
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
@@ -245,6 +262,10 @@ func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) erro
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
@@ -268,6 +289,10 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	// Fetch the statistics from the database
 	statistics, err := database.GetQuizClassStatistics(classroomID, minigameID)
 	if err != nil {
@@ -285,6 +310,12 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	return render(w, r, statistics.QuestionStatistics(minigameIDStr, classroomIDStr))
 }
 
@@ -296,6 +327,10 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.MultipleChoiceQuestion
@@ -416,6 +451,10 @@ func HandleQuizResponseStatistics(w http.ResponseWriter, r *http.Request) error 
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	questionID, _ := strconv.Atoi(questionIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	statistics, err := database.GetQuizResponseStatistics(classroomID, minigameID, questionID)
 	if err != nil {
@@ -601,6 +640,10 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	studentScores, err := database.GetStudentScores(classroomID, minigameID)
 	if err != nil {
 		return err
@@ -627,6 +670,11 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
 	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	// get student
 	student, err := database.GetStudent(studentID)
@@ -648,6 +696,10 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	var statistics []types.StudentFractionStatistics
 
@@ -677,6 +729,10 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	var statistics []types.StudentFractionStatistics
 
 	statistics, err := database.GetStudentWordedStatistics(studentID, minigameID, classroomID)
@@ -704,6 +760,10 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	var statistics []types.StudentQuizStatistics
 

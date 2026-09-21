@@ -14,6 +14,15 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	classroomIDStr := r.URL.Query().Get("classroomID")
 
+	classroomID, err := strconv.Atoi(classroomIDStr)
+	if err != nil {
+		http.Error(w, "invalid classroomID", http.StatusBadRequest)
+		return err
+	}
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	if minigameIDStr == "1" {
 		return render(w, r, minigame.Fractions("1", classroomIDStr))
 	} else if minigameIDStr == "2" {
@@ -50,6 +59,10 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	fmt.Print("minigameID = ", minigameID)
 	fmt.Print("classroomID= ", classroomID)
@@ -114,6 +127,10 @@ func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	err := database.AddFractionQuestions(w, r, classroomID)
 	if err != nil {
 		return err
@@ -126,8 +143,14 @@ func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
 func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID
 	classroomIDStr := r.FormValue("classroom_id")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 	// get minigameID
 	minigameID := r.FormValue("minigame_id")
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	if err := database.UpdateFractions(w, r); err != nil {
 		return err
 	}
@@ -140,9 +163,15 @@ func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
 	minigameID := r.FormValue("minigame_id")
 	questionID := r.FormValue("question_id")
 	classroomIDStr := r.FormValue("classroom_id")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	fmt.Print("we got minigameID", minigameID)
 	fmt.Print("we got questionID", questionID)
-	if err := database.DeleteFractions(minigameID, questionID); err != nil {
+	if err := database.DeleteFractions(minigameID, questionID, classroomIDStr); err != nil {
 		return err
 	}
 	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
@@ -155,6 +184,10 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	fractions, err := database.GetWordedQuestions(minigameID, classroomID)
 	if err != nil {
@@ -221,6 +254,10 @@ func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	err := database.AddWordedQuestions(w, r, classroomID)
 	if err != nil {
 		return err
@@ -235,6 +272,11 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
 	// get classroomID
 	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	if err := database.UpdateWordedQuestions(w, r); err != nil {
 		return err
@@ -255,7 +297,16 @@ func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := database.DeleteWorded(minigameID, questionID); err != nil {
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	if err := database.DeleteWorded(minigameID, questionID, classroomID); err != nil {
 		return err
 	}
 	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
@@ -271,6 +322,10 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	// get classroomID
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	questions, err := database.GetQuizQuestions(minigameID, classroomID)
 	if err != nil {
@@ -376,6 +431,10 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	err := database.AddMCQuestions(w, r, classroomID)
 	if err != nil {
 		return err
@@ -388,6 +447,12 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
 	classroomIDStr := r.FormValue("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}
@@ -408,8 +473,16 @@ func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
-	if err := database.DeleteMCQuestions(minigameID, questionID); err != nil {
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	if err := database.DeleteMCQuestions(minigameID, questionID, classroomID); err != nil {
 		return err
 	}
 

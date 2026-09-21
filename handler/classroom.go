@@ -25,6 +25,10 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	// convert classroomID to int
 	classroomID, _ := strconv.Atoi(room.ClassroomID)
 
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	// save classroomID in session
 	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
@@ -105,6 +109,11 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	// fetch users from database
 	students, err := database.GetStudents(classroomID)
 	if err != nil {
@@ -152,6 +161,11 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
 	fmt.Print("we got studentID ")
 	if err := database.UnenrollStudent(studentID, classroomID); err != nil {
 		return err
@@ -172,6 +186,10 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 
 	ClassroomID, err := strconv.Atoi(room.ClassroomID)
 	if err != nil {
+		return err
+	}
+
+	if err := assertOwnsClassroom(w, r, ClassroomID); err != nil {
 		return err
 	}
 
@@ -225,6 +243,10 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
 
 	studentIDs := r.Form["userID"]
 

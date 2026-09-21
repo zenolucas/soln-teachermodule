@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"soln-teachermodule/database"
 	"strconv"
 
 	"github.com/a-h/templ"
@@ -58,6 +59,33 @@ func getTeacherID(r *http.Request) (int, error) {
 		return 0, errors.New("no teacherID in session")
 	}
 	return teacherID, nil
+}
+
+// assertOwnsClassroom verifies the authenticated teacher owns the given classroom,
+// writing the response and returning a non-nil error if not (401 if the session
+// itself is invalid, 403 if it's valid but belongs to a different teacher). Every
+// classroom-scoped teacher-portal handler must call this before reading or writing
+// anything scoped to classroomID - without it, any authenticated teacher can view,
+// edit, or delete any other teacher's classroom, students, or questions just by
+// changing a URL or form parameter (see SEC-06).
+func assertOwnsClassroom(w http.ResponseWriter, r *http.Request, classroomID int) error {
+	teacherID, err := getTeacherID(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return err
+	}
+
+	ownerID, err := database.GetClassroomTeacherID(classroomID)
+	if err != nil {
+		return err
+	}
+
+	if ownerID != teacherID {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return fmt.Errorf("teacher %d does not own classroom %d", teacherID, classroomID)
+	}
+
+	return nil
 }
 
 // formInt reads a form value and parses it as an int, returning a descriptive error
