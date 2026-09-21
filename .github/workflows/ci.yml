@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Generate templ files
+        run: go run github.com/a-h/templ/cmd/templ@v0.3.819 generate view
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
