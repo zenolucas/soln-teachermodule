@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"soln-teachermodule/types"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -40,18 +40,47 @@ func formInt(r *http.Request, key string) (int, error) {
 }
 
 func InitializeDatabase() error {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal(err)
-		return err
+	// godotenv.Load failing (typically: no .env file) is fine - .env is a dev
+	// convenience, not a requirement. Docker, systemd, and most PaaS environments set
+	// these variables directly and never have a .env at all. What must exist is the
+	// variables themselves, checked explicitly below.
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("loading .env: %w", err)
+	}
+
+	dbUser := os.Getenv("DBUSER")
+	dbPass := os.Getenv("DBPASS")
+	dbName := os.Getenv("DBNAME")
+	var missing []string
+	if dbUser == "" {
+		missing = append(missing, "DBUSER")
+	}
+	if dbPass == "" {
+		missing = append(missing, "DBPASS")
+	}
+	if dbName == "" {
+		missing = append(missing, "DBNAME")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required environment variable(s): %s", strings.Join(missing, ", "))
+	}
+
+	dbHost := os.Getenv("DBHOST")
+	if dbHost == "" {
+		dbHost = "127.0.0.1"
+	}
+	dbPort := os.Getenv("DBPORT")
+	if dbPort == "" {
+		dbPort = "3306"
 	}
 
 	// Capture connection properties.
 	cfg := mysql.Config{
-		User:                 os.Getenv("DBUSER"),
-		Passwd:               os.Getenv("DBPASS"),
+		User:                 dbUser,
+		Passwd:               dbPass,
 		Net:                  "tcp",
-		Addr:                 "127.0.0.1:3306",
-		DBName:               os.Getenv("DBNAME"),
+		Addr:                 dbHost + ":" + dbPort,
+		DBName:               dbName,
 		AllowNativePasswords: true,
 	}
 
@@ -59,12 +88,11 @@ func InitializeDatabase() error {
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("opening database connection: %w", err)
 	}
 
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("pinging database: %w", err)
 	}
 	fmt.Println("Database connection established.")
 
