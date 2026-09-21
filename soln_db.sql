@@ -138,6 +138,20 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
   FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
 
+-- Every read path filters on (minigame_id, classroom_id) or (student_id, minigame_id),
+-- and none of those columns were indexed - only the auto-increment PKs and FK columns
+-- were. Small tables today, but these are the queries that run on every page load and
+-- every game event.
+CREATE INDEX IF NOT EXISTS idx_fq_minigame_classroom  ON fraction_questions (minigame_id, classroom_id);
+CREATE INDEX IF NOT EXISTS idx_fr_lookup              ON fraction_responses (classroom_id, minigame_id, question_id);
+CREATE INDEX IF NOT EXISTS idx_fr_student             ON fraction_responses (student_id, minigame_id);
+CREATE INDEX IF NOT EXISTS idx_mcq_minigame_classroom ON multiple_choice_questions (minigame_id, classroom_id);
+CREATE INDEX IF NOT EXISTS idx_mcr_lookup             ON multiple_choice_responses (classroom_id, minigame_id, question_id);
+CREATE INDEX IF NOT EXISTS idx_mcr_student            ON multiple_choice_responses (student_id, minigame_id);
+CREATE INDEX IF NOT EXISTS idx_mcs_lookup             ON multiple_choice_scores (classroom_id, minigame_id);
+CREATE INDEX IF NOT EXISTS idx_users_type             ON users (usertype);
+CREATE INDEX IF NOT EXISTS idx_save_states_student    ON save_states (student_id);
+
 -- Insert sample teacher data into users table
 INSERT INTO users (username, usertype, password) VALUES
 ('teacher', 'teacher', '$2a$10$ctgYzWWHK2xyB35nTrpJJOT.E1fxZeFkOJKGBwk6UjBDxTlRQBBlC'),
