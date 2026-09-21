@@ -6,13 +6,13 @@ type FractionClassStatistics struct {
 }
 
 type QuizClassStatistics struct {
-	Score int
-	Count int
+	Score int `json:"score"`
+	Count int `json:"count"`
 }
 
 type QuizResponseStatistics struct {
 	Choice string `json:"choice"`
-	Count  string `json:"count"`
+	Count  int    `json:"count"`
 }
 
 type StudentQuizScore struct {

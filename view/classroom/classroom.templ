@@ -276,8 +276,7 @@ templ Classroom(classroomID string) {
 							</tr>
 						</thead>
 					<!-- get enrolled students -->
-						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents" 
-							hx-vals='{"classroomID": { classroomID }}'>
+						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
 							<input type="hidden" name="classroomID" value={ classroomID } />
 						</form>
 							<tbody id="getstudents">
