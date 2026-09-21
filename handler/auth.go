@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"soln-teachermodule/database"
 	"soln-teachermodule/util"
 	"soln-teachermodule/view/auth"
@@ -15,7 +16,23 @@ const (
 	sessionUserKey = "teacher"
 )
 
-var store = sessions.NewCookieStore([]byte("0D~N4)H1iIOC6gx+e|[J3IJA[U%H~n)"))
+// store is configured by InitSessionStore, which must run once at startup after any
+// .env file has been loaded (a package-level initializer here would run before that
+// load happens, and would read an empty SESSION_SECRET). It is nil until then; every
+// route that uses it sits behind main() calling InitSessionStore first.
+var store *sessions.CookieStore
+
+// InitSessionStore reads SESSION_SECRET from the environment and configures the
+// session store. The old hardcoded key this replaces is committed in git history, so
+// it must not be reused even as a fallback - every deployment needs its own secret.
+func InitSessionStore() error {
+	secret := os.Getenv("SESSION_SECRET")
+	if len(secret) < 32 {
+		return fmt.Errorf("SESSION_SECRET must be set to at least 32 characters (got %d)", len(secret))
+	}
+	store = sessions.NewCookieStore([]byte(secret))
+	return nil
+}
 
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, auth.Login())
@@ -48,7 +65,10 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 		Path:     "/",
 		MaxAge:   3600 * 8,
 		HttpOnly: true,
-		Secure:   false,
+		// Only send the cookie over TLS in production. Defaults to false so local dev
+		// (typically plain HTTP) keeps working; set COOKIE_SECURE=true once the app is
+		// actually served over HTTPS.
+		Secure:   os.Getenv("COOKIE_SECURE") == "true",
 		SameSite: http.SameSiteLaxMode,
 	}
 

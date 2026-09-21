@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
@@ -47,7 +46,6 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 
 	var response LoginResponse
 
-	log.Printf("Received data: %+v", data.Password)
 	// authenticate student
 	if database.AuthenticateGameUser(data.Username, data.Password) {
 		// get classroomID student is enrolled in
