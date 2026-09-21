@@ -45,7 +45,7 @@ func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// authenticate the user
-	if err := database.AuthenticateWebUser(credentials.Username, credentials.Password); err != nil {
+	if err := database.AuthenticateWebUser(r.Context(), credentials.Username, credentials.Password); err != nil {
 		// if an error occurs
 		return render(w, r, auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: "Invalid username or password",

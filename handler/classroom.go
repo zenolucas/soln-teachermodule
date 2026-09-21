@@ -49,7 +49,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	classrooms, err := database.GetClassrooms(teacherID)
+	classrooms, err := database.GetClassrooms(r.Context(), teacherID)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	classrooms, err := database.GetClassrooms(teacherID)
+	classrooms, err := database.GetClassrooms(r.Context(), teacherID)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// fetch users from database
-	students, err := database.GetStudents(classroomID)
+	students, err := database.GetStudents(r.Context(), classroomID)
 	if err != nil {
 		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
@@ -167,7 +167,7 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	fmt.Print("we got studentID ")
-	if err := database.UnenrollStudent(studentID, classroomID); err != nil {
+	if err := database.UnenrollStudent(r.Context(), studentID, classroomID); err != nil {
 		return err
 	}
 	fmt.Print("delete success!")
@@ -193,7 +193,7 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	students, err := database.GetUnenrolledStudents(ClassroomID)
+	students, err := database.GetUnenrolledStudents(r.Context(), ClassroomID)
 	if err != nil {
 		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
@@ -250,7 +250,7 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 
 	studentIDs := r.Form["userID"]
 
-	database.AddStudents(studentIDs, classroomID)
+	database.AddStudents(r.Context(), studentIDs, classroomID)
 
 	url := "/classroom?classroom_id="
 	url += classroomIDStr
@@ -277,7 +277,7 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 		Description:   r.FormValue("description"),
 	}
 
-	err = database.InsertClassroom(classroom, teacherID)
+	err = database.InsertClassroom(r.Context(), classroom, teacherID)
 	if err != nil {
 		// if an error occurs
 		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
