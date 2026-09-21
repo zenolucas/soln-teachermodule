@@ -2,7 +2,7 @@ run: build
 	@./bin/soln-teachermodule
 
 install:
-	@go install github.com/a-h/templ/cmd/templ@latest
+	@go install github.com/a-h/templ/cmd/templ@v0.3.819
 	@go get ./...
 	@go mod vendor
 	@go mod tidy
