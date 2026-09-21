@@ -40,9 +40,13 @@ func WithAuth(next http.Handler) http.Handler {
 
 		session, _ := store.Get(r, sessionUserKey)
 
-		if !session.Values["authenticated"].(bool) {
+		// A first-time visitor has no "authenticated" value in the session at all, so
+		// Values["authenticated"] is nil - an unchecked type assertion to bool panics
+		// on that instead of falling through to the redirect below.
+		authenticated, ok := session.Values["authenticated"].(bool)
+		if !ok || !authenticated {
 			path := r.URL.Path
-			hxRedirect(w, r, "/login?to"+path)
+			hxRedirect(w, r, "/login?to="+path)
 			return
 		}
 
