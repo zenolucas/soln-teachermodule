@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/minigame"
@@ -245,10 +246,15 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 
 func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
-	questionIDStr := r.FormValue("questionID")
 	classroomIDStr := r.FormValue("classroomID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	questionID, _ := strconv.Atoi(questionIDStr)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
 	if err := database.DeleteWorded(minigameID, questionID); err != nil {
 		return err
 	}
@@ -272,6 +278,16 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	for i, question := range questions {
+		// A question is always created with exactly 4 choices, but a partially failed
+		// insert, a manual DB edit, or choices deleted independently of their question
+		// could leave that invariant broken. The rest of this loop indexes
+		// question.Choices[0..3] unconditionally, so guard against a panic here.
+		if len(question.Choices) != 4 {
+			slog.Warn("skipping MC question render: expected exactly 4 choices",
+				"question_id", question.QuestionID, "got", len(question.Choices))
+			continue
+		}
+
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
@@ -382,11 +398,16 @@ func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
-	questionIDStr := r.FormValue("questionID")
 	classroomIDStr := r.FormValue("classroomID")
 
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	questionID, _ := strconv.Atoi(questionIDStr)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
 
 	if err := database.DeleteMCQuestions(minigameID, questionID); err != nil {
 		return err

@@ -40,10 +40,10 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	teacherID := session.Values["teacherID"].(int)
-	var classrooms []types.Classroom
+	teacherID, err := getTeacherID(r)
+	if err != nil {
+		return err
+	}
 
 	classrooms, err := database.GetClassrooms(teacherID)
 	if err != nil {
@@ -71,10 +71,10 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
-	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
-	session, _ := store.Get(r, sessionUserKey)
-	teacherID := session.Values["teacherID"].(int)
-	var classrooms []types.Classroom
+	teacherID, err := getTeacherID(r)
+	if err != nil {
+		return err
+	}
 
 	classrooms, err := database.GetClassrooms(teacherID)
 	if err != nil {
@@ -144,10 +144,14 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 		fmt.Println("Error parsing form:", err)
 		return err
 	}
-	studentIDStr := r.FormValue("studentID")
-	classroomIDStr := r.FormValue("classroomID")
-	studentID, _ := strconv.Atoi(studentIDStr)
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	studentID, err := formInt(r, "studentID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 	fmt.Print("we got studentID ")
 	if err := database.UnenrollStudent(studentID, classroomID); err != nil {
 		return err
@@ -240,7 +244,18 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 
 	// TODO: error handling / data cleaning
 
-	err := database.InsertClassroom(w, r)
+	teacherID, err := getTeacherID(r)
+	if err != nil {
+		return err
+	}
+
+	classroom := types.Classroom{
+		ClassroomName: r.FormValue("classname"),
+		Section:       r.FormValue("section"),
+		Description:   r.FormValue("description"),
+	}
+
+	err = database.InsertClassroom(classroom, teacherID)
 	if err != nil {
 		// if an error occurs
 		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
