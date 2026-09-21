@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -78,9 +79,9 @@ func InitializeDatabase() error {
 	return err
 }
 
-func AuthenticateWebUser(username string, password string) error {
+func AuthenticateWebUser(ctx context.Context, username string, password string) error {
 	var storedHash string
-	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "teacher")
+	row := db.QueryRowContext(ctx, "SELECT password FROM users WHERE username = ? AND usertype = ?", username, "teacher")
 	if err := row.Scan(&storedHash); err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("authentication Error: incorrect username or password")
@@ -97,9 +98,9 @@ func AuthenticateWebUser(username string, password string) error {
 	return nil
 }
 
-func AuthenticateGameUser(username string, password string) bool {
+func AuthenticateGameUser(ctx context.Context, username string, password string) bool {
 	var storedHash string
-	row := db.QueryRow("SELECT password FROM users WHERE username = ? AND usertype = ?", username, "student")
+	row := db.QueryRowContext(ctx, "SELECT password FROM users WHERE username = ? AND usertype = ?", username, "student")
 	if err := row.Scan(&storedHash); err != nil {
 		return false
 	}
@@ -108,7 +109,7 @@ func AuthenticateGameUser(username string, password string) bool {
 }
 
 // gets classroomID of a student
-func GetClassroomID(username string) (int, error) {
+func GetClassroomID(ctx context.Context, username string) (int, error) {
 	var classroomID int
 
 	// Resolve via the enrollments table (the actual source of truth, and the one the
@@ -119,7 +120,7 @@ func GetClassroomID(username string) (int, error) {
 	// login API only has room for a single classroom_id today, so picking one classroom
 	// is the smallest fix that removes the section-string bug without redesigning that
 	// wire contract.
-	err := db.QueryRow(`
+	err := db.QueryRowContext(ctx, `
 		SELECT e.classroom_id FROM enrollments e
 		JOIN users u ON u.user_id = e.student_id
 		WHERE u.username = ? AND u.usertype = 'student'
@@ -132,11 +133,11 @@ func GetClassroomID(username string) (int, error) {
 	return classroomID, nil
 }
 
-func GetStudentID(username string) (int, error) {
+func GetStudentID(ctx context.Context, username string) (int, error) {
 	var studentID int
 
 	// first get section of student
-	err := db.QueryRow("SELECT user_id FROM users WHERE username = ? AND usertype = ?", username, "student").Scan(&studentID)
+	err := db.QueryRowContext(ctx, "SELECT user_id FROM users WHERE username = ? AND usertype = ?", username, "student").Scan(&studentID)
 	if err != nil {
 		return 0, err
 	}
@@ -144,10 +145,10 @@ func GetStudentID(username string) (int, error) {
 	return studentID, nil
 }
 
-func GetStudent(userID int) (types.Student, error) {
+func GetStudent(ctx context.Context, userID int) (types.Student, error) {
 	var student types.Student
 
-	err := db.QueryRow("SELECT firstname, lastname FROM users WHERE user_id = ?", userID).Scan(&student.Firstname, &student.Lastname)
+	err := db.QueryRowContext(ctx, "SELECT firstname, lastname FROM users WHERE user_id = ?", userID).Scan(&student.Firstname, &student.Lastname)
 	if err != nil {
 		return student, err
 	}
@@ -165,7 +166,7 @@ func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, string(hash), "teacher")
+	_, err = db.ExecContext(r.Context(), "INSERT INTO users (username, password, usertype) VALUES (?, ?, ?)", userCreds.Username, string(hash), "teacher")
 	if err != nil {
 		return err
 	}
@@ -207,7 +208,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	result, err := db.Exec("INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
+	result, err := db.ExecContext(r.Context(), "INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
 	if err != nil {
 		return err
 	}
@@ -218,7 +219,7 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// after creating account, create save state
-	err = CreateSaveState(studentID)
+	err = CreateSaveState(r.Context(), studentID)
 	if err != nil {
 		return err
 	}
@@ -226,8 +227,8 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func CreateSaveState(studentID int64) error {
-	_, err := db.Exec("INSERT INTO save_states (student_id) VALUES (?)", studentID)
+func CreateSaveState(ctx context.Context, studentID int64) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO save_states (student_id) VALUES (?)", studentID)
 	if err != nil {
 		return err
 	}
@@ -235,10 +236,10 @@ func CreateSaveState(studentID int64) error {
 	return nil
 }
 
-func GetStudents(classroomID int) ([]types.Student, error) {
+func GetStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
 	var students []types.Student
 	// get students given classroomID
-	rows, err := db.Query("SELECT users.firstname, users.lastname, users.user_id FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? ", classroomID)
+	rows, err := db.QueryContext(ctx, "SELECT users.firstname, users.lastname, users.user_id FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? ", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -259,11 +260,11 @@ func GetStudents(classroomID int) ([]types.Student, error) {
 	return students, nil
 }
 
-func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
+func GetUnenrolledStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
 	var students []types.Student
 
 	// get students given classroomID
-	rows, err := db.Query("SELECT user_id, firstname, lastname FROM users WHERE usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", "student", classroomID)
+	rows, err := db.QueryContext(ctx, "SELECT user_id, firstname, lastname FROM users WHERE usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", "student", classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -284,12 +285,12 @@ func GetUnenrolledStudents(classroomID int) ([]types.Student, error) {
 	return students, nil
 }
 
-func AddStudents(studentIDs []string, classroomID int) error {
+func AddStudents(ctx context.Context, studentIDs []string, classroomID int) error {
 	for _, studentID := range studentIDs {
 
 		fmt.Println("adding student", studentID)
 
-		_, err := db.Exec("INSERT INTO enrollments (classroom_id, student_id) VALUES (?, ?)", classroomID, studentID)
+		_, err := db.ExecContext(ctx, "INSERT INTO enrollments (classroom_id, student_id) VALUES (?, ?)", classroomID, studentID)
 		if err != nil {
 			return err
 		}
@@ -299,17 +300,17 @@ func AddStudents(studentIDs []string, classroomID int) error {
 	return nil
 }
 
-func UnenrollStudent(studentID int, classroomID int) error {
+func UnenrollStudent(ctx context.Context, studentID int, classroomID int) error {
 	// Execute the DELETE query
-	_, err := db.Exec("DELETE FROM enrollments WHERE student_id = ? AND classroom_id = ?", studentID, classroomID)
+	_, err := db.ExecContext(ctx, "DELETE FROM enrollments WHERE student_id = ? AND classroom_id = ?", studentID, classroomID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func InsertClassroom(classroom types.Classroom, teacherID int) error {
-	_, err := db.Exec("INSERT INTO classrooms (classroom_name, section, description, teacher_ID) VALUES (?, ?, ?, ?)", classroom.ClassroomName, classroom.Section, classroom.Description, teacherID)
+func InsertClassroom(ctx context.Context, classroom types.Classroom, teacherID int) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO classrooms (classroom_name, section, description, teacher_ID) VALUES (?, ?, ?, ?)", classroom.ClassroomName, classroom.Section, classroom.Description, teacherID)
 	if err != nil {
 		return err
 	}
@@ -322,7 +323,7 @@ func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
 	}
 
 	var teacherID int
-	err := db.QueryRow("SELECT user_id FROM users WHERE username = ? AND usertype = ?", userCreds.Username, "teacher").Scan(&teacherID)
+	err := db.QueryRowContext(r.Context(), "SELECT user_id FROM users WHERE username = ? AND usertype = ?", userCreds.Username, "teacher").Scan(&teacherID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -349,9 +350,9 @@ func GetSection(classroomID int) (string, error) {
 // verify the authenticated teacher actually owns the classroom they're about to act on
 // (see SEC-06 - without this, any authenticated teacher can view or modify any other
 // teacher's classroom just by changing a URL/form parameter).
-func GetClassroomTeacherID(classroomID int) (int, error) {
+func GetClassroomTeacherID(ctx context.Context, classroomID int) (int, error) {
 	var teacherID int
-	err := db.QueryRow("SELECT teacher_id FROM classrooms WHERE classroom_id = ?", classroomID).Scan(&teacherID)
+	err := db.QueryRowContext(ctx, "SELECT teacher_id FROM classrooms WHERE classroom_id = ?", classroomID).Scan(&teacherID)
 	if err != nil {
 		return 0, err
 	}
@@ -365,10 +366,10 @@ func SaveSessionToken(userID int, sessionToken string) error {
 	return err
 }
 
-func GetClassrooms(teacherID int) ([]types.Classroom, error) {
+func GetClassrooms(ctx context.Context, teacherID int) ([]types.Classroom, error) {
 	var classrooms []types.Classroom
 
-	rows, err := db.Query("SELECT classroom_id, classroom_name, section, description FROM classrooms WHERE teacher_id = ?", teacherID)
+	rows, err := db.QueryContext(ctx, "SELECT classroom_id, classroom_name, section, description FROM classrooms WHERE teacher_id = ?", teacherID)
 	if err != nil {
 		return nil, err
 	}
@@ -385,10 +386,10 @@ func GetClassrooms(teacherID int) ([]types.Classroom, error) {
 	return classrooms, nil
 }
 
-func GetFractionQuestions(minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
+func GetFractionQuestions(ctx context.Context, minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
 	var fractions []types.FractionQuestion
 
-	rows, err := db.Query("SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
+	rows, err := db.QueryContext(ctx, "SELECT question_id, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +421,7 @@ func AddFractionQuestions(w http.ResponseWriter, r *http.Request, classroomID in
 	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
 	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?)",
+	_, err := db.ExecContext(r.Context(), "INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?)",
 		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, classroomID)
 	if err != nil {
 		return err
@@ -455,7 +456,7 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	_, err = db.Exec("UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
+	_, err = db.ExecContext(r.Context(), "UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
 		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
 	if err != nil {
 		return err
@@ -464,12 +465,12 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func DeleteFractions(minigameID string, questionID string, classroomID string) error {
+func DeleteFractions(ctx context.Context, minigameID string, questionID string, classroomID string) error {
 	// classroom_id must be in the WHERE clause, not just checked by the caller against
 	// the session - otherwise a teacher who owns classroomID but supplies a questionID
 	// that actually belongs to a different classroom would delete someone else's
 	// question (see SEC-06).
-	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	result, err := db.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -485,11 +486,11 @@ func DeleteFractions(minigameID string, questionID string, classroomID string) e
 	return nil
 }
 
-func GetWordedQuestions(minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
+func GetWordedQuestions(ctx context.Context, minigame_id int, classroom_id int) ([]types.FractionQuestion, error) {
 	var questions []types.FractionQuestion
 
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
+	rows, err := db.QueryContext(ctx, "SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +523,7 @@ func AddWordedQuestions(w http.ResponseWriter, r *http.Request, classroomID int)
 	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
 	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
 
-	_, err := db.Exec("INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	_, err := db.ExecContext(r.Context(), "INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, classroomID)
 	if err != nil {
 		return err
@@ -570,7 +571,7 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	_, err = db.Exec("UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?",
+	_, err = db.ExecContext(r.Context(), "UPDATE fraction_questions SET question_text = ?, fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, questionID, classroomID)
 	if err != nil {
 		return err
@@ -579,12 +580,12 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func DeleteWorded(minigameID int, questionID int, classroomID int) error {
+func DeleteWorded(ctx context.Context, minigameID int, questionID int, classroomID int) error {
 	// classroom_id must be in the WHERE clause, not just checked by the caller against
 	// the session - otherwise a teacher who owns classroomID but supplies a questionID
 	// that actually belongs to a different classroom would delete someone else's
 	// question (see SEC-06).
-	result, err := db.Exec("DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	result, err := db.ExecContext(ctx, "DELETE FROM fraction_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -605,8 +606,8 @@ func DeleteWorded(minigameID int, questionID int, classroomID int) error {
 // per-question loop that kept every one of those choice result sets open until the
 // whole function returned. A single LEFT JOIN, grouped in Go by question_id, replaces
 // all of it with one round trip.
-func GetQuizQuestions(minigame_id int, classroom_id int) ([]types.MultipleChoiceQuestion, error) {
-	rows, err := db.Query(`
+func GetQuizQuestions(ctx context.Context, minigame_id int, classroom_id int) ([]types.MultipleChoiceQuestion, error) {
+	rows, err := db.QueryContext(ctx, `
 		SELECT q.question_id, q.question_text, c.choice_id, c.choice_text, c.is_correct
 		FROM multiple_choice_questions q
 		LEFT JOIN multiple_choice_choices c ON c.question_id = q.question_id
@@ -676,7 +677,7 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) err
 	correctAnswer := r.FormValue("correct_answer")
 
 	// first insert question_text without the correct_answer id
-	result, err := db.Exec(`INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)
+	result, err := db.ExecContext(r.Context(), `INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)
 	if err != nil {
 		return err
 	}
@@ -688,7 +689,7 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) err
 	for _, key := range optionKeys {
 		choiceText := r.FormValue(key)
 		isCorrect := key == correctAnswer
-		if _, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, isCorrect); err != nil {
+		if _, err := db.ExecContext(r.Context(), "INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, isCorrect); err != nil {
 			return err
 		}
 	}
@@ -719,7 +720,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	_, err = db.Exec("UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
+	_, err = db.ExecContext(r.Context(), "UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
 		question.QuestionText, questionID)
 	if err != nil {
 		return err
@@ -728,7 +729,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	// given the choices[]
 	// loop through, each choice gets to execute an update
 	for _, choice := range choices {
-		_, err = db.Exec("UPDATE multiple_choice_choices SET choice_text = ?, is_correct = ? WHERE choice_id = ?",
+		_, err = db.ExecContext(r.Context(), "UPDATE multiple_choice_choices SET choice_text = ?, is_correct = ? WHERE choice_id = ?",
 			choice.ChoiceText, choice.IsCorrect, choice.ChoiceID)
 		if err != nil {
 			return err
@@ -760,7 +761,7 @@ func constructChoices(r *http.Request, correctAnswerID int) ([]types.Choice, err
 	return choices, nil
 }
 
-func DeleteMCQuestions(minigameID int, questionID int, classroomID int) error {
+func DeleteMCQuestions(ctx context.Context, minigameID int, questionID int, classroomID int) error {
 	// multiple_choice_choices.question_id and multiple_choice_responses.question_id/choice_id
 	// are foreign keys with the default RESTRICT, so the parent question can't be deleted
 	// while either still references it. Delete children first, in one transaction.
@@ -772,19 +773,19 @@ func DeleteMCQuestions(minigameID int, questionID int, classroomID int) error {
 	// back (via the deferred tx.Rollback, since we return before tx.Commit) if it
 	// affected nothing means a classroom mismatch also undoes the child deletes above,
 	// rather than leaving them applied against a question that didn't end up deleted.
-	tx, err := db.Begin()
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.Exec("DELETE FROM multiple_choice_responses WHERE question_id = ?", questionID); err != nil {
+	if _, err := tx.ExecContext(ctx, "DELETE FROM multiple_choice_responses WHERE question_id = ?", questionID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec("DELETE FROM multiple_choice_choices WHERE question_id = ?", questionID); err != nil {
+	if _, err := tx.ExecContext(ctx, "DELETE FROM multiple_choice_choices WHERE question_id = ?", questionID); err != nil {
 		return err
 	}
-	result, err := tx.Exec("DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
+	result, err := tx.ExecContext(ctx, "DELETE FROM multiple_choice_questions WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?", minigameID, questionID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -799,8 +800,8 @@ func DeleteMCQuestions(minigameID int, questionID int, classroomID int) error {
 	return tx.Commit()
 }
 
-func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) error {
-	_, err := db.Exec("INSERT INTO multiple_choice_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
+func AddQuizStatistics(ctx context.Context, classroomID int, minigameID int, student_id, score int) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO multiple_choice_scores (classroom_id, minigame_id, student_id, score) VALUES (?, ?, ?, ?)", classroomID, minigameID, student_id, score)
 	if err != nil {
 		return err
 	}
@@ -811,9 +812,9 @@ func AddQuizStatistics(classroomID int, minigameID int, student_id, score int) e
 // CountQuizQuestions returns how many questions a quiz minigame has, so a posted score
 // can be sanity-checked against it - a score higher than the question count can't be
 // legitimate (see SEC-04).
-func CountQuizQuestions(minigameID int, classroomID int) (int, error) {
+func CountQuizQuestions(ctx context.Context, minigameID int, classroomID int) (int, error) {
 	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM multiple_choice_questions WHERE minigame_id = ? AND classroom_id = ?", minigameID, classroomID).Scan(&count)
+	err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM multiple_choice_questions WHERE minigame_id = ? AND classroom_id = ?", minigameID, classroomID).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -854,7 +855,7 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int
 	}
 	fmt.Print("we got statistics data: ", data)
 
-	_, err = db.Exec("INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
+	_, err = db.ExecContext(r.Context(), "INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {
 		return err
 	}
@@ -866,13 +867,13 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int
 // question. Used for both simple-fraction and worded-fraction minigames - both question
 // types live in the same fraction_questions/fraction_responses tables, so one function
 // serves both (GetWordedResponseStatistics used to be a byte-identical duplicate of this).
-func GetFractionResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
+func GetFractionResponseStatistics(ctx context.Context, classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
 	var statistics []types.FractionClassStatistics
 
 	// COALESCE: a bare SUM() with no matching rows still returns exactly one row, with
 	// both columns NULL - which fails to Scan into an int. A freshly created question
 	// with zero responses so far hits this on every load without the COALESCE.
-	rows, err := db.Query("SELECT COALESCE(SUM(num_right_attempts), 0), COALESCE(SUM(num_wrong_attempts), 0) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
+	rows, err := db.QueryContext(ctx, "SELECT COALESCE(SUM(num_right_attempts), 0), COALESCE(SUM(num_wrong_attempts), 0) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -889,11 +890,11 @@ func GetFractionResponseStatistics(classroomID int, minigameID int, questionID i
 	return statistics, nil
 }
 
-func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
+func GetQuizClassStatistics(ctx context.Context, classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
 	var statistics []types.QuizClassStatistics
 
 	// get scores and count per score
-	rows, err := db.Query("SELECT score, COUNT(*) AS count_per_score FROM multiple_choice_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
+	rows, err := db.QueryContext(ctx, "SELECT score, COUNT(*) AS count_per_score FROM multiple_choice_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}
@@ -911,10 +912,10 @@ func GetQuizClassStatistics(classroomID int, minigameID int) ([]types.QuizClassS
 	return statistics, nil
 }
 
-func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) ([]types.QuizResponseStatistics, error) {
+func GetQuizResponseStatistics(ctx context.Context, classroomID int, minigameID int, questionID int) ([]types.QuizResponseStatistics, error) {
 	var responseStatistics []types.QuizResponseStatistics
 
-	rows, err := db.Query(`
+	rows, err := db.QueryContext(ctx, `
 			SELECT
 			c.choice_text,
 			COUNT(r.choice_id) AS response_count
@@ -947,8 +948,8 @@ func GetQuizResponseStatistics(classroomID int, minigameID int, questionID int) 
 	return responseStatistics, nil
 }
 
-func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID int, choiceID int) error {
-	_, err := db.Exec("INSERT INTO multiple_choice_responses (classroom_id, minigame_id, question_id, student_id, choice_id) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, studentID, choiceID)
+func AddQuizResponse(ctx context.Context, classroomID int, minigameID int, questionID int, studentID int, choiceID int) error {
+	_, err := db.ExecContext(ctx, "INSERT INTO multiple_choice_responses (classroom_id, minigame_id, question_id, student_id, choice_id) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, studentID, choiceID)
 	if err != nil {
 		return err
 	}
@@ -959,11 +960,11 @@ func AddQuizResponse(classroomID int, minigameID int, questionID int, studentID 
 // row, one per disjoint column subset (base fields, badges, quest actionables) - all
 // three scan targets are in scope at once, so one query covering all of them replaces
 // all three round trips.
-func GetSavedData(studentID int) (types.SaveData, error) {
+func GetSavedData(ctx context.Context, studentID int) (types.SaveData, error) {
 	var save_data types.SaveData
 	var badges types.Badges
 
-	row := db.QueryRow(`
+	row := db.QueryRowContext(ctx, `
 		SELECT student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
 			first_time_init_floor1, first_time_init_floor2, first_time_init_floor3,
 			badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom,
@@ -1003,10 +1004,10 @@ func GetSavedData(studentID int) (types.SaveData, error) {
 	return save_data, nil
 }
 
-func GetStudentScores(classroomID int, minigameID int) ([]types.StudentQuizScore, error) {
+func GetStudentScores(ctx context.Context, classroomID int, minigameID int) ([]types.StudentQuizScore, error) {
 	var studentScores []types.StudentQuizScore
 
-	rows, err := db.Query("SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? AND mcs.minigame_id = ? ORDER BY mcs.score DESC", classroomID, minigameID)
+	rows, err := db.QueryContext(ctx, "SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? AND mcs.minigame_id = ? ORDER BY mcs.score DESC", classroomID, minigameID)
 	if err != nil {
 		return nil, err
 	}
@@ -1023,10 +1024,10 @@ func GetStudentScores(classroomID int, minigameID int) ([]types.StudentQuizScore
 	return studentScores, nil
 }
 
-func GetStudentFractionStatistics(userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
+func GetStudentFractionStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.Query("SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
+	rows, err := db.QueryContext(ctx, "SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -1043,10 +1044,10 @@ func GetStudentFractionStatistics(userID int, minigameID int, classroomID int) (
 	return statistics, nil
 }
 
-func GetStudentWordedStatistics(userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
+func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.Query("SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
+	rows, err := db.QueryContext(ctx, "SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -1065,7 +1066,7 @@ func GetStudentWordedStatistics(userID int, minigameID int, classroomID int) ([]
 	return statistics, nil
 }
 
-func GetStudentQuizStatistics(userID int, minigameID int, classroomID int) ([]types.StudentQuizStatistics, error) {
+func GetStudentQuizStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentQuizStatistics, error) {
 	var statistics []types.StudentQuizStatistics
 
 	// One query replaces what used to be three (questions, then correct answers via a
@@ -1075,7 +1076,7 @@ func GetStudentQuizStatistics(userID int, minigameID int, classroomID int) ([]ty
 	// sidesteps that failure mode entirely instead of needing a special case for it.
 	// COALESCE covers a question with no choice marked correct, and a question the
 	// student hasn't answered - both would otherwise scan as SQL NULL into a Go string.
-	rows, err := db.Query(`
+	rows, err := db.QueryContext(ctx, `
 		SELECT
 			q.question_id,
 			q.question_text,
@@ -1109,9 +1110,9 @@ func GetStudentQuizStatistics(userID int, minigameID int, classroomID int) ([]ty
 	return statistics, nil
 }
 
-func SaveData(data types.SaveData) error {
+func SaveData(ctx context.Context, data types.SaveData) error {
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
     UPDATE save_states
     SET 
         current_floor = ?, 

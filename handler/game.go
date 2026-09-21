@@ -48,15 +48,15 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 	var response LoginResponse
 
 	// authenticate student
-	if database.AuthenticateGameUser(data.Username, data.Password) {
+	if database.AuthenticateGameUser(r.Context(), data.Username, data.Password) {
 		// get classroomID student is enrolled in
-		classroomID, err := database.GetClassroomID(data.Username)
+		classroomID, err := database.GetClassroomID(r.Context(), data.Username)
 		if err != nil {
 			return err
 		}
 
 		// get userID of student
-		studentID, err := database.GetStudentID(data.Username)
+		studentID, err := database.GetStudentID(r.Context(), data.Username)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func HandleGetGameFractions(w http.ResponseWriter, r *http.Request) error {
 	fmt.Print("at get fractions, we got minigame id ", data.MinigameID)
 	fmt.Print("at get fractions, we got classroom id ", data.ClassroomID)
 
-	fractions, err := database.GetFractionQuestions(data.MinigameID, data.ClassroomID)
+	fractions, err := database.GetFractionQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("we got minigameID ", data.MinigameID)
 
-	questions, err := database.GetWordedQuestions(data.MinigameID, data.ClassroomID)
+	questions, err := database.GetWordedQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	questions, err := database.GetQuizQuestions(data.MinigameID, data.ClassroomID)
+	questions, err := database.GetQuizQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 
 	var response types.SaveData
 
-	response, saveError := database.GetSavedData(studentID)
+	response, saveError := database.GetSavedData(r.Context(), studentID)
 	if saveError != nil {
 		fmt.Print("a get saved data error has occurred!")
 		fmt.Print(saveError)
@@ -287,7 +287,7 @@ func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print(data)
 
-	err = database.SaveData(data)
+	err = database.SaveData(r.Context(), data)
 	if err != nil {
 		return err
 	}

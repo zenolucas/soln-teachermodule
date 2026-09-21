@@ -67,7 +67,7 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 	fmt.Print("minigameID = ", minigameID)
 	fmt.Print("classroomID= ", classroomID)
 
-	fractions, err := database.GetFractionQuestions(minigameID, classroomID)
+	fractions, err := database.GetFractionQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("we got minigameID", minigameID)
 	fmt.Print("we got questionID", questionID)
-	if err := database.DeleteFractions(minigameID, questionID, classroomIDStr); err != nil {
+	if err := database.DeleteFractions(r.Context(), minigameID, questionID, classroomIDStr); err != nil {
 		return err
 	}
 	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
@@ -189,7 +189,7 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fractions, err := database.GetWordedQuestions(minigameID, classroomID)
+	fractions, err := database.GetWordedQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := database.DeleteWorded(minigameID, questionID, classroomID); err != nil {
+	if err := database.DeleteWorded(r.Context(), minigameID, questionID, classroomID); err != nil {
 		return err
 	}
 	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
@@ -327,7 +327,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	questions, err := database.GetQuizQuestions(minigameID, classroomID)
+	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -482,7 +482,7 @@ func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := database.DeleteMCQuestions(minigameID, questionID, classroomID); err != nil {
+	if err := database.DeleteMCQuestions(r.Context(), minigameID, questionID, classroomID); err != nil {
 		return err
 	}
 

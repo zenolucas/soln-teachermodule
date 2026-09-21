@@ -77,7 +77,7 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
-	questions, err := database.GetFractionQuestions(minigameID, classroomID)
+	questions, err := database.GetFractionQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 
-	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
+	statistics, err := database.GetFractionResponseStatistics(r.Context(), classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
@@ -185,7 +185,7 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.FractionQuestion
-	questions, err := database.GetWordedQuestions(minigameID, classroomID)
+	questions, err := database.GetWordedQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -266,7 +266,7 @@ func HandleWordedResponseStatistics(w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
-	statistics, err := database.GetFractionResponseStatistics(classroomID, minigameID, questionID)
+	statistics, err := database.GetFractionResponseStatistics(r.Context(), classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
@@ -294,7 +294,7 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Fetch the statistics from the database
-	statistics, err := database.GetQuizClassStatistics(classroomID, minigameID)
+	statistics, err := database.GetQuizClassStatistics(r.Context(), classroomID, minigameID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
@@ -334,7 +334,7 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 
 	// questionIDs to put into the url parameters on async functions
 	var questions []types.MultipleChoiceQuestion
-	questions, err := database.GetQuizQuestions(minigameID, classroomID)
+	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -456,7 +456,7 @@ func HandleQuizResponseStatistics(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	statistics, err := database.GetQuizResponseStatistics(classroomID, minigameID, questionID)
+	statistics, err := database.GetQuizResponseStatistics(r.Context(), classroomID, minigameID, questionID)
 	if err != nil {
 		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
 		return err
@@ -516,7 +516,7 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	// A score higher than the number of questions in the minigame can't be legitimate -
 	// reject it instead of recording a number that will misrepresent this student's
 	// results on every chart and leaderboard that reads it back.
-	questionCount, err := database.CountQuizQuestions(data.MinigameID, data.ClassroomID)
+	questionCount, err := database.CountQuizQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -526,7 +526,7 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// record quiz statistics
-	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, studentID, data.Score)
+	err = database.AddQuizStatistics(r.Context(), data.ClassroomID, data.MinigameID, studentID, data.Score)
 	if err != nil {
 		response := QuizScoreResponse{Success: false}
 		w.Header().Set("Content-Type", "application/json")
@@ -586,7 +586,7 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// record quiz statistics
-	err = database.AddQuizResponse(data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.ChoiceID)
+	err = database.AddQuizResponse(r.Context(), data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.ChoiceID)
 	if err != nil {
 		response := QuizResponseResult{Success: false}
 		w.Header().Set("Content-Type", "application/json")
@@ -644,7 +644,7 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	studentScores, err := database.GetStudentScores(classroomID, minigameID)
+	studentScores, err := database.GetStudentScores(r.Context(), classroomID, minigameID)
 	if err != nil {
 		return err
 	}
@@ -677,7 +677,7 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// get student
-	student, err := database.GetStudent(studentID)
+	student, err := database.GetStudent(r.Context(), studentID)
 	if err != nil {
 		return err
 	}
@@ -703,7 +703,7 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 
 	var statistics []types.StudentFractionStatistics
 
-	statistics, err := database.GetStudentFractionStatistics(studentID, minigameID, classroomID)
+	statistics, err := database.GetStudentFractionStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -735,7 +735,7 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 
 	var statistics []types.StudentFractionStatistics
 
-	statistics, err := database.GetStudentWordedStatistics(studentID, minigameID, classroomID)
+	statistics, err := database.GetStudentWordedStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -767,7 +767,7 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 
 	var statistics []types.StudentQuizStatistics
 
-	statistics, err := database.GetStudentQuizStatistics(studentID, minigameID, classroomID)
+	statistics, err := database.GetStudentQuizStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
