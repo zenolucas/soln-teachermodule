@@ -41,6 +41,7 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		Success     bool   `json:"success"`
 		ClassroomID int    `json:"classroom_id"`
 		StudentID   int    `json:"student_id"`
+		Token       string `json:"token"`
 		ErrorText   string `json:"error_text"`
 	}
 
@@ -59,7 +60,17 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		response = LoginResponse{Success: true, ClassroomID: classroomID, StudentID: studentID}
+
+		// Issue a signed token the client must send back (as "Authorization: Bearer
+		// <token>") on every other /game/* request that acts on this student's data -
+		// those routes derive student_id from this token instead of trusting one
+		// posted in the request body.
+		token, err := issueGameToken(studentID)
+		if err != nil {
+			return err
+		}
+
+		response = LoginResponse{Success: true, ClassroomID: classroomID, StudentID: studentID, Token: token}
 	} else {
 		response = LoginResponse{Success: false, ErrorText: "wrong username or password"}
 	}
@@ -216,27 +227,17 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	body, err := io.ReadAll(r.Body)
+	// student_id comes from the token issued at /game/login, not the request body -
+	// a body-supplied student_id would let any client read any student's save data.
+	studentID, err := authenticateGameRequest(r)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		return nil
-	}
-	defer r.Body.Close()
-
-	type Data struct {
-		StudentID int `json:"student_id"`
-	}
-
-	var data Data
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return err
 	}
 
 	var response types.SaveData
 
-	response, saveError := database.GetSavedData(data.StudentID)
+	response, saveError := database.GetSavedData(studentID)
 	if saveError != nil {
 		fmt.Print("a get saved data error has occurred!")
 		fmt.Print(saveError)
@@ -256,6 +257,15 @@ func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	// student_id comes from the token issued at /game/login, not the request body -
+	// a body-supplied student_id would let any client overwrite any student's save
+	// data. Authenticate before trusting anything else in the body.
+	studentID, err := authenticateGameRequest(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return err
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -273,6 +283,7 @@ func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
 		return err
 	}
+	data.StudentID = studentID
 
 	fmt.Print(data)
 

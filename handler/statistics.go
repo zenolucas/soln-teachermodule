@@ -438,6 +438,14 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	// student_id comes from the token issued at /game/login, not the request body -
+	// a body-supplied student_id would let any client post a score for any student.
+	studentID, err := authenticateGameRequest(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return err
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -445,10 +453,11 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer r.Body.Close()
 
+	// StudentID is deliberately not read from the body - see authenticateGameRequest
+	// above.
 	type Data struct {
 		ClassroomID int
 		MinigameID  int
-		StudentID   int
 		Score       int
 	}
 
@@ -465,8 +474,20 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 		Success bool `json:"success"`
 	}
 
+	// A score higher than the number of questions in the minigame can't be legitimate -
+	// reject it instead of recording a number that will misrepresent this student's
+	// results on every chart and leaderboard that reads it back.
+	questionCount, err := database.CountQuizQuestions(data.MinigameID, data.ClassroomID)
+	if err != nil {
+		return err
+	}
+	if data.Score < 0 || data.Score > questionCount {
+		http.Error(w, fmt.Sprintf("invalid score: %d (minigame has %d questions)", data.Score, questionCount), http.StatusBadRequest)
+		return fmt.Errorf("invalid score %d for minigame %d with %d questions", data.Score, data.MinigameID, questionCount)
+	}
+
 	// record quiz statistics
-	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, data.StudentID, data.Score)
+	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, studentID, data.Score)
 	if err != nil {
 		response := QuizScoreResponse{Success: false}
 		w.Header().Set("Content-Type", "application/json")
@@ -488,6 +509,14 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	// student_id comes from the token issued at /game/login, not the request body -
+	// a body-supplied student_id would let any client record a response as any student.
+	studentID, err := authenticateGameRequest(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return err
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
@@ -495,11 +524,12 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer r.Body.Close()
 
+	// StudentID is deliberately not read from the body - see authenticateGameRequest
+	// above.
 	type Data struct {
 		ClassroomID int
 		MinigameID  int
 		QuestionID  int
-		StudentID   int
 		ChoiceID    int
 	}
 
@@ -517,7 +547,7 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// record quiz statistics
-	err = database.AddQuizResponse(data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.ChoiceID)
+	err = database.AddQuizResponse(data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.ChoiceID)
 	if err != nil {
 		response := QuizResponseResult{Success: false}
 		w.Header().Set("Content-Type", "application/json")
@@ -538,7 +568,15 @@ func HandleAddStatisticsFraction(w http.ResponseWriter, r *http.Request) error {
 		Success bool `json:"success"`
 	}
 
-	err := database.AddFractionStatistics(w, r)
+	// student_id comes from the token issued at /game/login, not the request body -
+	// a body-supplied student_id would let any client record attempts as any student.
+	studentID, err := authenticateGameRequest(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return err
+	}
+
+	err = database.AddFractionStatistics(w, r, studentID)
 	if err != nil {
 		response := StatisticsResponse{Success: false}
 		w.Header().Set("Content-Type", "application/json")
