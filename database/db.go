@@ -21,10 +21,6 @@ import (
 
 var db *sql.DB
 
-const (
-	sessionAccessTokenKey = "access_token"
-)
-
 // formInt reads a form value and parses it as an int, returning a descriptive error
 // instead of silently defaulting to 0 on missing or non-numeric input - a bare
 // strconv.Atoi with the error discarded is what let a bad or missing ID quietly turn
@@ -385,13 +381,6 @@ func GetClassroomTeacherID(ctx context.Context, classroomID int) (int, error) {
 		return 0, err
 	}
 	return teacherID, nil
-}
-
-// Example function to save session token in the database
-func SaveSessionToken(userID int, sessionToken string) error {
-	query := `INSERT INTO sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)`
-	_, err := db.Exec(query, userID, sessionToken, time.Now().Add(24*time.Hour))
-	return err
 }
 
 func GetClassrooms(ctx context.Context, teacherID int) ([]types.Classroom, error) {

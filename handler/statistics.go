@@ -33,31 +33,14 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("loading up statistics, we got minigameID: ", minigameID)
 
-	if minigameID == "1" {
+	switch minigameKinds[minigameID] {
+	case kindFractions:
 		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "2" {
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "3" {
+	case kindWorded:
 		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "4" {
-		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "5" {
+	case kindQuiz:
 		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "6" {
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "7" {
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "8" {
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "9" {
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "10" {
-		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "11" {
-		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
-	} else if minigameID == "12" {
-		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
-	} else {
+	default:
 		http.Error(w, "invalid minigame id", http.StatusBadRequest)
 		return errors.New("bad request")
 	}
@@ -660,8 +643,6 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 			</tr>	
 		`, i+1, esc(students.FirstName), esc(students.LastName), students.Score)
 	}
-
-	print(studentScores)
 
 	return nil
 }

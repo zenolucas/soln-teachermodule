@@ -122,6 +122,35 @@ func escJS(s string) string {
 	return string(b)
 }
 
+// minigameKind classifies which question type a minigame ID holds. HandleMinigameIndex
+// and HandleStatisticsIndex both need this exact mapping to pick which templ component
+// to render; centralizing it here means adding minigame 13 is one line in one place,
+// instead of a new branch in two separate 12-way if/else chains.
+// minigameKind's zero value is kindInvalid, not kindFractions, so a lookup miss on
+// minigameKinds (an unrecognized minigame ID) falls through to the error case in both
+// handlers rather than silently rendering as if it were minigame 1.
+type minigameKind int
+
+const (
+	kindInvalid minigameKind = iota
+	kindFractions
+	kindWorded
+	kindQuiz
+)
+
+var minigameKinds = map[string]minigameKind{
+	"1": kindFractions, "2": kindFractions,
+	"3": kindWorded, "4": kindWorded,
+	"5":  kindQuiz,
+	"6":  kindFractions,
+	"7":  kindFractions,
+	"8":  kindFractions,
+	"9":  kindFractions,
+	"10": kindWorded,
+	"11": kindQuiz,
+	"12": kindQuiz,
+}
+
 func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
 	if len(r.Header.Get("HX-Request")) > 0 {
 		w.Header().Set("HX-Redirect", to)

@@ -79,12 +79,6 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	return session.Save(r, w)
 }
 
-type RegisterParams struct {
-	Username        string
-	Password        string
-	ConfirmPassword string
-}
-
 func HandleRegisterIndex(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, auth.Register())
 }
