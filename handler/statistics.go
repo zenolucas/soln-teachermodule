@@ -247,7 +247,7 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 					});
 				}
 			</script>
-		`, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+		`, esc(question.QuestionText), i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
 	}
 
 	return nil
@@ -394,7 +394,7 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 					});
 				}
 			</script>
-		`, i+1, question.QuestionText, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i, setColors(question))
+		`, i+1, esc(question.QuestionText), i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i, setColors(question))
 	}
 	return nil
 }
@@ -658,7 +658,7 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 				%d
 				</td>
 			</tr>	
-		`, i+1, students.FirstName, students.LastName, students.Score)
+		`, i+1, esc(students.FirstName), esc(students.LastName), students.Score)
 	}
 
 	print(studentScores)
@@ -747,7 +747,7 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 				<td class="text-center">%d</td>
 				<td class="text-center">%d</td>
 			</tr>	
-		`, statistic.QuestionText, statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
+		`, esc(statistic.QuestionText), statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
 	}
 
 	return nil
@@ -780,7 +780,7 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 				<td class="text-center">%s</td>
 				<td class="text-center">%d</td>
 			</tr>	
-		`, statistic.QuestionText, statistic.CorrectAnswer, statistic.UserAnswer, statistic.Score)
+		`, esc(statistic.QuestionText), esc(statistic.CorrectAnswer), esc(statistic.UserAnswer), statistic.Score)
 	}
 
 	return nil

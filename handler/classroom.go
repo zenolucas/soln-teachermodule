@@ -68,7 +68,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 					</div>
 				</div>
 			</div>
-		`, classroom.ClassroomName, classroom.Section, classroom.Description, classroom.ClassroomID)
+		`, esc(classroom.ClassroomName), esc(classroom.Section), esc(classroom.Description), esc(classroom.ClassroomID))
 	}
 
 	return nil
@@ -89,7 +89,7 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
 				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - Section %s</div>
-		`, classroom.ClassroomID, classroom.ClassroomName, classroom.Section)
+		`, esc(classroom.ClassroomID), esc(classroom.ClassroomName), esc(classroom.Section))
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 					</form>
 				</td>
 			</tr>
-		`, student.UserID, i+1, student.Firstname, student.Lastname, student.UserID, classroomIDStr, student.UserID, student.UserID, classroomIDStr)
+		`, esc(student.UserID), i+1, esc(student.Firstname), esc(student.Lastname), esc(student.UserID), esc(classroomIDStr), esc(student.UserID), esc(student.UserID), esc(classroomIDStr))
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 				<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item"/></td>
 				<td>%s %s</td>
 			</tr>	
-		`, student.UserID, student.Firstname, student.Lastname)
+		`, esc(student.UserID), esc(student.Firstname), esc(student.Lastname))
 	}
 
 	fmt.Fprintf(w, `
