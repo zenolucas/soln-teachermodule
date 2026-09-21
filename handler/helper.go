@@ -77,7 +77,7 @@ func assertOwnsClassroom(w http.ResponseWriter, r *http.Request, classroomID int
 		return err
 	}
 
-	ownerID, err := database.GetClassroomTeacherID(classroomID)
+	ownerID, err := database.GetClassroomTeacherID(r.Context(), classroomID)
 	if err != nil {
 		return err
 	}
