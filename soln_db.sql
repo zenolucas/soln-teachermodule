@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS multiple_choice_questions (
 CREATE TABLE IF NOT EXISTS multiple_choice_choices (
     choice_id INT AUTO_INCREMENT PRIMARY KEY,
     question_id INT, 
-    choice_text VARCHAR(20) NOT NULL,
+    choice_text VARCHAR(255) NOT NULL,
     is_correct BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id)
 );
