@@ -81,7 +81,7 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 			</div>
 			<script>
 				async function getClassStatistics%d() {
-				const response = await fetch('http://localhost:3000/statistics/fraction/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const response = await fetch('/statistics/fraction/question/data?questionID=%d&classroomID=%d&minigameID=%d');
 				const results = await response.json();
 				return results
 				}
@@ -181,7 +181,7 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 			</div>
 			<script>
 				async function getClassStatistics%d() {
-				const response = await fetch('http://localhost:3000/statistics/worded/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const response = await fetch('/statistics/worded/question/data?questionID=%d&classroomID=%d&minigameID=%d');
 				const results = await response.json();
 				return results
 				}
@@ -312,7 +312,7 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 			</div>
 			<script>
 				async function getClassStatistics%d() {
-				const response = await fetch('http://localhost:3000/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d');
+				const response = await fetch('/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d');
 				const results = await response.json();
 				return results
 				}
@@ -461,16 +461,24 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("we recieved data: ", data)
 
-	type LoginResponse struct {
+	type QuizScoreResponse struct {
 		Success bool `json:"success"`
 	}
 
 	// record quiz statistics
 	err = database.AddQuizStatistics(data.ClassroomID, data.MinigameID, data.StudentID, data.Score)
 	if err != nil {
+		response := QuizScoreResponse{Success: false}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return err
 	}
 
+	response := QuizScoreResponse{Success: true}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
@@ -504,16 +512,24 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("we recieved data: ", data)
 
-	type LoginResponse struct {
+	type QuizResponseResult struct {
 		Success bool `json:"success"`
 	}
 
 	// record quiz statistics
 	err = database.AddQuizResponse(data.ClassroomID, data.MinigameID, data.QuestionID, data.StudentID, data.ChoiceID)
 	if err != nil {
+		response := QuizResponseResult{Success: false}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return err
 	}
 
+	response := QuizResponseResult{Success: true}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 	return nil
 }
 
@@ -561,7 +577,7 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 				%d
 				</td>
 			</tr>	
-		`, i, students.FirstName, students.LastName, students.Score)
+		`, i+1, students.FirstName, students.LastName, students.Score)
 	}
 
 	print(studentScores)
