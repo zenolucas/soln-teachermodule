@@ -363,24 +363,24 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 					<div class="label">
 						<span class="label-text text-white">Option 1:</span>
 					</div>
-					<input type="text" value="%s" name="option1" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="text" value="%s" name="option1" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 					<input type="hidden"  value="%d" name="option1_choiceID" />
 					<div class="label">
 						<span class="label-text text-white">Option 2:</span>
 					</div>
-					<input type="text" value="%s" name="option2" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="text" value="%s" name="option2" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 					<input type="hidden"  value="%d" name="option2_choiceID" />
 				</div>
 				<div class="flex gap-4 mt-4">
 				<div class="label">
 					<span class="label-text text-white">Option 3:</span>
 				</div>
-					<input type="text" value="%s" name="option3" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="text" value="%s" name="option3" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 					<input type="hidden"  value="%d" name="option3_choiceID" />
 				<div class="label">
 					<span class="label-text text-white">Option 4:</span>
 				</div>
-					<input type="text" value="%s" name="option4" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+					<input type="text" value="%s" name="option4" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
 					<input type="hidden"  value="%d" name="option4_choiceID" />
 				</div>
 				<div class="flex mt-4 relative inline-block w-64">
