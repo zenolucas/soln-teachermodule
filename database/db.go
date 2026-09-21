@@ -117,20 +117,25 @@ func AuthenticateGameUser(username string, password string) bool {
 // gets classroomID of a student
 func GetClassroomID(username string) (int, error) {
 	var classroomID int
-	var section string
 
-	// first get section of student
-	err := db.QueryRow("SELECT section FROM users WHERE username = ? AND usertype = ?", username, "student").Scan(&section)
+	// Resolve via the enrollments table (the actual source of truth, and the one the
+	// teacher UI writes to) instead of matching on users.section - section is a free-text
+	// field with no uniqueness constraint, so two teachers using the same section string
+	// could silently cross-wire a student into the wrong teacher's classroom.
+	// A student enrolled in more than one classroom returns the first match; the game's
+	// login API only has room for a single classroom_id today, so picking one classroom
+	// is the smallest fix that removes the section-string bug without redesigning that
+	// wire contract.
+	err := db.QueryRow(`
+		SELECT e.classroom_id FROM enrollments e
+		JOIN users u ON u.user_id = e.student_id
+		WHERE u.username = ? AND u.usertype = 'student'
+		LIMIT 1
+	`, username).Scan(&classroomID)
 	if err != nil {
 		return 0, err
 	}
-	// then get classroomID given section
-	err = db.QueryRow("SELECT classroom_id FROM classrooms WHERE section = ?", section).Scan(&classroomID)
-	if err != nil {
-		return 0, err
-	}
 
-	fmt.Print("returned classroomID is :", classroomID)
 	return classroomID, nil
 }
 
@@ -458,7 +463,7 @@ func GetWordedQuestions(minigame_id int, classroom_id int) ([]types.FractionQues
 	var questions []types.FractionQuestion
 
 	// get questiontext and correct answer
-	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ?", minigame_id)
+	rows, err := db.Query("SELECT question_id, question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator FROM fraction_questions WHERE minigame_id = ? AND classroom_id = ?", minigame_id, classroom_id)
 	if err != nil {
 		return nil, err
 	}
@@ -921,10 +926,10 @@ func GetStudentScores(classroomID int, minigameID int) ([]types.StudentQuizScore
 	return studentScores, nil
 }
 
-func GetStudentFractionStatistics(userID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+func GetStudentFractionStatistics(userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.Query("SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ?", userID, minigameID, minigameID)
+	rows, err := db.Query("SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -941,10 +946,10 @@ func GetStudentFractionStatistics(userID int, minigameID int) ([]types.StudentFr
 	return statistics, nil
 }
 
-func GetStudentWordedStatistics(userID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+func GetStudentWordedStatistics(userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.Query("SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ?", userID, minigameID, minigameID)
+	rows, err := db.Query("SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -963,7 +968,7 @@ func GetStudentWordedStatistics(userID int, minigameID int) ([]types.StudentFrac
 	return statistics, nil
 }
 
-func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizStatistics, error) {
+func GetStudentQuizStatistics(userID int, minigameID int, classroomID int) ([]types.StudentQuizStatistics, error) {
 	var statistics []types.StudentQuizStatistics
 
 	// One query replaces what used to be three (questions, then correct answers via a
@@ -983,10 +988,10 @@ func GetStudentQuizStatistics(userID int, minigameID int) ([]types.StudentQuizSt
 		JOIN multiple_choice_choices c ON c.question_id = q.question_id
 		LEFT JOIN multiple_choice_responses r ON r.question_id = q.question_id
 			AND r.student_id = ? AND r.minigame_id = ?
-		WHERE q.minigame_id = ?
+		WHERE q.minigame_id = ? AND q.classroom_id = ?
 		GROUP BY q.question_id, q.question_text
 		ORDER BY q.question_id
-	`, userID, minigameID, minigameID)
+	`, userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}

@@ -588,6 +588,7 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
+	classroomIDStr := r.URL.Query().Get("classroomID")
 
 	// get student
 	student, err := database.GetStudent(studentID)
@@ -595,7 +596,7 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr))
+	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr, classroomIDStr))
 }
 
 // different score formats
@@ -607,10 +608,12 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 	studentID, _ := strconv.Atoi(studentIDStr)
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	var statistics []types.StudentFractionStatistics
 
-	statistics, err := database.GetStudentFractionStatistics(studentID, minigameID)
+	statistics, err := database.GetStudentFractionStatistics(studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -633,10 +636,12 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 	studentID, _ := strconv.Atoi(studentIDStr)
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	var statistics []types.StudentFractionStatistics
 
-	statistics, err := database.GetStudentWordedStatistics(studentID, minigameID)
+	statistics, err := database.GetStudentWordedStatistics(studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
@@ -659,10 +664,12 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 	studentID, _ := strconv.Atoi(studentIDStr)
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
+	classroomIDStr := r.URL.Query().Get("classroomID")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	var statistics []types.StudentQuizStatistics
 
-	statistics, err := database.GetStudentQuizStatistics(studentID, minigameID)
+	statistics, err := database.GetStudentQuizStatistics(studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
