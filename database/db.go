@@ -585,51 +585,32 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) err
 	minigameIDStr := r.FormValue("minigameID")
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 
-	question := types.MultipleChoiceQuestion{
-		QuestionText: r.FormValue("question_text"),
-	}
+	questionText := r.FormValue("question_text")
 
-	var choices []string
-	choices = append(choices, r.FormValue("option_1"))
-	choices = append(choices, r.FormValue("option_2"))
-	choices = append(choices, r.FormValue("option_3"))
-	choices = append(choices, r.FormValue("option_4"))
-
+	// The "Add Question" form's correct-answer <select> submits the literal option
+	// key ("option_1".."option_4"), not the option's text - the form fields share
+	// that same naming, so we can match the correct answer by position rather than
+	// by comparing choice text (which breaks if two options have identical text).
+	optionKeys := []string{"option_1", "option_2", "option_3", "option_4"}
 	correctAnswer := r.FormValue("correct_answer")
 
 	// first insert question_text without the correct_answer id
-	result, err := db.Exec(`INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, question.QuestionText)
+	result, err := db.Exec(`INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)
 	if err != nil {
 		return err
 	}
 
 	// Get the last inserted question_id
 	questionID, _ := result.LastInsertId()
-	var correct_answer_id int64
 
 	// Insert choices into the multiple_choice_choices table using the questionID
-	for _, choiceText := range choices {
-		// to retrieve the choice_id of correct answer
-		if choiceText == correctAnswer {
-			result, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, true)
-			if err != nil {
-				return err
-			}
-			correct_answer_id, _ = result.LastInsertId()
-			// else if choice is not the correct answer
-		} else {
-			_, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text) VALUES (?, ?)", questionID, choiceText)
-			if err != nil {
-				return err
-			}
+	for _, key := range optionKeys {
+		choiceText := r.FormValue(key)
+		isCorrect := key == correctAnswer
+		if _, err := db.Exec("INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, isCorrect); err != nil {
+			return err
 		}
 	}
-	// // insert choice_id of correct_answer into table
-	// _, err = db.Exec(`INSERT INTO multiple_choice_questions (correct_answer) VALUES (?)`, correct_answer_id)
-	// if err != nil {
-	// 	return err
-	// }
-	fmt.Print(correct_answer_id)
 
 	return nil
 }
@@ -639,9 +620,12 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		QuestionText: r.FormValue("question"),
 	}
 
-	correctAnswer := r.FormValue("correct_answer")
+	// correct_answer holds the choice_id of the option the teacher picked (see the
+	// <select> in HandleGetMCQuestions), so compare by ID rather than by choice text -
+	// text comparison breaks if two options happen to have identical text.
+	correctAnswerID, _ := strconv.Atoi(r.FormValue("correct_answer"))
 	// construct choices[]
-	choices := constructChoices(r, correctAnswer)
+	choices := constructChoices(r, correctAnswerID)
 
 	questionIDStr := r.FormValue("questionID")
 	questionID, _ := strconv.Atoi(questionIDStr)
@@ -666,43 +650,21 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 // helper func to construct choices[]
-func constructChoices(r *http.Request, correctAnswer string) []types.Choice {
+func constructChoices(r *http.Request, correctAnswerID int) []types.Choice {
 	var choices []types.Choice
-	var choice types.Choice
 
-	option1 := r.FormValue("option1")
-	choice.ChoiceText = option1
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option1_choiceID"))
-	choice.IsCorrect = getCorrectAnswer(option1, correctAnswer)
-	choices = append(choices, choice)
+	optionKeys := []string{"option1", "option2", "option3", "option4"}
+	choiceIDKeys := []string{"option1_choiceID", "option2_choiceID", "option3_choiceID", "option4_choiceID"}
 
-	option2 := r.FormValue("option2")
-	choice.ChoiceText = option2
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option2_choiceID"))
-	choice.IsCorrect = getCorrectAnswer(option2, correctAnswer)
-	choices = append(choices, choice)
-
-	option3 := r.FormValue("option3")
-	choice.ChoiceText = option3
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option3_choiceID"))
-	choice.IsCorrect = getCorrectAnswer(option3, correctAnswer)
-	choices = append(choices, choice)
-
-	option4 := r.FormValue("option4")
-	choice.ChoiceText = option4
-	choice.ChoiceID, _ = strconv.Atoi(r.FormValue("option4_choiceID"))
-	choice.IsCorrect = getCorrectAnswer(option4, correctAnswer)
-	choices = append(choices, choice)
+	for i, key := range optionKeys {
+		var choice types.Choice
+		choice.ChoiceText = r.FormValue(key)
+		choice.ChoiceID, _ = strconv.Atoi(r.FormValue(choiceIDKeys[i]))
+		choice.IsCorrect = choice.ChoiceID == correctAnswerID
+		choices = append(choices, choice)
+	}
 
 	return choices
-}
-
-// helper func for construct choices to get correct answer
-func getCorrectAnswer(option string, correctAnswer string) bool {
-	if option == correctAnswer {
-		return true
-	}
-	return false
 }
 
 func DeleteMCQuestions(minigameID int, questionID int) error {
