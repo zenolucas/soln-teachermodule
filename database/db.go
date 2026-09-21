@@ -67,6 +67,14 @@ func InitializeDatabase() error {
 	}
 	fmt.Println("Database connection established.")
 
+	// Go's default is unlimited open connections, so a classroom of 30 students
+	// hitting /game/* at once could exhaust MySQL's max_connections; idle
+	// connections that outlive MySQL's wait_timeout also produce intermittent
+	// "invalid connection" errors without a lifetime cap.
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
 	return err
 }
 

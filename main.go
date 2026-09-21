@@ -1,15 +1,20 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"soln-teachermodule/database"
 	"soln-teachermodule/handler"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 //go:embed public
@@ -30,6 +35,10 @@ func main() {
 	}
 
 	router := chi.NewMux()
+	// Several handlers still panic on bad input (unchecked type assertions, index
+	// access with no bounds check) rather than returning an error - without this,
+	// each of those drops the connection instead of the client getting a 500.
+	router.Use(middleware.Recoverer)
 
 	// handle static files in public folder
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
@@ -100,10 +109,40 @@ func main() {
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
-	slog.Info("application running", "port", port)
 
 	// Wrap the entire router with CORS
 	wrapped := handler.WithCORS(router)
 
-	log.Fatal(http.ListenAndServe(port, wrapped))
+	// The zero-value server (a bare http.ListenAndServe call) has no timeouts at all,
+	// so a single slow or half-open client could hold a connection indefinitely.
+	// WriteTimeout is set well above a typical "5s" default deliberately: this server
+	// also serves public/downloads/soln.zip (~57MB, the game client) straight off
+	// disk, and a blanket 10s WriteTimeout would cut that download off for any
+	// connection slower than ~45Mbps sustained - 5 minutes comfortably covers even a
+	// slow mobile connection (~1.5Mbps) while still bounding a genuinely stuck one.
+	srv := &http.Server{
+		Addr:         port,
+		Handler:      wrapped,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Minute,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	go func() {
+		slog.Info("application running", "port", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
+	slog.Info("server stopped gracefully")
 }
