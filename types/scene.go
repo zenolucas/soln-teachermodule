@@ -36,6 +36,21 @@ func (s Scene) StatsPath() string {
 	return "/statistics/fraction"
 }
 
+// StudentStatsPath is the per-student score fragment route for this scene's kind.
+// Unlike StatsPath, all three kinds have their own dedicated route here
+// (/statistics/student/fraction|worded|quiz), so this is a direct three-way mapping
+// rather than a fallback.
+func (s Scene) StudentStatsPath() string {
+	switch s.Kind {
+	case KindWorded:
+		return "/statistics/student/worded"
+	case KindQuiz:
+		return "/statistics/student/quiz"
+	default:
+		return "/statistics/student/fraction"
+	}
+}
+
 // World groups scenes the way the game itself does, in play order.
 type World struct {
 	Title  string
