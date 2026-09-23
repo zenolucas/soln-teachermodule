@@ -8,3 +8,8 @@ tmp
 node_modules
 .txt
 *_templ.go
+# Built by `make build`/`make css-build` (and by the Docker build, which runs `make
+# build`) - committing it just meant every PR that touched a templ/JS file also carried
+# an unrelated full regeneration of this file, and any two such PRs landing close
+# together reconflicted on it every time (see D1).
+/public/styles.css

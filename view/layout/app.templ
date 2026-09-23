@@ -7,7 +7,10 @@ import "soln-teachermodule/view/ui"
 // history indistinguishable when several are open).
 templ App(nav bool, create bool, title string) {
 <!DOCTYPE html>
-<html lang="en" data-theme="emerald" class="bg-base-300">
+<!-- data-theme intentionally omitted: tailwind.config.js only ever compiles the nord
+     theme (see D2), so an "emerald" attribute here did nothing but claim a theme that
+     was never actually served. -->
+<html lang="en" class="bg-base-300">
 
 <head>
 	<title>{ title }</title>
