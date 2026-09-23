@@ -632,16 +632,21 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// questionCount lets each row show "score / N" instead of a bare number a teacher
+	// has to already know the quiz length to make sense of (see FE-33).
+	questionCount, err := database.CountQuizQuestions(r.Context(), minigameID, classroomID)
+	if err != nil {
+		return err
+	}
+
 	for i, students := range studentScores {
 		fmt.Fprintf(w, `
 			<tr>
 				<th>%d</th>
 				<td>%s %s</td>
-				<td class="flex justify-end">
-				%d
-				</td>
-			</tr>	
-		`, i+1, esc(students.FirstName), esc(students.LastName), students.Score)
+				<td class="text-right">%d / %d</td>
+			</tr>
+		`, i+1, esc(students.FirstName), esc(students.LastName), students.Score, questionCount)
 	}
 
 	return nil
@@ -695,8 +700,10 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 				<td>%d/%d + %d/%d ?</td>
 				<td class="text-center">%d</td>
 				<td class="text-center">%d</td>
-			</tr>	
-		`, statistic.Fraction1_Numerator, statistic.Fraction1_Denominator, statistic.Fraction2_Numerator, statistic.Fraction2_Denominator, statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
+				<td class="text-center">%s</td>
+			</tr>
+		`, statistic.Fraction1_Numerator, statistic.Fraction1_Denominator, statistic.Fraction2_Numerator, statistic.Fraction2_Denominator,
+			statistic.RightAttemptsCount, statistic.WrongAttemptsCount, pctCorrect(statistic.RightAttemptsCount, statistic.WrongAttemptsCount))
 	}
 
 	return nil
@@ -727,8 +734,9 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 				<td>%s</td>
 				<td class="text-center">%d</td>
 				<td class="text-center">%d</td>
-			</tr>	
-		`, esc(statistic.QuestionText), statistic.WrongAttemptsCount, statistic.RightAttemptsCount)
+				<td class="text-center">%s</td>
+			</tr>
+		`, esc(statistic.QuestionText), statistic.RightAttemptsCount, statistic.WrongAttemptsCount, pctCorrect(statistic.RightAttemptsCount, statistic.WrongAttemptsCount))
 	}
 
 	return nil

@@ -40,7 +40,7 @@ templ QuizStatistics(classroomID string, minigameID string) {
     <h1 class="text-5xl font-bold mt-2 mb-4">Quiz Statistics</h1>
     <div>
         <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary btn-active text-white">Class Statistics</a>
-        <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary text-white">Question Statistics</a>
+        <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-outline btn-secondary">Question Statistics</a>
     </div>
     <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         <canvas id="myStatisticsChart" width="300" height="200"></canvas>
@@ -52,7 +52,6 @@ templ QuizStatistics(classroomID string, minigameID string) {
             const minigameID = document.currentScript.getAttribute("minigameID")
             const response = await fetch(`/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);
             const results = await response.json();
-            console.log(results)
             return results
         }
 
@@ -79,11 +78,19 @@ templ QuizStatistics(classroomID string, minigameID string) {
                     indexAxis: 'x',
                     scales: {
                         x: {
-                            beginAtZero: true  // X-axis starts at 0
+                            beginAtZero: true,  // X-axis starts at 0
+                            title: {
+                                display: true,
+                                text: 'Score'
+                            }
                         },
                         y: {
                             ticks: {
                                 stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of students'
                             }
                         }
                     },
@@ -104,7 +111,7 @@ templ QuizStatistics(classroomID string, minigameID string) {
                 <tr>
                     <th></th>
                     <th class="text-xl">Name</th>
-                    <th class="text-xl">Score</th>
+                    <th class="text-xl text-right">Score</th>
                 </tr>
             </thead>
             <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/quiz/score?minigameID=%s&classroomID=%s", minigameID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
@@ -124,7 +131,7 @@ templ QuestionStatistics(minigameID string, classroomID string) {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Question Statistics</h1>
         <div>
-            <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary text-white">Class Statistics</a>
+            <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-outline btn-secondary">Class Statistics</a>
             <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary btn-active text-white">Question Statistics</a>
         </div>
 
@@ -148,8 +155,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=1&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame1">
@@ -165,8 +173,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=2&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame2">
@@ -182,8 +191,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=3&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame3">
@@ -199,8 +209,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=4&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame4">
@@ -234,8 +245,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=6&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame6">
@@ -251,8 +263,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=7&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame7">
@@ -268,8 +281,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=8&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame8">
@@ -285,8 +299,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=9&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame9">
@@ -302,8 +317,9 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
                 <thead>
                     <tr>
                         <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
                         <th class="text-xl text-center">Number of Correct Attempts</th>
+                        <th class="text-xl text-center">Number of Wrong Attempts</th>
+                        <th class="text-xl text-center">% Correct</th>
                     </tr>
                 </thead>
                 <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=10&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame10">
