@@ -16,6 +16,20 @@ jobs:
         with:
           go-version: "1.23"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install CSS build dependencies
+        run: npm ci
+
+      # public/styles.css is a build artifact, not a committed file (see D1) - go:embed
+      # needs it to exist on disk before `go build` runs, the same way `make build`
+      # already builds it first for local/Docker builds.
+      - name: Build CSS
+        run: npx tailwindcss -i view/css/app.css -o public/styles.css --minify
+
       - name: Generate templ files
         run: go run github.com/a-h/templ/cmd/templ@v0.3.819 generate view
 

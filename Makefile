@@ -19,6 +19,6 @@ css-build:
 templ:
 	@templ generate --watch --proxy=http://localhost:3000
 
-build:
+build: css-build
 	@templ generate view
 	@go build -tags dev -o bin/soln-teachermodule main.go 
