@@ -2,6 +2,7 @@ package statistics
 
 import "soln-teachermodule/view/layout"
 import "soln-teachermodule/view/ui"
+import "soln-teachermodule/types"
 import "fmt"
 
 templ FractionStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
@@ -159,234 +160,47 @@ templ StudentScores(firstname string, lastname string, userID string, classroomI
 @ui.Breadcrumb(classroomID, classroomName, fmt.Sprintf("%s %s", firstname, lastname), "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 1 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=1&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame1">
-                </form>
-                <tbody id="minigame1">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 2 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=2&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame2">
-                </form>
-                <tbody id="minigame2">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 3 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=3&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame3">
-                </form>
-                <tbody id="minigame3">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 4 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=4&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame4">
-                </form>
-                <tbody id="minigame4">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 5 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Correct Answer</th>
-                        <th class="text-xl text-center">User Answer</th>
-                        <th class="text-xl text-center">Score</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/quiz?userID=%s&minigameID=5&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame5">
-                </form>
-                <tbody id="minigame5">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 6 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=6&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame6">
-                </form>
-                <tbody id="minigame6">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 7 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=7&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame7">
-                </form>
-                <tbody id="minigame7">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 8 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=8&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame8">
-                </form>
-                <tbody id="minigame8">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 9 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/fraction?userID=%s&minigameID=9&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame9">
-                </form>
-                <tbody id="minigame9">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 10 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Number of Correct Attempts</th>
-                        <th class="text-xl text-center">Number of Wrong Attempts</th>
-                        <th class="text-xl text-center">% Correct</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/worded?userID=%s&minigameID=10&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame10">
-                </form>
-                <tbody id="minigame10">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 11 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Correct Answer</th>
-                        <th class="text-xl text-center">User Answer</th>
-                        <th class="text-xl text-center">Score</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/quiz?userID=%s&minigameID=11&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame11">
-                </form>
-                <tbody id="minigame11">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-
-        <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-            <p class="text-2xl">Minigame 12 Statistics</p>
-            <table class="table table-zebra text-xl">
-                <thead>
-                    <tr>
-                        <th class="text-xl">Question</th>
-                        <th class="text-xl text-center">Correct Answer</th>
-                        <th class="text-xl text-center">User Answer</th>
-                        <th class="text-xl text-center">Score</th>
-                    </tr>
-                </thead>
-                <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/student/quiz?userID=%s&minigameID=12&classroomID=%s", userID, classroomID)))} hx-trigger="load" hx-swap="outerHTML" hx-target="#minigame12">
-                </form>
-                <tbody id="minigame12">
-                    <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                </tbody>
-            </table>
-        </div>
+        for _, world := range types.Worlds {
+            <h2 class="text-3xl font-bold mt-6 mb-2 w-3/5">{ world.Title }</h2>
+            for _, scene := range world.Scenes {
+                <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+                    <p class="text-2xl">{ scene.Name } Statistics</p>
+                    if scene.Kind == types.KindQuiz {
+                        <table class="table table-zebra text-xl">
+                            <thead>
+                                <tr>
+                                    <th class="text-xl">Question</th>
+                                    <th class="text-xl text-center">Correct Answer</th>
+                                    <th class="text-xl text-center">User Answer</th>
+                                    <th class="text-xl text-center">Score</th>
+                                </tr>
+                            </thead>
+                            <form hx-get={ string(templ.URL(fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), userID, scene.MinigameID, classroomID))) } hx-trigger="load" hx-swap="outerHTML" hx-target={ fmt.Sprintf("#minigame%d", scene.MinigameID) }>
+                            </form>
+                            <tbody id={ fmt.Sprintf("minigame%d", scene.MinigameID) }>
+                                <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
+                            </tbody>
+                        </table>
+                    } else {
+                        <table class="table table-zebra text-xl">
+                            <thead>
+                                <tr>
+                                    <th class="text-xl">Question</th>
+                                    <th class="text-xl text-center">Number of Correct Attempts</th>
+                                    <th class="text-xl text-center">Number of Wrong Attempts</th>
+                                    <th class="text-xl text-center">% Correct</th>
+                                </tr>
+                            </thead>
+                            <form hx-get={ string(templ.URL(fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), userID, scene.MinigameID, classroomID))) } hx-trigger="load" hx-swap="outerHTML" hx-target={ fmt.Sprintf("#minigame%d", scene.MinigameID) }>
+                            </form>
+                            <tbody id={ fmt.Sprintf("minigame%d", scene.MinigameID) }>
+                                <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            }
+        }
     </div>
     }
 }
