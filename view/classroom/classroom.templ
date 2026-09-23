@@ -22,6 +22,7 @@ templ Classroom(classroomID string, tab string, room types.Classroom) {
 				class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
 
 		<div class="flex flex-wrap w-full text-white" hx-get="getclassrooms_menu" hx-trigger="load" hx-target="this">
+			<div class="flex justify-center w-full p-4"><span class="loading loading-spinner" aria-label="Loading"></span></div>
 		</div>
 	</div>
 	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
@@ -294,7 +295,7 @@ templ Classroom(classroomID string, tab string, room types.Classroom) {
 							<input type="hidden" name="classroomID" value={ classroomID } />
 						</form>
 							<tbody id="getstudents">
-
+								<tr><td colspan="3" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
 							</tbody>
 					</table>
 				</div>
@@ -324,6 +325,7 @@ templ AddStudentsForm(classroomID string) {
 					</tr>
 				</thead>
 				<tbody id="getunenrolledstudents">
+					<tr><td colspan="2" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
 				</tbody>
 			</table>
 			<div class="modal-action">
