@@ -69,7 +69,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 		<div class="glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8">
 				<figure>
-					<img src="/public/images/bg/soln-card-image.png" alt="image" />
+					<img src="/public/images/bg/soln-card-image.png" alt="" />
 				</figure>
 				<div class="card-body">
 					<h2 class="card-title">%s - %s</h2>
@@ -152,7 +152,7 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 					>
 						<input type="hidden" name="studentID" value="%s" />
 						<input type="hidden" name="classroomID" value="%s" />
-						<button type="submit" class="btn"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+						<button type="submit" class="btn" aria-label="Remove student"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
 					</form>
 				</td>
 			</tr>
