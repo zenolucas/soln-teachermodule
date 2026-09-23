@@ -16,7 +16,7 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 
 	classroomID, err := strconv.Atoi(classroomIDStr)
 	if err != nil {
-		http.Error(w, "invalid classroomID", http.StatusBadRequest)
+		renderErrorPage(w, r, http.StatusBadRequest, "That classroom link looks invalid.")
 		return err
 	}
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
@@ -31,7 +31,7 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 	case kindQuiz:
 		return render(w, r, minigame.Quiz(minigameIDStr, classroomIDStr))
 	default:
-		http.Error(w, "invalid minigame id", http.StatusBadRequest)
+		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
 	}
 }
