@@ -3,7 +3,9 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
@@ -259,12 +261,46 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
+	classname := strings.TrimSpace(r.FormValue("classname"))
+	section := strings.TrimSpace(r.FormValue("section"))
+	description := strings.TrimSpace(r.FormValue("description"))
+
 	createParams := home.CreateParams{
-		Classname: r.FormValue("classname"),
-		Section:   r.FormValue("section"),
+		Classname:   classname,
+		Section:     section,
+		Description: description,
 	}
 
-	// TODO: error handling / data cleaning
+	// Client-side `required`/`maxlength` on the form already block most of this, but
+	// those are trivially bypassed with a hand-crafted request - without a server-side
+	// check here, a blank classname sailed straight into InsertClassroom, and an
+	// over-length one hit classrooms.classroom_name VARCHAR(100) as an opaque MySQL
+	// truncation error the teacher never saw either way (see FE-02).
+	if classname == "" {
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: "Class name is required.",
+		}))
+	}
+	if len(classname) > 100 {
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: "Class name must be 100 characters or fewer.",
+		}))
+	}
+	if section == "" {
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: "Section is required.",
+		}))
+	}
+	if len(section) > 100 {
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: "Section must be 100 characters or fewer.",
+		}))
+	}
+	if len(description) > 200 {
+		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+			ErrorMessage: "Description must be 200 characters or fewer.",
+		}))
+	}
 
 	teacherID, err := getTeacherID(r)
 	if err != nil {
@@ -272,16 +308,19 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	classroom := types.Classroom{
-		ClassroomName: r.FormValue("classname"),
-		Section:       r.FormValue("section"),
-		Description:   r.FormValue("description"),
+		ClassroomName: classname,
+		Section:       section,
+		Description:   description,
 	}
 
 	err = database.InsertClassroom(r.Context(), classroom, teacherID)
 	if err != nil {
-		// if an error occurs
+		// The raw DB error (e.g. a driver-level message naming columns/constraints)
+		// isn't something a teacher can act on - log it for us and show a generic
+		// message instead of leaking it into the form (see FE-02).
+		slog.Error("failed to create classroom", "err", err, "teacher_id", teacherID)
 		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
-			ErrorMessage: err.Error(),
+			ErrorMessage: "Couldn't create the classroom. Please try again.",
 		}))
 	}
 	hxRedirect(w, r, "/home")

@@ -20,6 +20,7 @@ templ Index() {
 type CreateParams struct {
 Classname string
 Section string
+Description string
 }
 
 type CreateErrors struct {
@@ -29,23 +30,30 @@ ErrorMessage string
 templ CreateClassForm(data CreateParams, errors CreateErrors) {
 <form hx-post="/createclassroom" hx-swap="outerHTML">
 
-	<input type="checkbox" id="my_modal_6" class="modal-toggle" />
+	<!-- checked when re-rendered with an error, so the modal stays open instead of
+	     silently closing on the client with the teacher's input discarded (FE-02) -->
+	<input type="checkbox" id="my_modal_6" class="modal-toggle" checked?={ len(errors.ErrorMessage) > 0 } />
 	<div class="modal" role="dialog">
 		<div class="modal-box">
 			<h3 class="text-lg font-bold">Create Classroom</h3>
+			if len(errors.ErrorMessage) > 0 {
+				<div role="alert" class="alert alert-error mt-4">
+					<span>{ errors.ErrorMessage }</span>
+				</div>
+			}
 			<label class="form-control w-full max-w-s">
 				<div class="label">
 					<span class="label-text">Class name</span>
 				</div>
-				<input type="text" name="classname" placeholder="Type here" class="input input-bordered w-full" />
+				<input type="text" name="classname" value={ data.Classname } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
 				<div class="label">
 					<span class="label-text">Section</span>
 				</div>
-				<input type="text" name="section" placeholder="Type here" class="input input-bordered w-full" />
+				<input type="text" name="section" value={ data.Section } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
 				<div class="label">
 					<span class="label-text">Description</span>
 				</div>
-				<textarea name="description" placeholder="Type here" class="input input-bordered w-full" />
+				<textarea name="description" placeholder="Type here" maxlength="200" class="textarea textarea-bordered w-full">{ data.Description }</textarea>
 			</label>
 			<div class="modal-action">
 				<label for="my_modal_6" class="btn">Cancel</label>
