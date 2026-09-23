@@ -426,19 +426,36 @@ func GetFractionQuestions(ctx context.Context, minigame_id int, classroom_id int
 }
 
 func AddFractionQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
-	MinigameIDStr := r.FormValue("minigameID")
-	Fraction1_NumeratorStr := r.FormValue("fraction1_numerator")
-	Fraction1_DenominatorStr := r.FormValue("fraction1_denominator")
-	Fraction2_NumeratorStr := r.FormValue("fraction2_numerator")
-	Fraction2_DenominatorStr := r.FormValue("fraction2_denominator")
+	// Every strconv.Atoi error used to be discarded, so a blank field (a teacher
+	// submitting the Add Question form with an empty input) silently inserted as 0 -
+	// including a 0 denominator, which then gets served to a student's game as an
+	// unsolvable fraction (see FE-23). formInt fails loudly instead, matching the
+	// pattern UpdateFractions below already uses.
+	MinigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	Fraction1_Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	Fraction1_Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	Fraction2_Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	Fraction2_Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
+	if Fraction1_Denominator == 0 || Fraction2_Denominator == 0 {
+		return errors.New("fraction denominator must not be 0")
+	}
 
-	MinigameID, _ := strconv.Atoi(MinigameIDStr)
-	Fraction1_Numerator, _ := strconv.Atoi(Fraction1_NumeratorStr)
-	Fraction1_Denominator, _ := strconv.Atoi(Fraction1_DenominatorStr)
-	Fraction2_Numerator, _ := strconv.Atoi(Fraction2_NumeratorStr)
-	Fraction2_Denominator, _ := strconv.Atoi(Fraction2_DenominatorStr)
-
-	_, err := db.ExecContext(r.Context(), "INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?)",
+	_, err = db.ExecContext(r.Context(), "INSERT INTO fraction_questions (fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?)",
 		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, classroomID)
 	if err != nil {
 		return err
@@ -538,22 +555,38 @@ func GetWordedQuestions(ctx context.Context, minigame_id int, classroom_id int) 
 }
 
 func AddWordedQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
-	// get minigameID
-	minigameIDStr := r.FormValue("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-
 	questionText := r.FormValue("question_text")
-	fraction1NumeratorStr := r.FormValue("fraction1_numerator")
-	fraction1DenominatorStr := r.FormValue("fraction1_denominator")
-	fraction2NumeratorStr := r.FormValue("fraction2_numerator")
-	fraction2DenominatorStr := r.FormValue("fraction2_denominator")
+	if strings.TrimSpace(questionText) == "" {
+		return errors.New("question text must not be blank")
+	}
 
-	fraction1Numerator, _ := strconv.Atoi(fraction1NumeratorStr)
-	fraction1Denominator, _ := strconv.Atoi(fraction1DenominatorStr)
-	fraction2Numerator, _ := strconv.Atoi(fraction2NumeratorStr)
-	fraction2Denominator, _ := strconv.Atoi(fraction2DenominatorStr)
+	// See AddFractionQuestions above for why this uses formInt instead of a bare
+	// strconv.Atoi with the error discarded (FE-23).
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	fraction1Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	fraction1Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	fraction2Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	fraction2Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
+	if fraction1Denominator == 0 || fraction2Denominator == 0 {
+		return errors.New("fraction denominator must not be 0")
+	}
 
-	_, err := db.ExecContext(r.Context(), "INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	_, err = db.ExecContext(r.Context(), "INSERT INTO fraction_questions (question_text, fraction1_numerator, fraction1_denominator, fraction2_numerator, fraction2_denominator, minigame_id, classroom_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		questionText, fraction1Numerator, fraction1Denominator, fraction2Numerator, fraction2Denominator, minigameID, classroomID)
 	if err != nil {
 		return err
@@ -707,10 +740,17 @@ func GetQuizQuestions(ctx context.Context, minigame_id int, classroom_id int) ([
 }
 
 func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) error {
-	minigameIDStr := r.FormValue("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
+	// See AddFractionQuestions above for why this uses formInt instead of a bare
+	// strconv.Atoi with the error discarded (FE-23).
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
 
 	questionText := r.FormValue("question_text")
+	if strings.TrimSpace(questionText) == "" {
+		return errors.New("question text must not be blank")
+	}
 
 	// The "Add Question" form's correct-answer <select> submits the literal option
 	// key ("option_1".."option_4"), not the option's text - the form fields share
@@ -718,6 +758,11 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) err
 	// by comparing choice text (which breaks if two options have identical text).
 	optionKeys := []string{"option_1", "option_2", "option_3", "option_4"}
 	correctAnswer := r.FormValue("correct_answer")
+	for _, key := range optionKeys {
+		if strings.TrimSpace(r.FormValue(key)) == "" {
+			return fmt.Errorf("%s must not be blank", key)
+		}
+	}
 
 	// first insert question_text without the correct_answer id
 	result, err := db.ExecContext(r.Context(), `INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)

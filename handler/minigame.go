@@ -59,11 +59,11 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
-				<form action="/delete/fractions" method="POST">
+				<form action="/delete/fractions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 					<input type="hidden" name="question_id" value="%d" />
 					<input type="hidden" name="minigame_id" value= "%d" />
 					<input type="hidden" name="classroom_id" value= "%d" />
-					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
 				</form>
 			</div>
 			<form action="/update/fractions" method="POST">
@@ -181,11 +181,11 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
-				<form action="/delete/worded" method="POST">
+				<form action="/delete/worded" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 					<input type="hidden" name="questionID" value="%d" />
 					<input type="hidden" name="minigameID" value= "%d" />
 					<input type="hidden" name="classroomID" value= "%d" />
-					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
 				</form>
 			</div>
 			<form action="/update/worded" method="POST">
@@ -329,11 +329,11 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
 			<div class="flex justify-end">
-				<form action="/delete/mcquestions" method="POST">
+				<form action="/delete/mcquestions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 					<input type="hidden" name="questionID" value="%d" />
 					<input type="hidden" name="minigameID" value= "%d" />
 					<input type="hidden" name="classroomID" value= "%d" />
-					<button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
+					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
 				</form>
 			</div>
 			<form action="/update/mcquestions" method="POST">
