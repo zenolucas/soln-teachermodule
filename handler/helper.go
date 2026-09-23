@@ -169,6 +169,17 @@ func isLocalRedirect(to string) bool {
 	return true
 }
 
+// pctCorrect renders a right/wrong attempt count as a percentage string for display,
+// e.g. "75%" - or "—" when there have been no attempts yet, since 0/0 would otherwise
+// render as a misleading "0%" (see FE-31).
+func pctCorrect(right, wrong int) string {
+	total := right + wrong
+	if total == 0 {
+		return "—"
+	}
+	return fmt.Sprintf("%.0f%%", 100*float64(right)/float64(total))
+}
+
 func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
 	if len(r.Header.Get("HX-Request")) > 0 {
 		w.Header().Set("HX-Redirect", to)
