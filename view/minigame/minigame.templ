@@ -4,7 +4,7 @@ import "soln-teachermodule/view/layout"
 
 
 templ Fractions(minigameID string, classroomID string) {
-@layout.App(true, false, "Simple Fraction Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, false, "Simple Fraction Questions · Sol'n Teacher Portal") {
 <div>
 </div>
 <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
@@ -26,7 +26,7 @@ templ Fractions(minigameID string, classroomID string) {
 }
 
 templ Worded(minigameID string, classroomID string) {
-@layout.App(true, false, "Worded Fraction Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, false, "Worded Fraction Questions · Sol'n Teacher Portal") {
 <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />
@@ -44,7 +44,7 @@ templ Worded(minigameID string, classroomID string) {
 }
 
 templ Quiz(minigameID string, classroomID string) {
-@layout.App(true, false, "Quiz Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, false, "Quiz Questions · Sol'n Teacher Portal") {
 <form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />

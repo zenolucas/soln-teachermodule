@@ -11,7 +11,7 @@ import "fmt"
 // nowhere except the sidebar list). classroomID is passed separately, rather than
 // read off room, since every link below already builds its URL from it.
 templ Classroom(classroomID string, tab string, room types.Classroom) {
-@layout.App(true, false, fmt.Sprintf("%s · Sol'n Teacher Portal", room.ClassroomName)) {
+@layout.App(true, false, false, fmt.Sprintf("%s · Sol'n Teacher Portal", room.ClassroomName)) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04). -->
 <div class="flex w-full h-[calc(100vh-5rem)]">
 	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
