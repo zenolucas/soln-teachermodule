@@ -4,7 +4,9 @@ import "soln-teachermodule/view/layout"
 
 templ Index() {
 @layout.App(true, true) {
-<div class="flex w-full h-[calc(100vh-65px)]">
+<!-- The navbar is h-20 (5rem/80px), not 65px - the mismatch was making this pane 15px
+     taller than the viewport, so both the window and the pane scrolled (see FE-04). -->
+<div class="flex w-full h-[calc(100vh-5rem)]">
 	<div class="w-1/4 bg-neutral flex">
 	</div>
 	<div class="w-3/4 bg-base-300 justify-center gap-4">

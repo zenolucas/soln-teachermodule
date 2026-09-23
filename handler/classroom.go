@@ -42,7 +42,8 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 
 	// fmt.Print("classroomID is ", session.Values["classroomID"])
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	return render(w, r, classroom.Classroom(room.ClassroomID))
+	tab := r.URL.Query().Get("tab")
+	return render(w, r, classroom.Classroom(room.ClassroomID, tab))
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
@@ -88,9 +89,12 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	for _, classroom := range classrooms {
+		// Was missing a closing </i>, had a stray `//` left inside the <i> tag, and
+		// closed with </div> instead of </a> - browsers recover from this, but
+		// unpredictably (see FE-03).
 		fmt.Fprintf(w, `
-		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2"> <i //
-				class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - Section %s</div>
+		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2">
+				<i class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - Section %s</a>
 		`, esc(classroom.ClassroomID), esc(classroom.ClassroomName), esc(classroom.Section))
 	}
 
@@ -254,8 +258,10 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 
 	database.AddStudents(r.Context(), studentIDs, classroomID)
 
-	url := "/classroom?classroom_id="
-	url += classroomIDStr
+	// tab=students keeps the teacher on the Students tab after this redirect, instead
+	// of landing back on Overview with no sign the students they just added were
+	// actually added (see FE-08).
+	url := "/classroom?classroom_id=" + classroomIDStr + "&tab=students"
 	hxRedirect(w, r, url)
 	return nil
 }
