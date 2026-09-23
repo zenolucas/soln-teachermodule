@@ -214,12 +214,57 @@ function solnOpenPendingModals(root) {
 		});
 }
 
+// Makes a table[data-sortable]'s columns clickable to re-sort its rows client-side, no
+// server round trip - the class-wide question tables (see FE-30, D6) arrive
+// pre-sorted weakest-question-first, but a teacher may want to re-sort by a different
+// column (e.g. most attempts, or alphabetically by question).
+function solnInitSortableTables(root) {
+	var tables = root.matches && root.matches("table[data-sortable]") ? [root] : [];
+	tables = tables.concat(Array.from(root.querySelectorAll("table[data-sortable]")));
+	tables.forEach(function (table) {
+		if (table.dataset.sortableInitialized) {
+			return;
+		}
+		table.dataset.sortableInitialized = "true";
+
+		var headers = Array.from(table.querySelectorAll("thead th[data-sort]"));
+		headers.forEach(function (th, index) {
+			th.style.cursor = "pointer";
+			th.addEventListener("click", function () {
+				var ascending = th.dataset.sortDir !== "asc";
+				headers.forEach(function (h) {
+					delete h.dataset.sortDir;
+				});
+				th.dataset.sortDir = ascending ? "asc" : "desc";
+
+				var tbody = table.querySelector("tbody");
+				var rows = Array.from(tbody.querySelectorAll("tr"));
+				var type = th.dataset.sort;
+				rows.sort(function (a, b) {
+					var aText = a.children[index].textContent.trim();
+					var bText = b.children[index].textContent.trim();
+					if (type === "number") {
+						var aNum = parseFloat(aText) || 0;
+						var bNum = parseFloat(bText) || 0;
+						return ascending ? aNum - bNum : bNum - aNum;
+					}
+					return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+				});
+				rows.forEach(function (row) {
+					tbody.appendChild(row);
+				});
+			});
+		});
+	});
+}
+
 // htmx:afterSettle (not the plain "load" event, which won't fire for content that
 // arrives via an htmx swap) covers both the initial hx-trigger="load" fragment and
 // any later swap into the same target.
 document.body.addEventListener("htmx:afterSettle", function (evt) {
 	solnInitCharts(evt.detail.elt);
 	solnOpenPendingModals(evt.detail.elt);
+	solnInitSortableTables(evt.detail.elt);
 });
 
 // Disables a form's submit button just after it's submitted, so a double-click (or an
