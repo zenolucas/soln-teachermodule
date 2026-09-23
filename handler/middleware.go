@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -40,8 +41,13 @@ func WithAuth(next http.Handler) http.Handler {
 		// on that instead of falling through to the redirect below.
 		authenticated, ok := session.Values["authenticated"].(bool)
 		if !ok || !authenticated {
-			path := r.URL.Path
-			hxRedirect(w, r, "/login?to="+path)
+			// RequestURI (not just Path) keeps the query string too, e.g.
+			// ?minigameID=5&classroomID=1 on a statistics page - dropping it here is
+			// what made FE-07's post-login redirect land back on a page with no idea
+			// which classroom/minigame to show. QueryEscape it since it becomes the
+			// value of our own ?to= query parameter.
+			to := url.QueryEscape(r.URL.RequestURI())
+			hxRedirect(w, r, "/login?to="+to)
 			return
 		}
 

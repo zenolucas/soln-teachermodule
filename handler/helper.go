@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"soln-teachermodule/database"
 	"strconv"
+	"strings"
 
 	"github.com/a-h/templ"
 )
@@ -149,6 +150,23 @@ var minigameKinds = map[string]minigameKind{
 	"10": kindWorded,
 	"11": kindQuiz,
 	"12": kindQuiz,
+}
+
+// isLocalRedirect reports whether to is safe to redirect a logged-in-again teacher
+// to (see FE-07): it must be a same-site path, not an absolute URL or a
+// protocol-relative one (`//evil.com` or `/\evil.com`, both of which browsers treat
+// as a scheme-relative redirect to a different host). Without this check, carrying
+// the post-login destination through as a plain redirect target would be an open
+// redirect: /login?to=https://evil.example would send a teacher who just typed their
+// password straight to an attacker's page.
+func isLocalRedirect(to string) bool {
+	if to == "" || to[0] != '/' {
+		return false
+	}
+	if strings.HasPrefix(to, "//") || strings.HasPrefix(to, "/\\") {
+		return false
+	}
+	return true
 }
 
 func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
