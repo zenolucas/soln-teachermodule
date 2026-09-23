@@ -971,32 +971,6 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int
 	return nil
 }
 
-// GetFractionResponseStatistics returns the count of right/wrong attempts for a single
-// question. Used for both simple-fraction and worded-fraction minigames - both question
-// types live in the same fraction_questions/fraction_responses tables, so one function
-// serves both (GetWordedResponseStatistics used to be a byte-identical duplicate of this).
-func GetFractionResponseStatistics(ctx context.Context, classroomID int, minigameID int, questionID int) ([]types.FractionClassStatistics, error) {
-	var statistics []types.FractionClassStatistics
-
-	// COALESCE: a bare SUM() with no matching rows still returns exactly one row, with
-	// both columns NULL - which fails to Scan into an int. A freshly created question
-	// with zero responses so far hits this on every load without the COALESCE.
-	rows, err := db.QueryContext(ctx, "SELECT COALESCE(SUM(num_right_attempts), 0), COALESCE(SUM(num_wrong_attempts), 0) FROM fraction_responses WHERE classroom_id = ? AND minigame_id = ? AND question_id = ?", classroomID, minigameID, questionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var statistic types.FractionClassStatistics
-		if err := rows.Scan(&statistic.RightAttemptsCount, &statistic.WrongAttemptsCount); err != nil {
-			return nil, err
-		}
-		statistics = append(statistics, statistic)
-	}
-
-	return statistics, nil
-}
 
 func GetQuizClassStatistics(ctx context.Context, classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
 	var statistics []types.QuizClassStatistics
@@ -1172,6 +1146,55 @@ func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int,
 	// fmt.Print(statistics)
 
 	return statistics, nil
+}
+
+// GetFractionQuestionSummaries returns one row per question with right/wrong attempt
+// counts summed across every student in the classroom - the class-wide equivalent of
+// GetStudentFractionStatistics's single-student LEFT JOIN, reusing the same
+// types.StudentFractionStatistics shape since a class summary is a per-question
+// right/wrong count either way. Backs the sortable summary table that replaced a
+// one-chart-per-question stack (see FE-30, D6).
+func GetFractionQuestionSummaries(ctx context.Context, classroomID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+	var summaries []types.StudentFractionStatistics
+
+	rows, err := db.QueryContext(ctx, "SELECT fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator, COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0) FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.classroom_id = fq.classroom_id AND fr.minigame_id = fq.minigame_id WHERE fq.minigame_id = ? AND fq.classroom_id = ? GROUP BY fq.question_id, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator", minigameID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var summary types.StudentFractionStatistics
+		if err := rows.Scan(&summary.Fraction1_Numerator, &summary.Fraction1_Denominator, &summary.Fraction2_Numerator, &summary.Fraction2_Denominator, &summary.RightAttemptsCount, &summary.WrongAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetFractionQuestionSummaries: %v", err)
+		}
+		summaries = append(summaries, summary)
+	}
+
+	return summaries, nil
+}
+
+// GetWordedQuestionSummaries is GetFractionQuestionSummaries' worded-question
+// equivalent (see FE-30, D6) - same class-wide aggregation, question_text instead of
+// the fraction fields.
+func GetWordedQuestionSummaries(ctx context.Context, classroomID int, minigameID int) ([]types.StudentFractionStatistics, error) {
+	var summaries []types.StudentFractionStatistics
+
+	rows, err := db.QueryContext(ctx, "SELECT fq.question_text, COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0) FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.classroom_id = fq.classroom_id AND fr.minigame_id = fq.minigame_id WHERE fq.minigame_id = ? AND fq.classroom_id = ? GROUP BY fq.question_id, fq.question_text", minigameID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var summary types.StudentFractionStatistics
+		if err := rows.Scan(&summary.QuestionText, &summary.RightAttemptsCount, &summary.WrongAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetWordedQuestionSummaries: %v", err)
+		}
+		summaries = append(summaries, summary)
+	}
+
+	return summaries, nil
 }
 
 func GetStudentQuizStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentQuizStatistics, error) {

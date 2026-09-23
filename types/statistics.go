@@ -1,10 +1,5 @@
 package types
 
-type FractionClassStatistics struct {
-	RightAttemptsCount int `json:"num_right_attempts"`
-	WrongAttemptsCount int `json:"num_wrong_attempts"`
-}
-
 type QuizClassStatistics struct {
 	Score int `json:"score"`
 	Count int `json:"count"`
