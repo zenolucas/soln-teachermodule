@@ -2,12 +2,15 @@ package layout
 
 import "soln-teachermodule/view/ui"
 
-templ App(nav bool, create bool) {
+// title is the full <title> text for the page (see FE-17 - every page previously
+// shared the one hardcoded "Sol'n Teacher Portal" title, which makes browser tabs and
+// history indistinguishable when several are open).
+templ App(nav bool, create bool, title string) {
 <!DOCTYPE html>
 <html lang="en" data-theme="emerald" class="bg-base-300">
 
 <head>
-	<title>Sol'n Teacher Portal</title>
+	<title>{ title }</title>
 	<link rel="icon" type="image/x-icon" href="/public/images/assets/chip-favicon.png" />
 
 	<meta charset="UTF-8" />

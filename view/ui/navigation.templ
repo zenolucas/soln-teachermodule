@@ -3,7 +3,7 @@ package ui
 templ Navigation(create bool) {
 	<div class="navbar h-20 bg-base-content">
 		<div class="flex-none">
-			<i class="fa-solid fa-bars fa-xl ml-8" style="color: #ffffff;"></i>
+			<i class="fa-solid fa-bars fa-xl ml-8" style="color: #ffffff;" aria-hidden="true"></i>
 		</div>
 		<div class="flex-1">
 			<a href="/home" class="btn btn-ghost text-white text-xl">Sol'n Teacher Portal</a>
@@ -11,9 +11,9 @@ templ Navigation(create bool) {
 		<div class="flex-none">
 		if create {
 			<div class="dropdown dropdown-end">
-				<div tabindex="0" role="button" class="btn btn-ghost btn-circle mr-[10px]">
+				<div tabindex="0" role="button" class="btn btn-ghost btn-circle mr-[10px]" aria-label="Create classroom">
 					<div class="indicator">
-						<i class="fa-solid fa-plus fa-2xl" style="color:#ffffff;"></i>
+						<i class="fa-solid fa-plus fa-2xl" style="color:#ffffff;" aria-hidden="true"></i>
 					</div>
 				</div>
 				<div tabindex="0" class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-52 shadow">
@@ -26,10 +26,10 @@ templ Navigation(create bool) {
 			</div>
 		}
 			<div class="dropdown dropdown-end">
-				<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar mr-[20px]">
+				<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar mr-[20px]" aria-label="Account menu">
 					<div class="w-10 rounded-full">
 						<img
-							alt="Tailwind CSS Navbar component"
+							alt=""
 							src="/public/images/bg/sample_user.png"
 						/>
 					</div>
@@ -38,15 +38,20 @@ templ Navigation(create bool) {
 					tabindex="0"
 					class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
 				>
-					<li>@LogoutForm()</li>
+					<li>
+						@LogoutForm()
+					</li>
 				</ul>
 			</div>
 		</div>
 	</div>
 }
 
+// LogoutForm used to nest a <li> inside its <form>, which itself sat inside the
+// caller's own <li> - li>form>li is invalid list markup and confuses screen readers
+// (see FE-16). The <li> now wraps the form, matching every other <li> in the menu.
 templ LogoutForm() {
 	<form method="POST" action="/logout">
-		<li><button type="submit" class="btn btn-link">Logout</button></li>
+		<button type="submit" class="btn btn-link w-full">Logout</button>
 	</form>
 }
