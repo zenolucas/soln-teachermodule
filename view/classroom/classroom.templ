@@ -1,11 +1,16 @@
 package classroom
 
 import "soln-teachermodule/view/layout"
+import "soln-teachermodule/types"
 import "fmt"
 
-templ Classroom(classroomID string, tab string) {
 // tab keeps the teacher on the tab they were on across a full-page reload/redirect
 // (e.g. after adding students) instead of always resetting to Overview (see FE-08).
+// room carries the classroom's name/section/description purely for display (see
+// FE-12 - previously the page showed only tabs, with the classroom's name visible
+// nowhere except the sidebar list). classroomID is passed separately, rather than
+// read off room, since every link below already builds its URL from it.
+templ Classroom(classroomID string, tab string, room types.Classroom) {
 @layout.App(true, false) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04). -->
 <div class="flex w-full h-[calc(100vh-5rem)]">
@@ -20,6 +25,12 @@ templ Classroom(classroomID string, tab string) {
 		</div>
 	</div>
 	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
+		<div class="px-4 pt-4">
+			<h2 class="text-2xl font-bold">{ room.ClassroomName } &mdash; Section { room.Section }</h2>
+			if len(room.Description) > 0 {
+				<p class="text-sm opacity-70">{ room.Description }</p>
+			}
+		</div>
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked?={ tab == "" || tab == "overview" } />
 			<div role="tabpanel" class="tab-content p-10">
