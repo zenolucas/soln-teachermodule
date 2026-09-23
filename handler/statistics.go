@@ -65,64 +65,18 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	for i, question := range questions {
+	// Each question used to get its own inline <script> defining numbered
+	// getClassStatisticsN/renderChartN globals - identical apart from the URL and
+	// number. A shared renderer in public/js/index.js now does this for every
+	// canvas[data-chart-url] an htmx swap adds to the page (see FE-34).
+	for _, question := range questions {
+		dataURL := fmt.Sprintf("/statistics/fraction/question/data?questionID=%d&classroomID=%d&minigameID=%d", question.QuestionID, classroomID, minigameID)
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
 				<div class="text-2xl mt-2 mb-2">Question: %d/%d + %d/%d ?</div>
-				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
+				<canvas data-chart-type="attempts" data-chart-url="%s" width="300" height="200"></canvas>
 			</div>
-			<script>
-				async function getClassStatistics%d() {
-				const response = await fetch('/statistics/fraction/question/data?questionID=%d&classroomID=%d&minigameID=%d');
-				const results = await response.json();
-				return results
-				}
-
-				getClassStatistics%d().then(results => {
-					results;
-					const right = results.map(item => item.num_right_attempts);  
-					const wrong = results.map(item => item.num_wrong_attempts);  
-					var count = right.concat(wrong)
-					renderChart%d(count);
-				});
-
-				function renderChart%d(count) {
-					Chart.defaults.font.size = 30;  // Set the default font size globally
-					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
-					var myChart%d = new Chart(ctx%d, {
-						type: 'bar',  // Keep type as 'bar'
-						data: {
-							labels: ["Correct Attempts", "Wrong Attempts"], 
-							datasets: [{
-								data: count, 
-								borderWidth: 1,
-								categoryPercentage: 0.3,
-								backgroundColor: [
-									'rgba(75, 192, 192, 0.5)',
-									'rgba(255, 99, 132, 0.5)'
-									]
-							}]
-						},
-						options: {
-							indexAxis: 'x',  // This makes the bars horizontal
-							scales: {
-								y: {
-									beginAtZero: true,  
-									ticks: {
-										stepSize: 1
-									}
-								}
-							},
-							plugins: {
-								legend: {
-									display: false
-								}
-							}
-						}
-					});
-				}
-			</script>
-		`, question.Fraction1_Numerator, question.Fraction1_Denominator, question.Fraction2_Numerator, question.Fraction2_Denominator, i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+		`, question.Fraction1_Numerator, question.Fraction1_Denominator, question.Fraction2_Numerator, question.Fraction2_Denominator, esc(dataURL))
 	}
 
 	return nil
@@ -173,64 +127,16 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	for i, question := range questions {
+	// See the matching comment in HandleFractionQuestionCharts above (FE-34) - this
+	// loop used to be nearly identical inline-<script> boilerplate to that one.
+	for _, question := range questions {
+		dataURL := fmt.Sprintf("/statistics/worded/question/data?questionID=%d&classroomID=%d&minigameID=%d", question.QuestionID, classroomID, minigameID)
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
 				<div class="text-2xl mt-2 mb-2">Question: %s</div>
-				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
+				<canvas data-chart-type="attempts" data-chart-url="%s" width="300" height="200"></canvas>
 			</div>
-			<script>
-				async function getClassStatistics%d() {
-				const response = await fetch('/statistics/worded/question/data?questionID=%d&classroomID=%d&minigameID=%d');
-				const results = await response.json();
-				return results
-				}
-
-				getClassStatistics%d().then(results => {
-					results;
-					const right = results.map(item => item.num_right_attempts);  
-					const wrong = results.map(item => item.num_wrong_attempts);  
-					var count = right.concat(wrong)
-					renderChart%d(count);
-				});
-
-				function renderChart%d(count) {
-					Chart.defaults.font.size = 30;  // Set the default font size globally
-					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
-					var myChart%d = new Chart(ctx%d, {
-						type: 'bar',  // Keep type as 'bar'
-						data: {
-							labels: ["Correct Attempts", "Wrong Attempts"], 
-							datasets: [{
-								data: count, 
-								borderWidth: 1,
-								categoryPercentage: 0.3,
-								backgroundColor: [
-									'rgba(75, 192, 192, 0.5)',
-									'rgba(255, 99, 132, 0.5)'
-									]
-							}]
-						},
-						options: {
-							indexAxis: 'x',  // This makes the bars horizontal
-							scales: {
-								y: {
-									beginAtZero: true,  
-									ticks: {
-										stepSize: 1
-									}
-								}
-							},
-							plugins: {
-								legend: {
-									display: false
-								}
-							}
-						}
-					});
-				}
-			</script>
-		`, esc(question.QuestionText), i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i)
+		`, esc(question.QuestionText), esc(dataURL))
 	}
 
 	return nil
@@ -322,108 +228,43 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// See the matching comment in HandleFractionQuestionCharts above (FE-34) - this
+	// loop used to be nearly identical inline-<script> boilerplate to that one, plus
+	// the per-choice colors from setColors embedded as literal JS text.
 	for i, question := range questions {
+		dataURL := fmt.Sprintf("/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d", question.QuestionID, classroomID, minigameID)
+		colorsJSON, err := json.Marshal(setColors(question))
+		if err != nil {
+			return err
+		}
 		fmt.Fprintf(w, `
 			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
 				<div class="text-2xl mt-2 mb-2">Question %d: %s</div>
-				<canvas id="QuestionChart%d" width="300" height="200"></canvas>
+				<canvas data-chart-type="choices" data-chart-url="%s" data-colors='%s' width="300" height="200"></canvas>
 			</div>
-			<script>
-				async function getClassStatistics%d() {
-				const response = await fetch('/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d');
-				const results = await response.json();
-				return results
-				}
-
-				getClassStatistics%d().then(results => {
-					results;
-					const label = results.map(item => item.choice);  
-					const count = results.map(item => item.count);  
-					console.log(label)
-					console.log(count)
-					renderChart%d(label, count);
-				});
-
-				function renderChart%d(label, count) {
-					Chart.defaults.font.size = 30;  // Set the default font size globally
-					var ctx%d = document.getElementById('QuestionChart%d').getContext('2d');
-					var myChart%d = new Chart(ctx%d, {
-						type: 'bar',  // Keep type as 'bar'
-						data: {
-							labels: label, 
-							datasets: [{
-								label: 'number of responses',
-								data: count, 
-								%s
-								borderWidth: 1
-							}]
-						},
-						options: {
-							indexAxis: 'y',  // This makes the bars horizontal
-							scales: {
-								x: {
-									beginAtZero: true,  // X-axis starts at 0
-									ticks: {
-										stepSize: 1
-									}
-								}
-							},
-							plugins: {
-								legend: {
-									display: false
-								}
-							}
-						}
-					});
-				}
-			</script>
-		`, i+1, esc(question.QuestionText), i, i, question.QuestionID, classroomID, minigameID, i, i, i, i, i, i, i, setColors(question))
+		`, i+1, esc(question.QuestionText), esc(dataURL), colorsJSON)
 	}
 	return nil
 }
 
-// helper function to set bar colors for question statistics
-func setColors(question types.MultipleChoiceQuestion) string {
-	choices := question.Choices
-
-	for i, choice := range choices {
+// setColors returns one Chart.js background color per choice, in the same order as
+// question.Choices, with the correct choice highlighted teal and the rest red - same
+// four-way if/else this replaced, just generalized to any choice count and returned
+// as data instead of a literal JS snippet, since the chart itself moved out of a
+// per-question inline <script> into a shared renderer (see FE-34). Serialized to JSON
+// and passed via a data-colors attribute.
+func setColors(question types.MultipleChoiceQuestion) []string {
+	colors := make([]string, len(question.Choices))
+	for i := range colors {
+		colors[i] = "rgba(255, 99, 132, 0.5)"
+	}
+	for i, choice := range question.Choices {
 		if choice.IsCorrect {
-			if i == 0 {
-				return `
-					backgroundColor: [
-						'rgba(75, 192, 192, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)'
-						],`
-			} else if i == 1 {
-				return `
-					backgroundColor: [
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(75, 192, 192, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)'
-						],`
-			} else if i == 2 {
-				return `
-					backgroundColor: [
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(75, 192, 192, 0.5)',
-						'rgba(255, 99, 132, 0.5)'
-						],`
-			} else {
-				return `
-					backgroundColor: [
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(255, 99, 132, 0.5)',
-						'rgba(75, 192, 192, 0.5)'
-						],`
-			}
+			colors[i] = "rgba(75, 192, 192, 0.5)"
+			break
 		}
 	}
-	return ""
+	return colors
 }
 
 func HandleQuizResponseStatistics(w http.ResponseWriter, r *http.Request) error {
