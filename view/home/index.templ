@@ -1,6 +1,9 @@
 package home
 
-import "soln-teachermodule/view/layout"
+import (
+	"fmt"
+	"soln-teachermodule/view/layout"
+)
 
 templ Index() {
 @layout.App(true, true, "Home · Sol'n Teacher Portal") {
@@ -31,19 +34,18 @@ ErrorMessage string
 }
 
 templ CreateClassForm(data CreateParams, errors CreateErrors) {
-<form hx-post="/createclassroom" hx-swap="outerHTML">
-
-	<!-- checked when re-rendered with an error, so the modal stays open instead of
-	     silently closing on the client with the teacher's input discarded (FE-02) -->
-	<input type="checkbox" id="my_modal_6" class="modal-toggle" checked?={ len(errors.ErrorMessage) > 0 } />
-	<div class="modal" role="dialog">
-		<div class="modal-box">
-			<h3 class="text-lg font-bold">Create Classroom</h3>
-			if len(errors.ErrorMessage) > 0 {
-				<div role="alert" class="alert alert-error mt-4">
-					<span>{ errors.ErrorMessage }</span>
-				</div>
-			}
+<!-- data-autoopen re-shows this after an htmx swap re-renders it with an error, so the
+     modal stays open instead of silently closing on the client with the teacher's
+     input discarded (FE-02); see solnOpenPendingModals in public/js/index.js. -->
+<dialog id="my_modal_6" class="modal" data-autoopen={ fmt.Sprint(len(errors.ErrorMessage) > 0) }>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Create Classroom</h3>
+		if len(errors.ErrorMessage) > 0 {
+			<div role="alert" class="alert alert-error mt-4">
+				<span>{ errors.ErrorMessage }</span>
+			</div>
+		}
+		<form id="create-classroom-form" hx-post="/createclassroom" hx-swap="outerHTML" hx-target="#my_modal_6">
 			<label class="form-control w-full max-w-s">
 				<div class="label">
 					<span class="label-text">Class name</span>
@@ -58,12 +60,14 @@ templ CreateClassForm(data CreateParams, errors CreateErrors) {
 				</div>
 				<textarea name="description" placeholder="Type here" maxlength="200" class="textarea textarea-bordered w-full">{ data.Description }</textarea>
 			</label>
-			<div class="modal-action">
-				<label for="my_modal_6" class="btn">Cancel</label>
-				<button type="submit" class="btn btn-secondary">Create</button>
-			</div>
+		</form>
+		<div class="modal-action">
+			<button type="button" class="btn" data-modal-close>Cancel</button>
+			<button type="submit" form="create-classroom-form" class="btn btn-secondary">Create</button>
 		</div>
 	</div>
-
-</form>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
 }

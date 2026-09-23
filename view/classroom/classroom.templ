@@ -280,7 +280,7 @@ templ Classroom(classroomID string, tab string, room types.Classroom) {
 					</form>
 
 					<div class="flex justify-center">
-						<label for="modal_add_students" class="btn btn-primary text-white">Add Students</label>
+						<button type="button" class="btn btn-primary text-white" data-modal-open="modal_add_students">Add Students</button>
 					</div>
 					<table class="table table-zebra text-xl">
 						<thead>
@@ -308,32 +308,39 @@ templ Classroom(classroomID string, tab string, room types.Classroom) {
 }
 
 templ AddStudentsForm(classroomID string) {
-<form hx-post="/addstudents" hx-swap="outerHTML">
-	<input type="checkbox" id="modal_add_students" class="modal-toggle" />
-	<div class="modal" role="dialog">
-		<div class="modal-box w-full">
-			<h3 class="text-lg font-bold">Add Students</h3>
-			<label>
-				<input type="checkbox" id="select-all"/> Select All
+<dialog id="modal_add_students" class="modal">
+	<!-- max-h + flex-col keeps Cancel/Add always in view: the long student list scrolls
+	     inside its own flex-1 region instead of pushing the action row past the bottom
+	     of the viewport, which is what the checkbox-hack version did (see FE-43). -->
+	<div class="modal-box w-full max-h-[80vh] flex flex-col min-h-0">
+		<h3 class="text-lg font-bold">Add Students</h3>
+		<form id="add-students-form" hx-post="/addstudents" hx-swap="outerHTML" class="flex flex-col flex-1 min-h-0">
+			<input type="hidden" name="classroomID" value={ classroomID } />
+			<label class="label cursor-pointer justify-start gap-2 w-fit">
+				<input type="checkbox" id="select-all" class="checkbox"/> Select All
 			</label>
-			<table class="table table-zebra text-xl">
-				<!-- head -->
-				<thead>
-					<tr>
-						<th></th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="getunenrolledstudents">
-					<tr><td colspan="2" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-				</tbody>
-			</table>
-			<div class="modal-action">
-				<label for="modal_add_students" class="btn">Cancel</label>
-				<button type="submit" name="classroomID" value={ classroomID } class="btn btn-secondary">Add</button>
+			<div class="overflow-y-auto flex-1 min-h-0">
+				<table class="table table-zebra text-xl">
+					<!-- head -->
+					<thead>
+						<tr>
+							<th></th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody id="getunenrolledstudents">
+						<tr><td colspan="2" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
+					</tbody>
+				</table>
 			</div>
+		</form>
+		<div class="modal-action">
+			<button type="button" class="btn" data-modal-close>Cancel</button>
+			<button type="submit" form="add-students-form" class="btn btn-secondary">Add</button>
 		</div>
 	</div>
-
-</form>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
 }

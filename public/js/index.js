@@ -166,11 +166,60 @@ function solnRenderChoicesChart(canvas, results) {
 	});
 }
 
+// Native <dialog> modals replace the old checkbox-hack pattern (an
+// `<input type="checkbox" class="modal-toggle">` whose :checked state showed a sibling
+// `.modal` div via CSS) - that had no keyboard support at all: Esc did nothing, there
+// was no focus trapping, and clicking outside the box didn't close it (see FE-43). A
+// dialog shown via showModal() gets all three from the browser for free; only the
+// open/close triggers need wiring up here. Delegated on document.body (rather than one
+// listener per trigger) so it keeps working for triggers that arrive later via an htmx
+// swap without needing to be re-bound.
+document.body.addEventListener("click", function (evt) {
+	var opener = evt.target.closest("[data-modal-open]");
+	if (opener) {
+		var dialog = document.getElementById(opener.dataset.modalOpen);
+		if (dialog) {
+			dialog.showModal();
+		}
+		return;
+	}
+
+	var closer = evt.target.closest("[data-modal-close]");
+	if (closer) {
+		var dialog = closer.closest("dialog");
+		if (dialog) {
+			dialog.close();
+		}
+	}
+});
+
+// A form that re-renders itself with a validation error (e.g. Create Classroom) needs
+// its modal to come back open after the htmx swap replaces it, the same "stay open on
+// error" behaviour the checkbox-hack version had via a server-rendered `checked`
+// attribute (see FE-02). A server-rendered data-autoopen="true" on the dialog signals
+// that here instead, since a plain `open` attribute on a <dialog> shows it without the
+// backdrop or Esc/focus handling that only showModal() turns on.
+function solnOpenPendingModals(root) {
+	// For an outerHTML swap targeted directly at the dialog itself (hx-target pointing
+	// at the dialog's own id, as CreateClassForm does so the whole dialog - not just
+	// the form inside it - gets replaced), root *is* the dialog, and
+	// querySelectorAll only matches descendants, never the root element itself -
+	// missing this left the modal closed after a real error swap even though the
+	// error message rendered correctly.
+	var matches = root.matches && root.matches('dialog[data-autoopen="true"]') ? [root] : [];
+	matches
+		.concat(Array.from(root.querySelectorAll('dialog[data-autoopen="true"]')))
+		.forEach(function (dialog) {
+			dialog.showModal();
+		});
+}
+
 // htmx:afterSettle (not the plain "load" event, which won't fire for content that
 // arrives via an htmx swap) covers both the initial hx-trigger="load" fragment and
 // any later swap into the same target.
 document.body.addEventListener("htmx:afterSettle", function (evt) {
 	solnInitCharts(evt.detail.elt);
+	solnOpenPendingModals(evt.detail.elt);
 });
 
 // Disables a form's submit button just after it's submitted, so a double-click (or an
