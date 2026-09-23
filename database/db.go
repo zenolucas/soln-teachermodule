@@ -383,6 +383,22 @@ func GetClassroomTeacherID(ctx context.Context, classroomID int) (int, error) {
 	return teacherID, nil
 }
 
+// GetClassroom returns a single classroom's name/section/description, so the
+// classroom page can show which classroom the teacher is actually looking at (see
+// FE-12 - previously the page showed nothing but tabs, with the name visible only in
+// the sidebar list). Callers must check ownership themselves (assertOwnsClassroom);
+// this has no teacherID filter, matching GetClassroomTeacherID above.
+func GetClassroom(ctx context.Context, classroomID int) (types.Classroom, error) {
+	var classroom types.Classroom
+	classroom.ClassroomID = strconv.Itoa(classroomID)
+	err := db.QueryRowContext(ctx, "SELECT classroom_name, section, description FROM classrooms WHERE classroom_id = ?", classroomID).
+		Scan(&classroom.ClassroomName, &classroom.Section, &classroom.Description)
+	if err != nil {
+		return types.Classroom{}, err
+	}
+	return classroom, nil
+}
+
 func GetClassrooms(ctx context.Context, teacherID int) ([]types.Classroom, error) {
 	var classrooms []types.Classroom
 

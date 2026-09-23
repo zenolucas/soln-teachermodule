@@ -43,7 +43,15 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	// fmt.Print("classroomID is ", session.Values["classroomID"])
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	tab := r.URL.Query().Get("tab")
-	return render(w, r, classroom.Classroom(room.ClassroomID, tab))
+
+	// So the page can show which classroom the teacher is looking at (see FE-12) -
+	// ownership was already checked above, so this is just fetching the display text.
+	fullClassroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, classroom.Classroom(room.ClassroomID, tab, fullClassroom))
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
