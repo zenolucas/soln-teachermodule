@@ -14,7 +14,7 @@ templ Fractions(minigameID string, classroomID string) {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Simple Fraction Questions</h1>
      <div class="flex justify-center mt-4 space-x-4">
-          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
+          <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      </div>
      <div id="questions-container" class="mb-4">
      <div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
@@ -33,7 +33,7 @@ templ Worded(minigameID string, classroomID string) {
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Worded Fraction Questions</h1>
-     <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
+     <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      <div id="questions-container">
      <div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
      </div>
@@ -52,7 +52,7 @@ templ Quiz(minigameID string, classroomID string) {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
      <h1 class="text-5xl font-bold">Quiz Questions (Multiple Choice)</h1>
      <div class="flex justify-center mt-4">
-          <label for="my_modal_6" class="btn btn-primary text-white">Add Question</label>
+          <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      </div>
      <div id="questions-container">
      <div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
@@ -72,13 +72,12 @@ type FractionQuestionParams struct {
 }
 
 templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string, classroomID string) {
-     <form hx-post="/add/fractionquestions" hx-swap="outerHTML">
-          <input type="hidden" name="minigameID" value={ minigameID } />
-          <input type="hidden" name="classroomID" value={ classroomID } />
-          <input type="checkbox" id="my_modal_6" class="modal-toggle" />
-          <div class="modal" role="dialog">
-               <div class="modal-box">
-                    <h3 class="text-lg font-bold">Add Question</h3>
+     <dialog id="my_modal_6" class="modal">
+          <div class="modal-box">
+               <h3 class="text-lg font-bold">Add Question</h3>
+               <form id="add-fraction-question-form" hx-post="/add/fractionquestions" hx-swap="outerHTML">
+                    <input type="hidden" name="minigameID" value={ minigameID } />
+                    <input type="hidden" name="classroomID" value={ classroomID } />
                     <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 1 Numerator</span>
@@ -100,13 +99,16 @@ templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string,
                          </div>
                          <input type="number" inputmode="numeric" required min="1" name="fraction2_denominator" placeholder="Type here" class="input input-bordered w-full" />
                     </label>
-                    <div class="modal-action">
-                         <label for="my_modal_6" class="btn">Cancel</label>
-                         <button type="submit" class="btn btn-secondary">Add Question</button>
-                    </div>
+               </form>
+               <div class="modal-action">
+                    <button type="button" class="btn" data-modal-close>Cancel</button>
+                    <button type="submit" form="add-fraction-question-form" class="btn btn-secondary">Add Question</button>
                </div>
           </div>
-     </form>
+          <form method="dialog" class="modal-backdrop">
+               <button>close</button>
+          </form>
+     </dialog>
 }
 
 type WordedQuestionParams struct {
@@ -117,13 +119,12 @@ type WordedQuestionParams struct {
 }
 
 templ CreateWordedQuestionForm(data WordedQuestionParams, minigameID string, classroomID string) {
-     <form hx-post="/add/wordedquestions" hx-swap="outerHTML">
-          <input type="hidden" name="minigameID" value={ minigameID } />
-          <input type="hidden" name="classroomID" value={ classroomID } />
-          <input type="checkbox" id="my_modal_6" class="modal-toggle" />
-          <div class="modal" role="dialog">
-               <div class="modal-box">
-                    <h3 class="text-lg font-bold">Add Question</h3>
+     <dialog id="my_modal_6" class="modal">
+          <div class="modal-box">
+               <h3 class="text-lg font-bold">Add Question</h3>
+               <form id="add-worded-question-form" hx-post="/add/wordedquestions" hx-swap="outerHTML">
+                    <input type="hidden" name="minigameID" value={ minigameID } />
+                    <input type="hidden" name="classroomID" value={ classroomID } />
                     <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Question Text</span>
@@ -150,13 +151,16 @@ templ CreateWordedQuestionForm(data WordedQuestionParams, minigameID string, cla
                          </div>
                          <input type="number" inputmode="numeric" required min="1" name="fraction2_denominator" placeholder="Type here" class="input input-bordered w-full" />
                     </label>
-                    <div class="modal-action">
-                         <label for="my_modal_6" class="btn">Cancel</label>
-                         <button type="submit" class="btn btn-secondary">Add Question</button>
-                    </div>
+               </form>
+               <div class="modal-action">
+                    <button type="button" class="btn" data-modal-close>Cancel</button>
+                    <button type="submit" form="add-worded-question-form" class="btn btn-secondary">Add Question</button>
                </div>
           </div>
-     </form>
+          <form method="dialog" class="modal-backdrop">
+               <button>close</button>
+          </form>
+     </dialog>
 }
 
 type QuestionParams struct {
@@ -168,13 +172,12 @@ Option4 string
 }
 
 templ CreateMCQuestionForm(data QuestionParams, minigameID string, classroomID string) {
-<form hx-post="/add/mcquestions" hx-swap="outerHTML">
-     <input type="hidden" name="minigameID" value={ minigameID } />
-     <input type="hidden" name="classroomID" value={ classroomID } />
-     <input type="checkbox" id="my_modal_6" class="modal-toggle" />
-     <div class="modal" role="dialog">
-          <div class="modal-box">
-               <h3 class="text-lg font-bold">Add Question</h3>
+<dialog id="my_modal_6" class="modal">
+     <div class="modal-box">
+          <h3 class="text-lg font-bold">Add Question</h3>
+          <form id="add-mc-question-form" hx-post="/add/mcquestions" hx-swap="outerHTML">
+               <input type="hidden" name="minigameID" value={ minigameID } />
+               <input type="hidden" name="classroomID" value={ classroomID } />
                <label class="form-control w-full max-w-s">
                     <div class="label">
                          <span class="label-text">Question Text</span>
@@ -210,11 +213,14 @@ templ CreateMCQuestionForm(data QuestionParams, minigameID string, classroomID s
                     <option value="option_3">Option 3</option>
                     <option value="option_4">Option 4</option>
                </select>
-               <div class="modal-action">
-                    <label for="my_modal_6" class="btn">Cancel</label>
-                    <button type="submit" class="btn btn-secondary">Add Question</button>
-               </div>
+          </form>
+          <div class="modal-action">
+               <button type="button" class="btn" data-modal-close>Cancel</button>
+               <button type="submit" form="add-mc-question-form" class="btn btn-secondary">Add Question</button>
           </div>
      </div>
-</form>
+     <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+     </form>
+</dialog>
 }
