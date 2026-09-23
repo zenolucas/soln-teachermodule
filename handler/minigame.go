@@ -56,11 +56,24 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	if len(fractions) == 0 {
+		renderNoQuestions(w)
+		return nil
+	}
+
 	for _, fraction := range fractions {
 		renderFractionCard(w, fraction, minigameID, classroomID, false)
 	}
 
 	return nil
+}
+
+// renderNoQuestions is shared by all three question-list fragments (fractions, worded,
+// multiple choice) - each was rendering nothing at all for a freshly-created minigame,
+// leaving just the "Add Question" form floating with no indication the game itself has
+// no content yet (see FE-20).
+func renderNoQuestions(w http.ResponseWriter) {
+	fmt.Fprint(w, `<p class="text-white text-opacity-60 mt-4">No questions yet. Add one below to get started.</p>`)
 }
 
 // renderFractionCard emits one fraction question's card: a delete form and an update
@@ -229,6 +242,11 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	fractions, err := database.GetWordedQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	if len(fractions) == 0 {
+		renderNoQuestions(w)
+		return nil
 	}
 
 	for _, fraction := range fractions {
@@ -412,6 +430,11 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	if len(questions) == 0 {
+		renderNoQuestions(w)
+		return nil
 	}
 
 	for i, question := range questions {
