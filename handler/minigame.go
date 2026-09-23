@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
+	"soln-teachermodule/types"
 	"soln-teachermodule/view/minigame"
 	"strconv"
 )
@@ -56,51 +57,73 @@ func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	for _, fraction := range fractions {
-		fmt.Fprintf(w, `
-			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
-			<div class="flex justify-end">
-				<form action="/delete/fractions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
-					<input type="hidden" name="question_id" value="%d" />
-					<input type="hidden" name="minigame_id" value= "%d" />
-					<input type="hidden" name="classroom_id" value= "%d" />
-					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
-				</form>
-			</div>
-			<form action="/update/fractions" method="POST">
-				<input type="hidden" name="question_id" value= "%d" />
-				<input type="hidden" name="minigame_id" value= "%d" />
-				<input type="hidden" name="classroom_id" value= "%d" />
-				<div class="flex gap-4 mt-4">
-					<div class="label mr-4">
-						<span class="label-text text-white">Fraction 1 Numerator:</span>
-					</div>
-					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				<div class="label mr-4">
-					<span class="label-text text-white">Fraction 2 Numerator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				</div>
-				<div class="flex gap-4 mt-4">
-					<div class="label">
-						<span class="label-text text-white">Fraction 1 Denominator:</span>
-					</div>
-					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				<div class="label">
-					<span class="label-text text-white">Fraction 2 Denominator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				</div>
-
-				<div class="flex justify-end">
-					<button  type="submit" class="btn btn-primary text-white ">save changes</button>
-				</div>
-			</div>  	
-			</form>
-			</div>
-		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		renderFractionCard(w, fraction, minigameID, classroomID, false)
 	}
 
 	return nil
+}
+
+// renderFractionCard emits one fraction question's card: a delete form and an update
+// form. The update form is now hx-post targeting the card's own id (was a plain POST
+// that redirected back to the whole /minigame page - see FE-22), so saving a change no
+// longer reloads the page or loses scroll position; the server just sends back this
+// same card with saved=true to show a brief confirmation. Numeric fields are now
+// type="number" required, matching the same fix already applied to the Add Question
+// form (see FE-23) - these edit fields had been missed.
+func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, minigameID int, classroomID int, saved bool) {
+	savedText := ""
+	if saved {
+		savedText = `<span class="text-success mr-2">Saved <i class="fa-solid fa-check"></i></span>`
+	}
+	// The update form targets and swaps itself (hx-target/hx-swap both default to
+	// that when omitted) rather than a wrapping ancestor div - a form whose own
+	// hx-target is an ancestor that contains it hit a reproducible tab crash in
+	// headless Chromium during verification of this ticket; every other htmx form in
+	// this app already uses the safer self-targeting pattern, so this matches that
+	// instead of introducing the one exception.
+	fmt.Fprintf(w, `
+		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="flex justify-end">
+			<form action="/delete/fractions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
+				<input type="hidden" name="question_id" value="%d" />
+				<input type="hidden" name="minigame_id" value= "%d" />
+				<input type="hidden" name="classroom_id" value= "%d" />
+				<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
+			</form>
+		</div>
+		<form hx-post="/update/fractions" hx-swap="outerHTML">
+			<input type="hidden" name="question_id" value= "%d" />
+			<input type="hidden" name="minigame_id" value= "%d" />
+			<input type="hidden" name="classroom_id" value= "%d" />
+			<div class="flex gap-4 mt-4">
+				<div class="label mr-4">
+					<span class="label-text text-white">Fraction 1 Numerator:</span>
+				</div>
+				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+			<div class="label mr-4">
+				<span class="label-text text-white">Fraction 2 Numerator</span>
+			</div>
+				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+			</div>
+			<div class="flex gap-4 mt-4">
+				<div class="label">
+					<span class="label-text text-white">Fraction 1 Denominator:</span>
+				</div>
+				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
+			<div class="label">
+				<span class="label-text text-white">Fraction 2 Denominator</span>
+			</div>
+				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+			</div>
+
+			<div class="flex justify-end items-center">
+				%s
+				<button type="submit" class="btn btn-primary text-white">Save changes</button>
+			</div>
+		</form>
+		</div>
+	`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID,
+		fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator, savedText)
 }
 
 func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
@@ -128,7 +151,8 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.FormValue("classroom_id")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 	// get minigameID
-	minigameID := r.FormValue("minigame_id")
+	minigameIDStr := r.FormValue("minigame_id")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -138,7 +162,37 @@ func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
+	// Re-render just this card instead of redirecting back to the whole /minigame
+	// page (see FE-22) - the values below are read from the same form fields
+	// database.UpdateFractions just validated and saved, not a fresh DB query.
+	questionID, err := formInt(r, "question_id")
+	if err != nil {
+		return err
+	}
+	fraction1Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	fraction1Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	fraction2Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	fraction2Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
+
+	renderFractionCard(w, types.FractionQuestion{
+		QuestionID:            questionID,
+		Fraction1_Numerator:   fraction1Numerator,
+		Fraction1_Denominator: fraction1Denominator,
+		Fraction2_Numerator:   fraction2Numerator,
+		Fraction2_Denominator: fraction2Denominator,
+	}, minigameID, classroomID, true)
 	return nil
 }
 
@@ -178,56 +232,70 @@ func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	for _, fraction := range fractions {
-		fmt.Fprintf(w, `
-			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
-			<div class="flex justify-end">
-				<form action="/delete/worded" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
-					<input type="hidden" name="questionID" value="%d" />
-					<input type="hidden" name="minigameID" value= "%d" />
-					<input type="hidden" name="classroomID" value= "%d" />
-					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
-				</form>
-			</div>
-			<form action="/update/worded" method="POST">
-				<input type="hidden" name="questionID" value= "%d" />
-				<input type="hidden" name="minigameID" value= "%d" />
-				<input type="hidden" name="classroomID" value= "%d" />
-				<div class="flex gap-4 mt-4 mb-4">
-					<div class="label mr-16">
-						<span class="label-text text-white">Question Text</span>
-					</div>
-					<input type="text" value="%s" name="question_text" class="input input-bordered input-primary w-3/4 text-xl" />
-				</div>	
-				<div class="flex gap-4 mt-4">
-					<div class="label mr-3">
-						<span class="label-text text-white">Fraction 1 Numerator:</span>
-					</div>
-					<input type="text" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				<div class="label mr-4">
-					<span class="label-text text-white">Fraction 2 Numerator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				</div>
-				<div class="flex gap-4 mt-4">
-					<div class="label">
-						<span class="label-text text-white">Fraction 1 Denominator:</span>
-					</div>
-					<input type="text" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				<div class="label">
-					<span class="label-text text-white">Fraction 2 Denominator</span>
-				</div>
-					<input type="text" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				</div>
-
-				<div class="flex justify-end">
-					<button  type="submit" class="btn btn-primary text-white ">save changes</button>
-				</div>
-			</div>  	
-			</form>
-			</div>
-		`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID, esc(fraction.QuestionText), fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator)
+		renderWordedCard(w, fraction, minigameID, classroomID, false)
 	}
 	return nil
+}
+
+// renderWordedCard is the worded-question equivalent of renderFractionCard above -
+// see its comment for why the update form is hx-post now instead of a plain POST
+// (FE-22), and why the fields are type="number" required (FE-23).
+func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, minigameID int, classroomID int, saved bool) {
+	savedText := ""
+	if saved {
+		savedText = `<span class="text-success mr-2">Saved <i class="fa-solid fa-check"></i></span>`
+	}
+	// See the matching comment in renderFractionCard above for why this form now
+	// targets/swaps itself instead of a wrapping ancestor div.
+	fmt.Fprintf(w, `
+		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="flex justify-end">
+			<form action="/delete/worded" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
+				<input type="hidden" name="questionID" value="%d" />
+				<input type="hidden" name="minigameID" value= "%d" />
+				<input type="hidden" name="classroomID" value= "%d" />
+				<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
+			</form>
+		</div>
+		<form hx-post="/update/worded" hx-swap="outerHTML">
+			<input type="hidden" name="questionID" value= "%d" />
+			<input type="hidden" name="minigameID" value= "%d" />
+			<input type="hidden" name="classroomID" value= "%d" />
+			<div class="flex gap-4 mt-4 mb-4">
+				<div class="label mr-16">
+					<span class="label-text text-white">Question Text</span>
+				</div>
+				<input type="text" value="%s" name="question_text" required class="input input-bordered input-primary w-3/4 text-xl" />
+			</div>
+			<div class="flex gap-4 mt-4">
+				<div class="label mr-3">
+					<span class="label-text text-white">Fraction 1 Numerator:</span>
+				</div>
+				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+			<div class="label mr-4">
+				<span class="label-text text-white">Fraction 2 Numerator</span>
+			</div>
+				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+			</div>
+			<div class="flex gap-4 mt-4">
+				<div class="label">
+					<span class="label-text text-white">Fraction 1 Denominator:</span>
+				</div>
+				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
+			<div class="label">
+				<span class="label-text text-white">Fraction 2 Denominator</span>
+			</div>
+				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+			</div>
+
+			<div class="flex justify-end items-center">
+				%s
+				<button type="submit" class="btn btn-primary text-white">Save changes</button>
+			</div>
+		</form>
+		</div>
+	`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID,
+		esc(fraction.QuestionText), fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator, savedText)
 }
 
 func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
@@ -253,6 +321,7 @@ func HandleAddWorded(w http.ResponseWriter, r *http.Request) error {
 func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 	// get minigameID here
 	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
 	// get classroomID
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
@@ -265,7 +334,37 @@ func HandleUpdateWorded(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
+	// Re-render just this card instead of redirecting back to the whole /minigame
+	// page (see FE-22).
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
+	fraction1Numerator, err := formInt(r, "fraction1_numerator")
+	if err != nil {
+		return err
+	}
+	fraction1Denominator, err := formInt(r, "fraction1_denominator")
+	if err != nil {
+		return err
+	}
+	fraction2Numerator, err := formInt(r, "fraction2_numerator")
+	if err != nil {
+		return err
+	}
+	fraction2Denominator, err := formInt(r, "fraction2_denominator")
+	if err != nil {
+		return err
+	}
+
+	renderWordedCard(w, types.FractionQuestion{
+		QuestionID:            questionID,
+		QuestionText:          r.FormValue("question_text"),
+		Fraction1_Numerator:   fraction1Numerator,
+		Fraction1_Denominator: fraction1Denominator,
+		Fraction2_Numerator:   fraction2Numerator,
+		Fraction2_Denominator: fraction2Denominator,
+	}, minigameID, classroomID, true)
 	return nil
 }
 
@@ -318,7 +417,7 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	for i, question := range questions {
 		// A question is always created with exactly 4 choices, but a partially failed
 		// insert, a manual DB edit, or choices deleted independently of their question
-		// could leave that invariant broken. The rest of this loop indexes
+		// could leave that invariant broken. renderMCCard indexes
 		// question.Choices[0..3] unconditionally, so guard against a panic here.
 		if len(question.Choices) != 4 {
 			slog.Warn("skipping MC question render: expected exactly 4 choices",
@@ -326,77 +425,93 @@ func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		fmt.Fprintf(w, `
-			<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
-			<div class="flex justify-end">
-				<form action="/delete/mcquestions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
-					<input type="hidden" name="questionID" value="%d" />
-					<input type="hidden" name="minigameID" value= "%d" />
-					<input type="hidden" name="classroomID" value= "%d" />
-					<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
-				</form>
-			</div>
-			<form action="/update/mcquestions" method="POST">
-				<input type="hidden" name="minigameID" value="%d" />
-				<input type="hidden" name="questionID" value= "%d" />
-				<input type="hidden" name="classroomID" value= "%d" />
-				<span class="label-text text-white">Question %d:</span>
-				<input type="text" value="%s" name="question" class="input input-bordered input-primary w-3/4 text-lg" />
-				<div class="flex gap-4 mt-4">
-					<div class="label">
-						<span class="label-text text-white">Option 1:</span>
-					</div>
-					<input type="text" value="%s" name="option1" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-					<input type="hidden"  value="%d" name="option1_choiceID" />
-					<div class="label">
-						<span class="label-text text-white">Option 2:</span>
-					</div>
-					<input type="text" value="%s" name="option2" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-					<input type="hidden"  value="%d" name="option2_choiceID" />
-				</div>
-				<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Option 3:</span>
-				</div>
-					<input type="text" value="%s" name="option3" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-					<input type="hidden"  value="%d" name="option3_choiceID" />
-				<div class="label">
-					<span class="label-text text-white">Option 4:</span>
-				</div>
-					<input type="text" value="%s" name="option4" maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-					<input type="hidden"  value="%d" name="option4_choiceID" />
-				</div>
-				<div class="flex mt-4 relative inline-block w-64">
-				<div class="label">
-					<span class="label-text text-white">Correct Answer: </span>
-				</div>
-					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
-						<option value="%d" %s>Option 1</option>
-						<option value="%d" %s>Option 2</option>
-						<option value="%d" %s>Option 3</option>
-						<option value="%d" %s>Option 4</option>
-					</select>
-				</div>
-
-				<div class="flex justify-end">
-					<button  type="submit" class="btn btn-primary text-white ">save changes</button>
-				</div>
-			</div>
-			</form>
-			</div>
-		`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, i+1, esc(question.QuestionText),
-			esc(question.Choices[0].ChoiceText), question.Choices[0].ChoiceID,
-			esc(question.Choices[1].ChoiceText), question.Choices[1].ChoiceID,
-			esc(question.Choices[2].ChoiceText), question.Choices[2].ChoiceID,
-			esc(question.Choices[3].ChoiceText), question.Choices[3].ChoiceID,
-			// correct_answer's <option value> is the choice_id, not the choice text -
-			// text can collide between options, choice_id can't (see BUG-02 fix).
-			question.Choices[0].ChoiceID, getCorrectAnswer(question.Choices[0].IsCorrect),
-			question.Choices[1].ChoiceID, getCorrectAnswer(question.Choices[1].IsCorrect),
-			question.Choices[2].ChoiceID, getCorrectAnswer(question.Choices[2].IsCorrect),
-			question.Choices[3].ChoiceID, getCorrectAnswer(question.Choices[3].IsCorrect))
+		renderMCCard(w, question, minigameID, classroomID, i+1, false)
 	}
 	return nil
+}
+
+// renderMCCard is the multiple-choice equivalent of renderFractionCard above - see
+// its comment for why the update form is hx-post now instead of a plain POST (FE-22).
+// number is the question's 1-based display position ("Question N:"), passed in
+// separately since it isn't part of the question data itself.
+func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, minigameID int, classroomID int, number int, saved bool) {
+	savedText := ""
+	if saved {
+		savedText = `<span class="text-success mr-2">Saved <i class="fa-solid fa-check"></i></span>`
+	}
+	// See the matching comment in renderFractionCard above for why this form now
+	// targets/swaps itself instead of a wrapping ancestor div.
+	fmt.Fprintf(w, `
+		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="flex justify-end">
+			<form action="/delete/mcquestions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
+				<input type="hidden" name="questionID" value="%d" />
+				<input type="hidden" name="minigameID" value= "%d" />
+				<input type="hidden" name="classroomID" value= "%d" />
+				<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
+			</form>
+		</div>
+		<form hx-post="/update/mcquestions" hx-swap="outerHTML">
+			<input type="hidden" name="minigameID" value="%d" />
+			<input type="hidden" name="questionID" value= "%d" />
+			<input type="hidden" name="classroomID" value= "%d" />
+			<input type="hidden" name="question_number" value="%d" />
+			<span class="label-text text-white">Question %d:</span>
+			<input type="text" value="%s" name="question" required class="input input-bordered input-primary w-3/4 text-lg" />
+			<div class="flex gap-4 mt-4">
+				<div class="label">
+					<span class="label-text text-white">Option 1:</span>
+				</div>
+				<input type="text" value="%s" name="option1" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<input type="hidden"  value="%d" name="option1_choiceID" />
+				<div class="label">
+					<span class="label-text text-white">Option 2:</span>
+				</div>
+				<input type="text" value="%s" name="option2" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<input type="hidden"  value="%d" name="option2_choiceID" />
+			</div>
+			<div class="flex gap-4 mt-4">
+			<div class="label">
+				<span class="label-text text-white">Option 3:</span>
+			</div>
+				<input type="text" value="%s" name="option3" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<input type="hidden"  value="%d" name="option3_choiceID" />
+			<div class="label">
+				<span class="label-text text-white">Option 4:</span>
+			</div>
+				<input type="text" value="%s" name="option4" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<input type="hidden"  value="%d" name="option4_choiceID" />
+			</div>
+			<div class="flex mt-4 relative inline-block w-64">
+			<div class="label">
+				<span class="label-text text-white">Correct Answer: </span>
+			</div>
+				<select name="correct_answer" class="select select-bordered w-full max-w-xs">
+					<option value="%d" %s>Option 1</option>
+					<option value="%d" %s>Option 2</option>
+					<option value="%d" %s>Option 3</option>
+					<option value="%d" %s>Option 4</option>
+				</select>
+			</div>
+
+			<div class="flex justify-end items-center">
+				%s
+				<button type="submit" class="btn btn-primary text-white">Save changes</button>
+			</div>
+		</form>
+		</div>
+	`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, number, number, esc(question.QuestionText),
+		esc(question.Choices[0].ChoiceText), question.Choices[0].ChoiceID,
+		esc(question.Choices[1].ChoiceText), question.Choices[1].ChoiceID,
+		esc(question.Choices[2].ChoiceText), question.Choices[2].ChoiceID,
+		esc(question.Choices[3].ChoiceText), question.Choices[3].ChoiceID,
+		// correct_answer's <option value> is the choice_id, not the choice text -
+		// text can collide between options, choice_id can't (see BUG-02 fix).
+		question.Choices[0].ChoiceID, getCorrectAnswer(question.Choices[0].IsCorrect),
+		question.Choices[1].ChoiceID, getCorrectAnswer(question.Choices[1].IsCorrect),
+		question.Choices[2].ChoiceID, getCorrectAnswer(question.Choices[2].IsCorrect),
+		question.Choices[3].ChoiceID, getCorrectAnswer(question.Choices[3].IsCorrect),
+		savedText)
 }
 
 // helper function to get correct answer for GetMCQuestion function above
@@ -429,6 +544,7 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.FormValue("minigameID")
+	minigameID, _ := strconv.Atoi(minigameIDStr)
 	classroomIDStr := r.FormValue("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
@@ -440,7 +556,32 @@ func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
+	// Re-render just this card instead of redirecting back to the whole /minigame
+	// page (see FE-22) - reading back the same form fields database.UpdateMCQuestions
+	// just validated and saved (including reusing database.ConstructChoices, the same
+	// helper it used to build the choices it saved), not a fresh DB query.
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
+	number, err := formInt(r, "question_number")
+	if err != nil {
+		return err
+	}
+	correctAnswerID, err := formInt(r, "correct_answer")
+	if err != nil {
+		return err
+	}
+	choices, err := database.ConstructChoices(r, correctAnswerID)
+	if err != nil {
+		return err
+	}
+
+	renderMCCard(w, types.MultipleChoiceQuestion{
+		QuestionID:   questionID,
+		QuestionText: r.FormValue("question"),
+		Choices:      choices,
+	}, minigameID, classroomID, number, true)
 	return nil
 }
 
