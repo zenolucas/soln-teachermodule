@@ -1,0 +1,20 @@
+package ui
+
+import "fmt"
+
+// Breadcrumb links back to the classroom the minigame/statistics page belongs to and
+// names the scene and the current page, so a teacher landing on e.g. /minigame from a
+// bookmark or a shared link isn't looking at a generic "Simple Fraction Questions"
+// heading with no indication of which classroom or scene it's for and no way back
+// (see FE-13). classroomID/classroomName build the link back to the classroom's
+// Minigames tab; sceneName and action (e.g. "Edit Questions", "Statistics") are plain
+// text, since there's nowhere further to navigate to from here.
+templ Breadcrumb(classroomID string, classroomName string, sceneName string, action string) {
+	<div class="breadcrumbs text-sm px-4 pt-4">
+		<ul>
+			<li><a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s&tab=minigames", classroomID)) }>{ classroomName }</a></li>
+			<li>{ sceneName }</li>
+			<li>{ action }</li>
+		</ul>
+	</div>
+}

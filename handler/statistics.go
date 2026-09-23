@@ -33,13 +33,22 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("loading up statistics, we got minigameID: ", minigameID)
 
+	// classroomName and sceneName are for the breadcrumb only (see FE-13) - dispatch
+	// below is unchanged.
+	classroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	minigameIDInt, _ := strconv.Atoi(minigameID)
+	scene, _ := types.SceneByID(minigameIDInt)
+
 	switch minigameKinds[minigameID] {
 	case kindFractions:
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID))
+		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
 	case kindWorded:
-		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID))
+		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
 	case kindQuiz:
-		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
+		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
@@ -222,7 +231,14 @@ func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
-	return render(w, r, statistics.QuestionStatistics(minigameIDStr, classroomIDStr))
+	classroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	scene, _ := types.SceneByID(minigameID)
+
+	return render(w, r, statistics.QuestionStatistics(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 }
 
 func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
@@ -539,8 +555,12 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	classroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
 
-	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr, classroomIDStr))
+	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr, classroomIDStr, classroom.ClassroomName))
 }
 
 // different score formats
