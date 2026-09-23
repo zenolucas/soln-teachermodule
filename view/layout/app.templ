@@ -4,8 +4,10 @@ import "soln-teachermodule/view/ui"
 
 // title is the full <title> text for the page (see FE-17 - every page previously
 // shared the one hardcoded "Sol'n Teacher Portal" title, which makes browser tabs and
-// history indistinguishable when several are open).
-templ App(nav bool, create bool, title string) {
+// history indistinguishable when several are open). charts loads Chart.js - only the
+// statistics pages that actually render a canvas[data-chart-url] need it (see FE-50);
+// every other page was paying for an unused ~200KB download, including the login page.
+templ App(nav bool, create bool, charts bool, title string) {
 <!DOCTYPE html>
 <!-- data-theme intentionally omitted: tailwind.config.js only ever compiles the nord
      theme (see D2), so an "emerald" attribute here did nothing but claim a theme that
@@ -19,11 +21,17 @@ templ App(nav bool, create bool, title string) {
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<link rel="stylesheet" href="/public/styles.css" />
-	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-	<script src="https://unpkg.com/htmx.org@1.9.9" defer></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<!-- htmx, Chart.js and Font Awesome are vendored under public/vendor/ (go:embed'd
+	     with everything else in public/) instead of loaded from a CDN - a school LAN
+	     with flaky or filtered internet access previously meant every page load could
+	     silently lose htmx entirely, and Chart.js was loaded unversioned, so a new
+	     upstream major release could break every stats page with no code change on our
+	     side at all (see D3). jQuery was dropped outright: unused anywhere in the app. -->
+	<script src="/public/vendor/htmx.min.js" defer></script>
+	<script src="/public/vendor/fontawesome.min.js" defer></script>
+	if charts {
+	<script src="/public/vendor/chart.min.js" defer></script>
+	}
 	<script src="/public/js/index.js" defer></script>
 
 </head>

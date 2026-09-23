@@ -4,7 +4,7 @@ import "soln-teachermodule/view/layout"
 import "fmt"
 
 templ FractionStatistics(classroomID string, minigameID string) {
-@layout.App(true, false, "Simple Fraction Statistics · Sol'n Teacher Portal") {
+@layout.App(true, false, true, "Simple Fraction Statistics · Sol'n Teacher Portal") {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Simple Fraction Statistics</h1>
 
@@ -21,7 +21,7 @@ templ FractionStatistics(classroomID string, minigameID string) {
 
 
 templ WordedStatistics(classroomID string, minigameID string) {
-@layout.App(true, false, "Worded Questions Statistics · Sol'n Teacher Portal") {
+@layout.App(true, false, true, "Worded Questions Statistics · Sol'n Teacher Portal") {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Worded Questions Statistics</h1>
 
@@ -37,7 +37,7 @@ templ WordedStatistics(classroomID string, minigameID string) {
 }
 
 templ QuizStatistics(classroomID string, minigameID string) {
-@layout.App(true, false, "Quiz Statistics · Sol'n Teacher Portal") {
+@layout.App(true, false, true, "Quiz Statistics · Sol'n Teacher Portal") {
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
     <h1 class="text-5xl font-bold mt-2 mb-4">Quiz Statistics</h1>
     <div>
@@ -49,18 +49,29 @@ templ QuizStatistics(classroomID string, minigameID string) {
     </div>
 
     <script classroomID={ classroomID } minigameID={ minigameID }>
+        // The `defer` attribute on chart.min.js (see layout/app.templ, FE-50) does
+        // nothing for this script itself - `defer` is only meaningful on a <script
+        // src="...">, and is silently ignored on an inline one, which still runs
+        // synchronously the instant the parser reaches it. Reading the data-* values
+        // via currentScript has to happen right here, synchronously, while
+        // currentScript is still this element - but calling into Chart.js has to wait
+        // until DOMContentLoaded, which (per spec) only fires after every deferred
+        // script, including chart.min.js, has already run.
+        const classroomID = document.currentScript.getAttribute("classroomID")
+        const minigameID = document.currentScript.getAttribute("minigameID")
+
         async function getClassStatistics() {
-            const classroomID = document.currentScript.getAttribute("classroomID")
-            const minigameID = document.currentScript.getAttribute("minigameID")
             const response = await fetch(`/statistics/quiz/class?classroomID=${classroomID}&minigameID=${minigameID}`);
             const results = await response.json();
             return results
         }
 
-        getClassStatistics().then(results => {
-            const count = results.map(item => item.count);
-            const score = results.map(item => item.score);
-            renderChart(score, count);
+        document.addEventListener("DOMContentLoaded", function () {
+            getClassStatistics().then(results => {
+                const count = results.map(item => item.count);
+                const score = results.map(item => item.score);
+                renderChart(score, count);
+            });
         });
 
         function renderChart(score, count) {
@@ -130,7 +141,7 @@ templ QuizStatistics(classroomID string, minigameID string) {
 
 // let this be for Quiz Question Statistics
 templ QuestionStatistics(minigameID string, classroomID string) {
-@layout.App(true, false, "Question Statistics · Sol'n Teacher Portal") {
+@layout.App(true, false, true, "Question Statistics · Sol'n Teacher Portal") {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">Question Statistics</h1>
         <div>
@@ -150,7 +161,7 @@ templ QuestionStatistics(minigameID string, classroomID string) {
 
 
 templ StudentScores(firstname string, lastname string, userID string, classroomID string) {
-@layout.App(true, false, fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", firstname, lastname)) {
+@layout.App(true, false, false, fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", firstname, lastname)) {
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-5xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>
         <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
