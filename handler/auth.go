@@ -35,28 +35,41 @@ func InitSessionStore() error {
 }
 
 func HandleLoginIndex(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, auth.Login())
+	to := r.URL.Query().Get("to")
+	registered := r.URL.Query().Get("registered") == "1"
+	return render(w, r, auth.Login(to, registered))
 }
 
 func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
+	// Never echo the submitted password back into the re-rendered form (see FE-24) -
+	// credentials.Password is intentionally left unset; it's only read from the
+	// request below, for the authentication check itself.
 	credentials := auth.LoginParams{
 		Username: r.FormValue("username"),
-		Password: r.FormValue("password"),
 	}
+	to := r.FormValue("to")
 
 	// authenticate the user
-	if err := database.AuthenticateWebUser(r.Context(), credentials.Username, credentials.Password); err != nil {
+	if err := database.AuthenticateWebUser(r.Context(), credentials.Username, r.FormValue("password")); err != nil {
 		// if an error occurs
 		return render(w, r, auth.LoginForm(credentials, auth.LoginErrors{
 			InvalidCredentials: "Invalid username or password",
-		}))
+		}, to, false))
 	}
 
 	if err := setAuthCookie(w, r); err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/home")
+	// Send the teacher back to the page WithAuth redirected them away from, e.g. a
+	// statistics page whose session had expired - but only if it's a same-site path
+	// (see isLocalRedirect), so a crafted `to` can't turn this into an open redirect
+	// (see FE-07).
+	target := "/home"
+	if isLocalRedirect(to) {
+		target = to
+	}
+	hxRedirect(w, r, target)
 	return nil
 }
 
@@ -117,8 +130,12 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 			}
 			return err
 		} else {
-			fmt.Print("Account registered successfully!")
-			return render(w, r, auth.LoginForm(auth.LoginParams{}, auth.LoginErrors{}))
+			// Redirect to the login page instead of rendering it in place (see FE-06) -
+			// swapping in a blank LoginForm left the URL at /register with nothing
+			// telling the teacher the account was actually created, and a refresh
+			// re-showed the register form as if nothing had happened.
+			hxRedirect(w, r, "/login?registered=1")
+			return nil
 		}
 	} else {
 		return render(w, r, auth.RegisterForm(credentials, auth.RegisterErrors{

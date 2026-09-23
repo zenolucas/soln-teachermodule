@@ -5,9 +5,9 @@ import (
 	// "soln-teachermodule/types"
 )
 
-templ Login() {
+templ Login(to string, registered bool) {
 	@layout.App(false, false) {
-		@LoginForm(LoginParams{}, LoginErrors{})
+		@LoginForm(LoginParams{}, LoginErrors{}, to, registered)
 	}
 }
 
@@ -22,28 +22,34 @@ type LoginErrors struct {
 	InvalidCredentials	string
 }
 
-templ LoginForm(credentials LoginParams, errors LoginErrors) {
+// to carries the path (if any) the teacher was redirected from by WithAuth, so a
+// successful login can send them back there instead of always to /home (see FE-07).
+// registered is set after a successful registration, to show a one-time success
+// message on the login page it redirects to (see FE-06).
+templ LoginForm(credentials LoginParams, errors LoginErrors, to string, registered bool) {
 	<form
 		hx-post="/login"
 		hx-swap="outerHTML"
 	>
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-
-			// <img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
-		</div>
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
+		<div class="flex justify-center mt-32">
 			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl">
 				<h1 class="text-center text-xl text-white">Sol'n Teacher Portal </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
+				if registered {
+					<div role="alert" class="alert alert-success mb-4">
+						<span>Account created. You can now log in.</span>
+					</div>
+				}
+				<input type="hidden" name="to" value={ to }/>
 				<div class="w-full">
 					<div class="label">
 						<span class="label-text text-white">Username</span>
 					</div>
-					<input type="text" name="username" value={ credentials.Username } autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
+					<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
 					<div class="label">
 						<span class="label-text text-white">Password</span>
 					</div>
-					<input type="password" name="password" value={ credentials.Password } autocomplete="off" required class="input input-bordered w-full"/>
+					<input type="password" name="password" autocomplete="current-password" required class="input input-bordered w-full"/>
 				</div>
 				if len(errors.InvalidCredentials) > 0 {
 					<div class="text-sm text-error">{errors.InvalidCredentials}</div>
@@ -77,26 +83,26 @@ templ RegisterForm(credentials RegisterParams, errors RegisterErrors) {
 		hx-post="/register"
 		hx-swap="outerHTML"
 	>
-		<div class="flex justify-center mt-[calc(100vh-100vh+8rem)]">
-			// <img src="http://localhost:3000/public/images/bg/soln-portal-logo.png"/>
-		</div>
 		<div class="flex justify-center">
-			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl mt-[calc(100vh-100vh+8rem)]">
+			<div class="max-w-md w-full bg-neutral py-10 px-8 rounded-xl mt-32">
 				<h1 class="text-center text-xl text-white">Register a Teacher Account </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
 				<div class="w-full">
 					<div class="label">
 						<span class="label-text text-white">Username</span>
 					</div>
-					<input type="text" name="username" value={ credentials.Username } autocomplete="off" required placeholder="Type here" class="input input-bordered w-full"/>
+					<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
 					<div class="label">
 						<span class="label-text text-white">Password</span>
-					</div> 
-					<input type="password" name="password" value={ credentials.Password } autocomplete="off" required class="input input-bordered w-full"/>
+					</div>
+					<div class="label pt-0">
+						<span class="label-text-alt text-white/70">At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a special character.</span>
+					</div>
+					<input type="password" name="password" autocomplete="new-password" required class="input input-bordered w-full"/>
 					<div class="label">
 						<span class="label-text text-white">Confirm Password</span>
 					</div>
-					<input type="password" name="confirmPassword" value={ credentials.ConfirmPassword } autocomplete="off" required class="input input-bordered w-full"/>
+					<input type="password" name="confirmPassword" autocomplete="new-password" required class="input input-bordered w-full"/>
 					if len(errors.RegisterErrors) > 0 {
 					<div class="text-sm text-error">{errors.RegisterErrors}</div>
 					}
