@@ -109,24 +109,32 @@ func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, 
 			<input type="hidden" name="minigame_id" value= "%d" />
 			<input type="hidden" name="classroom_id" value= "%d" />
 			<div class="flex gap-4 mt-4">
-				<div class="label mr-4">
-					<span class="label-text text-white">Fraction 1 Numerator:</span>
-				</div>
-				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
-			<div class="label mr-4">
-				<span class="label-text text-white">Fraction 2 Numerator</span>
-			</div>
-				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				<label class="form-control w-xs mr-4">
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Numerator:</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
+				<label class="form-control w-xs mr-4">
+					<div class="label">
+						<span class="label-text text-white">Fraction 2 Numerator</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
 			</div>
 			<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Fraction 1 Denominator:</span>
-				</div>
-				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
-			<div class="label">
-				<span class="label-text text-white">Fraction 2 Denominator</span>
-			</div>
-				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				<label class="form-control w-xs">
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Denominator:</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
+				<label class="form-control w-xs">
+					<div class="label">
+						<span class="label-text text-white">Fraction 2 Denominator</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
 			</div>
 
 			<div class="flex justify-end items-center">
@@ -280,30 +288,40 @@ func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, mi
 			<input type="hidden" name="minigameID" value= "%d" />
 			<input type="hidden" name="classroomID" value= "%d" />
 			<div class="flex gap-4 mt-4 mb-4">
-				<div class="label mr-16">
-					<span class="label-text text-white">Question Text</span>
-				</div>
-				<input type="text" value="%s" name="question_text" required class="input input-bordered input-primary w-3/4 text-xl" />
+				<label class="form-control w-3/4 mr-16">
+					<div class="label">
+						<span class="label-text text-white">Question Text</span>
+					</div>
+					<input type="text" value="%s" name="question_text" required class="input input-bordered input-primary w-3/4 text-xl" />
+				</label>
 			</div>
 			<div class="flex gap-4 mt-4">
-				<div class="label mr-3">
-					<span class="label-text text-white">Fraction 1 Numerator:</span>
-				</div>
-				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
-			<div class="label mr-4">
-				<span class="label-text text-white">Fraction 2 Numerator</span>
-			</div>
-				<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				<label class="form-control w-xs mr-3">
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Numerator:</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
+				<label class="form-control w-xs mr-4">
+					<div class="label">
+						<span class="label-text text-white">Fraction 2 Numerator</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
 			</div>
 			<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Fraction 1 Denominator:</span>
-				</div>
-				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
-			<div class="label">
-				<span class="label-text text-white">Fraction 2 Denominator</span>
-			</div>
-				<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				<label class="form-control w-xs">
+					<div class="label">
+						<span class="label-text text-white">Fraction 1 Denominator:</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
+				<label class="form-control w-xs">
+					<div class="label">
+						<span class="label-text text-white">Fraction 2 Denominator</span>
+					</div>
+					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
+				</label>
 			</div>
 
 			<div class="flex justify-end items-center">
@@ -479,42 +497,56 @@ func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, 
 			<input type="hidden" name="questionID" value= "%d" />
 			<input type="hidden" name="classroomID" value= "%d" />
 			<input type="hidden" name="question_number" value="%d" />
-			<span class="label-text text-white">Question %d:</span>
-			<input type="text" value="%s" name="question" required class="input input-bordered input-primary w-3/4 text-lg" />
+			<label class="form-control w-3/4">
+				<div class="label">
+					<span class="label-text text-white">Question %d:</span>
+				</div>
+				<input type="text" value="%s" name="question" required class="input input-bordered input-primary w-3/4 text-lg" />
+			</label>
 			<div class="flex gap-4 mt-4">
-				<div class="label">
-					<span class="label-text text-white">Option 1:</span>
-				</div>
-				<input type="text" value="%s" name="option1" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<label class="form-control w-full max-w-xs">
+					<div class="label">
+						<span class="label-text text-white">Option 1:</span>
+					</div>
+					<input type="text" value="%s" name="option1" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				</label>
 				<input type="hidden"  value="%d" name="option1_choiceID" />
-				<div class="label">
-					<span class="label-text text-white">Option 2:</span>
-				</div>
-				<input type="text" value="%s" name="option2" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<label class="form-control w-full max-w-xs">
+					<div class="label">
+						<span class="label-text text-white">Option 2:</span>
+					</div>
+					<input type="text" value="%s" name="option2" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				</label>
 				<input type="hidden"  value="%d" name="option2_choiceID" />
 			</div>
 			<div class="flex gap-4 mt-4">
-			<div class="label">
-				<span class="label-text text-white">Option 3:</span>
-			</div>
-				<input type="text" value="%s" name="option3" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<label class="form-control w-full max-w-xs">
+					<div class="label">
+						<span class="label-text text-white">Option 3:</span>
+					</div>
+					<input type="text" value="%s" name="option3" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				</label>
 				<input type="hidden"  value="%d" name="option3_choiceID" />
-			<div class="label">
-				<span class="label-text text-white">Option 4:</span>
-			</div>
-				<input type="text" value="%s" name="option4" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				<label class="form-control w-full max-w-xs">
+					<div class="label">
+						<span class="label-text text-white">Option 4:</span>
+					</div>
+					<input type="text" value="%s" name="option4" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
+				</label>
 				<input type="hidden"  value="%d" name="option4_choiceID" />
 			</div>
 			<div class="flex mt-4 relative inline-block w-64">
-			<div class="label">
-				<span class="label-text text-white">Correct Answer: </span>
-			</div>
-				<select name="correct_answer" class="select select-bordered w-full max-w-xs">
-					<option value="%d" %s>Option 1</option>
-					<option value="%d" %s>Option 2</option>
-					<option value="%d" %s>Option 3</option>
-					<option value="%d" %s>Option 4</option>
-				</select>
+				<label class="form-control w-full max-w-xs">
+					<div class="label">
+						<span class="label-text text-white">Correct Answer: </span>
+					</div>
+					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
+						<option value="%d" %s>Option 1</option>
+						<option value="%d" %s>Option 2</option>
+						<option value="%d" %s>Option 3</option>
+						<option value="%d" %s>Option 4</option>
+					</select>
+				</label>
 			</div>
 
 			<div class="flex justify-end items-center">

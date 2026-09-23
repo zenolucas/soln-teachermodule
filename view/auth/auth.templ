@@ -42,14 +42,18 @@ templ LoginForm(credentials LoginParams, errors LoginErrors, to string, register
 				}
 				<input type="hidden" name="to" value={ to }/>
 				<div class="w-full">
-					<div class="label">
-						<span class="label-text text-white">Username</span>
-					</div>
-					<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
-					<div class="label">
-						<span class="label-text text-white">Password</span>
-					</div>
-					<input type="password" name="password" autocomplete="current-password" required class="input input-bordered w-full"/>
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text text-white">Username</span>
+						</div>
+						<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
+					</label>
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text text-white">Password</span>
+						</div>
+						<input type="password" name="password" autocomplete="current-password" required class="input input-bordered w-full"/>
+					</label>
 				</div>
 				if len(errors.InvalidCredentials) > 0 {
 					<div class="text-sm text-error">{errors.InvalidCredentials}</div>
@@ -88,21 +92,27 @@ templ RegisterForm(credentials RegisterParams, errors RegisterErrors) {
 				<h1 class="text-center text-xl text-white">Register a Teacher Account </h1>
 				<div class="divider before:bg-white after:bg-white my-[5px]"></div>
 				<div class="w-full">
-					<div class="label">
-						<span class="label-text text-white">Username</span>
-					</div>
-					<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
-					<div class="label">
-						<span class="label-text text-white">Password</span>
-					</div>
-					<div class="label pt-0">
-						<span class="label-text-alt text-white/70">At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a special character.</span>
-					</div>
-					<input type="password" name="password" autocomplete="new-password" required class="input input-bordered w-full"/>
-					<div class="label">
-						<span class="label-text text-white">Confirm Password</span>
-					</div>
-					<input type="password" name="confirmPassword" autocomplete="new-password" required class="input input-bordered w-full"/>
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text text-white">Username</span>
+						</div>
+						<input type="text" name="username" value={ credentials.Username } autocomplete="username" required placeholder="Type here" class="input input-bordered w-full"/>
+					</label>
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text text-white">Password</span>
+						</div>
+						<div class="label pt-0">
+							<span class="label-text-alt text-white/70">At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a special character.</span>
+						</div>
+						<input type="password" name="password" autocomplete="new-password" required class="input input-bordered w-full"/>
+					</label>
+					<label class="form-control w-full">
+						<div class="label">
+							<span class="label-text text-white">Confirm Password</span>
+						</div>
+						<input type="password" name="confirmPassword" autocomplete="new-password" required class="input input-bordered w-full"/>
+					</label>
 					if len(errors.RegisterErrors) > 0 {
 					<div class="text-sm text-error">{errors.RegisterErrors}</div>
 					}

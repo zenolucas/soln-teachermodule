@@ -83,17 +83,20 @@ templ CreateFractionQuestionForm(data FractionQuestionParams, minigameID string,
                               <span class="label-text">Fraction 1 Numerator</span>
                          </div>
                          <input type="number" inputmode="numeric" required min="0" name="fraction1_numerator" placeholder="Type here" class="input input-bordered w-full" />
-
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 1 Denominator</span>
                          </div>
-
                          <input type="number" inputmode="numeric" required min="1" name="fraction1_denominator" placeholder="Type here" class="input input-bordered w-full" />
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 2 Numerator</span>
                          </div>
-
                          <input type="number" inputmode="numeric" required min="0" name="fraction2_numerator" placeholder="Type here" class="input input-bordered w-full" />
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 2 Denominator</span>
                          </div>
@@ -130,22 +133,26 @@ templ CreateWordedQuestionForm(data WordedQuestionParams, minigameID string, cla
                               <span class="label-text">Question Text</span>
                          </div>
                          <input type="text" name="question_text" placeholder="Type here" required maxlength="500" class="input input-bordered w-full" />
-
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 1 Numerator</span>
                          </div>
                          <input type="number" inputmode="numeric" required min="0" name="fraction1_numerator" placeholder="Type here" class="input input-bordered w-full" />
-
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 1 Denominator</span>
                          </div>
-
                          <input type="number" inputmode="numeric" required min="1" name="fraction1_denominator" placeholder="Type here" class="input input-bordered w-full" />
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 2 Numerator</span>
                          </div>
-
                          <input type="number" inputmode="numeric" required min="0" name="fraction2_numerator" placeholder="Type here" class="input input-bordered w-full" />
+                    </label>
+                    <label class="form-control w-full max-w-s">
                          <div class="label">
                               <span class="label-text">Fraction 2 Denominator</span>
                          </div>
@@ -184,35 +191,42 @@ templ CreateMCQuestionForm(data QuestionParams, minigameID string, classroomID s
                     </div>
                     <input type="text" name="question_text" placeholder="Type here" required
                          class="input input-bordered w-full" />
+               </label>
+               <label class="form-control w-full max-w-s">
                     <div class="label">
                          <span class="label-text">Option 1</span>
                     </div>
                     <input type="text" name="option_1" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
-
+               </label>
+               <label class="form-control w-full max-w-s">
                     <div class="label">
                          <span class="label-text">Option 2</span>
                     </div>
-
                     <input type="text" name="option_2" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
+               </label>
+               <label class="form-control w-full max-w-s">
                     <div class="label">
                          <span class="label-text">Option 3</span>
                     </div>
-
                     <input type="text" name="option_3" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
+               </label>
+               <label class="form-control w-full max-w-s">
                     <div class="label">
                          <span class="label-text">Option 4</span>
                     </div>
                     <input type="text" name="option_4" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
                </label>
-               <div class="label">
-                    <span class="label-text">Correct Answer</span>
-               </div>
-               <select name="correct_answer" class="select select-bordered w-full max-w-xs">
-                    <option value="option_1">Option 1</option>
-                    <option value="option_2">Option 2</option>
-                    <option value="option_3">Option 3</option>
-                    <option value="option_4">Option 4</option>
-               </select>
+               <label class="form-control w-full max-w-xs">
+                    <div class="label">
+                         <span class="label-text">Correct Answer</span>
+                    </div>
+                    <select name="correct_answer" class="select select-bordered w-full max-w-xs">
+                         <option value="option_1">Option 1</option>
+                         <option value="option_2">Option 2</option>
+                         <option value="option_3">Option 3</option>
+                         <option value="option_4">Option 4</option>
+                    </select>
+               </label>
           </form>
           <div class="modal-action">
                <button type="button" class="btn" data-modal-close>Cancel</button>
