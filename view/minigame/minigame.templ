@@ -7,7 +7,7 @@ import (
 
 
 templ Fractions(minigameID string, classroomID string, classroomName string, sceneName string) {
-@layout.App(true, false, false, "Simple Fraction Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, "Simple Fraction Questions · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <div>
 </div>
@@ -16,7 +16,7 @@ templ Fractions(minigameID string, classroomID string, classroomName string, sce
      <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
-     <h1 class="text-5xl font-bold">Simple Fraction Questions</h1>
+     <h1 class="text-3xl font-bold">Simple Fraction Questions</h1>
      <div class="flex justify-center mt-4 space-x-4">
           <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      </div>
@@ -30,14 +30,14 @@ templ Fractions(minigameID string, classroomID string, classroomName string, sce
 }
 
 templ Worded(minigameID string, classroomID string, classroomName string, sceneName string) {
-@layout.App(true, false, false, "Worded Fraction Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, "Worded Fraction Questions · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
-     <h1 class="text-5xl font-bold">Worded Fraction Questions</h1>
+     <h1 class="text-3xl font-bold">Worded Fraction Questions</h1>
      <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      <div id="questions-container">
      <div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
@@ -49,14 +49,14 @@ templ Worded(minigameID string, classroomID string, classroomName string, sceneN
 }
 
 templ Quiz(minigameID string, classroomID string, classroomName string, sceneName string) {
-@layout.App(true, false, false, "Quiz Questions · Sol'n Teacher Portal") {
+@layout.App(true, false, "Quiz Questions · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />
 </form>
 <div class="flex justify-center items-center flex-col w-full h-140 mt-8">
-     <h1 class="text-5xl font-bold">Quiz Questions (Multiple Choice)</h1>
+     <h1 class="text-3xl font-bold">Quiz Questions (Multiple Choice)</h1>
      <div class="flex justify-center mt-4">
           <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
      </div>

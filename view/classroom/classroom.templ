@@ -11,27 +11,17 @@ import "fmt"
 // nowhere except the sidebar list). classroomID is passed separately, rather than
 // read off room, since every link below already builds its URL from it.
 templ Classroom(classroomID string, tab string, room types.Classroom) {
-@layout.App(true, false, false, fmt.Sprintf("%s · Sol'n Teacher Portal", room.ClassroomName)) {
-<!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04). -->
-<div class="flex w-full h-[calc(100vh-5rem)]">
-	<div class="w-1/4 bg-neutral flex flex-col overflow-x-auto">
-		<a href="/home" class="btn btn btn-ghost w-full text-white text-left justify-start h-16 mt-2"><i
-				class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;"></i>Home</a>
-		<div class="divider my-0"></div>
-		<div class="btn btn-wide no-animation btn-ghost w-full text-white text-left justify-start"> <i
-				class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;"></i>Classrooms</div>
-
-		<div class="flex flex-wrap w-full text-white" hx-get="getclassrooms_menu" hx-trigger="load" hx-target="this">
-			<div class="flex justify-center w-full p-4"><span class="loading loading-spinner" aria-label="Loading"></span></div>
-		</div>
+@layout.App(true, false, fmt.Sprintf("%s · Sol'n Teacher Portal", room.ClassroomName)) {
+<!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04).
+     No sidebar column here anymore - layout.App renders one shared ui.Sidebar for every
+     authenticated page now, this page just fills the remaining width (see FE-11, D4). -->
+<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+	<div class="px-4 pt-4">
+		<h2 class="text-2xl font-bold">{ room.ClassroomName } &mdash; Section { room.Section }</h2>
+		if len(room.Description) > 0 {
+			<p class="text-sm opacity-70">{ room.Description }</p>
+		}
 	</div>
-	<div class="w-3/4 bg-base-300 justify-center gap-4 overflow-x-auto">
-		<div class="px-4 pt-4">
-			<h2 class="text-2xl font-bold">{ room.ClassroomName } &mdash; Section { room.Section }</h2>
-			if len(room.Description) > 0 {
-				<p class="text-sm opacity-70">{ room.Description }</p>
-			}
-		</div>
 		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
 			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked?={ tab == "" || tab == "overview" } />
 			<div role="tabpanel" class="tab-content p-10">
@@ -142,7 +132,6 @@ templ Classroom(classroomID string, tab string, room types.Classroom) {
 			</div>
 		</div>
 	</div>
-</div>
 }
 }
 

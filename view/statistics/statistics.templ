@@ -6,10 +6,10 @@ import "soln-teachermodule/types"
 import "fmt"
 
 templ FractionStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, false, true, "Simple Fraction Statistics · Sol'n Teacher Portal") {
+@layout.App(true, true, "Simple Fraction Statistics · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-5xl font-bold mt-2 mb-4">Simple Fraction Statistics</h1>
+        <h1 class="text-3xl font-bold mt-2 mb-4">Simple Fraction Statistics</h1>
 
         <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/fraction/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
         </form>
@@ -24,10 +24,10 @@ templ FractionStatistics(classroomID string, minigameID string, classroomName st
 
 
 templ WordedStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, false, true, "Worded Questions Statistics · Sol'n Teacher Portal") {
+@layout.App(true, true, "Worded Questions Statistics · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-5xl font-bold mt-2 mb-4">Worded Questions Statistics</h1>
+        <h1 class="text-3xl font-bold mt-2 mb-4">Worded Questions Statistics</h1>
 
         <form hx-get={ string(templ.URL(fmt.Sprintf("/statistics/worded/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID)))} hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
         </form>
@@ -41,15 +41,15 @@ templ WordedStatistics(classroomID string, minigameID string, classroomName stri
 }
 
 templ QuizStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, false, true, "Quiz Statistics · Sol'n Teacher Portal") {
+@layout.App(true, true, "Quiz Statistics · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-    <h1 class="text-5xl font-bold mt-2 mb-4">Quiz Statistics</h1>
+    <h1 class="text-3xl font-bold mt-2 mb-4">Quiz Statistics</h1>
     <div>
         <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary btn-active text-white">Class Statistics</a>
         <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-outline btn-secondary">Question Statistics</a>
     </div>
-    <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+    <div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         <canvas id="myStatisticsChart" width="300" height="200"></canvas>
     </div>
 
@@ -122,7 +122,7 @@ templ QuizStatistics(classroomID string, minigameID string, classroomName string
         }
     </script>
 
-    <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+    <div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
         // student scores table
         <table class="table table-zebra text-xl">
             <thead>
@@ -146,10 +146,10 @@ templ QuizStatistics(classroomID string, minigameID string, classroomName string
 
 // let this be for Quiz Question Statistics
 templ QuestionStatistics(minigameID string, classroomID string, classroomName string, sceneName string) {
-@layout.App(true, false, true, "Question Statistics · Sol'n Teacher Portal") {
+@layout.App(true, true, "Question Statistics · Sol'n Teacher Portal") {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-5xl font-bold mt-2 mb-4">Question Statistics</h1>
+        <h1 class="text-3xl font-bold mt-2 mb-4">Question Statistics</h1>
         <div>
             <a href={ templ.URL(fmt.Sprintf("/statistics/quiz?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-outline btn-secondary">Class Statistics</a>
             <a href={ templ.URL(fmt.Sprintf("/statistics/quiz/question?minigameID=%s&classroomID=%s", minigameID, classroomID))} class="btn btn-secondary btn-active text-white">Question Statistics</a>
@@ -167,14 +167,14 @@ templ QuestionStatistics(minigameID string, classroomID string, classroomName st
 
 
 templ StudentScores(firstname string, lastname string, userID string, classroomID string, classroomName string) {
-@layout.App(true, false, false, fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", firstname, lastname)) {
+@layout.App(true, false, fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", firstname, lastname)) {
 @ui.Breadcrumb(classroomID, classroomName, fmt.Sprintf("%s %s", firstname, lastname), "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-5xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>
+        <h1 class="text-3xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>
         for _, world := range types.Worlds {
             <h2 class="text-3xl font-bold mt-6 mb-2 w-3/5">{ world.Title }</h2>
             for _, scene := range world.Scenes {
-                <div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+                <div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
                     <p class="text-2xl">{ scene.Name } Statistics</p>
                     if scene.Kind == types.KindQuiz {
                         <table class="table table-zebra text-xl">

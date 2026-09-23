@@ -11,7 +11,7 @@ import "strconv"
 // full HTML document into a fragment target or parsing it as JSON would break the
 // caller instead of helping it.
 templ Error(code int, message string) {
-	@layout.App(false, false, false, strconv.Itoa(code)+" · Sol'n Teacher Portal") {
+	@layout.App(false, false, strconv.Itoa(code)+" · Sol'n Teacher Portal") {
 		<div class="hero min-h-screen">
 			<div class="hero-content text-center">
 				<div class="max-w-md">

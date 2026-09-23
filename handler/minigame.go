@@ -104,7 +104,7 @@ func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, 
 	// this app already uses the safer self-targeting pattern, so this matches that
 	// instead of introducing the one exception.
 	fmt.Fprintf(w, `
-		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="w-full max-w-3xl bg-neutral py-10 px-8 rounded-xl mt-4">
 		<div class="flex justify-end">
 			<form action="/delete/fractions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 				<input type="hidden" name="question_id" value="%d" />
@@ -117,7 +117,7 @@ func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, 
 			<input type="hidden" name="question_id" value= "%d" />
 			<input type="hidden" name="minigame_id" value= "%d" />
 			<input type="hidden" name="classroom_id" value= "%d" />
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-xs mr-4">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Numerator:</span>
@@ -131,7 +131,7 @@ func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, 
 					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
 				</label>
 			</div>
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-xs">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Denominator:</span>
@@ -283,7 +283,7 @@ func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, mi
 	// See the matching comment in renderFractionCard above for why this form now
 	// targets/swaps itself instead of a wrapping ancestor div.
 	fmt.Fprintf(w, `
-		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="w-full max-w-3xl bg-neutral py-10 px-8 rounded-xl mt-4">
 		<div class="flex justify-end">
 			<form action="/delete/worded" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 				<input type="hidden" name="questionID" value="%d" />
@@ -296,7 +296,7 @@ func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, mi
 			<input type="hidden" name="questionID" value= "%d" />
 			<input type="hidden" name="minigameID" value= "%d" />
 			<input type="hidden" name="classroomID" value= "%d" />
-			<div class="flex gap-4 mt-4 mb-4">
+			<div class="flex flex-wrap gap-4 mt-4 mb-4">
 				<label class="form-control w-3/4 mr-16">
 					<div class="label">
 						<span class="label-text text-white">Question Text</span>
@@ -304,7 +304,7 @@ func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, mi
 					<input type="text" value="%s" name="question_text" required class="input input-bordered input-primary w-3/4 text-xl" />
 				</label>
 			</div>
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-xs mr-3">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Numerator:</span>
@@ -318,7 +318,7 @@ func renderWordedCard(w http.ResponseWriter, fraction types.FractionQuestion, mi
 					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
 				</label>
 			</div>
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-xs">
 					<div class="label">
 						<span class="label-text text-white">Fraction 1 Denominator:</span>
@@ -492,7 +492,7 @@ func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, 
 	// See the matching comment in renderFractionCard above for why this form now
 	// targets/swaps itself instead of a wrapping ancestor div.
 	fmt.Fprintf(w, `
-		<div class="w-3/5 bg-neutral py-10 px-8 rounded-xl mt-4">
+		<div class="w-full max-w-3xl bg-neutral py-10 px-8 rounded-xl mt-4">
 		<div class="flex justify-end">
 			<form action="/delete/mcquestions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
 				<input type="hidden" name="questionID" value="%d" />
@@ -512,7 +512,7 @@ func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, 
 				</div>
 				<input type="text" value="%s" name="question" required class="input input-bordered input-primary w-3/4 text-lg" />
 			</label>
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-full max-w-xs">
 					<div class="label">
 						<span class="label-text text-white">Option 1:</span>
@@ -528,7 +528,7 @@ func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, 
 				</label>
 				<input type="hidden"  value="%d" name="option2_choiceID" />
 			</div>
-			<div class="flex gap-4 mt-4">
+			<div class="flex flex-wrap gap-4 mt-4">
 				<label class="form-control w-full max-w-xs">
 					<div class="label">
 						<span class="label-text text-white">Option 3:</span>

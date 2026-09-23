@@ -1,0 +1,21 @@
+package ui
+
+// Sidebar used to exist only inline inside classroom.templ, so it showed up on the
+// classroom page and nowhere else - /home rendered a permanently empty w-1/4 column
+// where it should have been, and the minigame/statistics pages had no sidebar at all
+// (see FE-11, D4). It's now rendered once by layout.App for every authenticated page.
+// Self-contained: loads its own classroom list via htmx, same as the inline version did.
+templ Sidebar() {
+	<div class="w-64 bg-neutral flex flex-col overflow-x-auto min-h-full">
+		<a href="/home" class="btn btn-ghost w-full text-white text-left justify-start h-16 mt-2">
+			<i class="fa-solid fa-house fa-2xl ml-6" style="color: #ffffff;" aria-hidden="true"></i>Home
+		</a>
+		<div class="divider my-0"></div>
+		<div class="btn btn-wide no-animation btn-ghost w-full text-white text-left justify-start">
+			<i class="fa-solid fa-school fa-2xl ml-6" style="color: #ffffff;" aria-hidden="true"></i>Classrooms
+		</div>
+		<div class="flex flex-wrap w-full text-white" hx-get="/getclassrooms_menu" hx-trigger="load" hx-target="this">
+			<div class="flex justify-center w-full p-4"><span class="loading loading-spinner" aria-label="Loading"></span></div>
+		</div>
+	</div>
+}
