@@ -28,9 +28,9 @@ func TestConstructChoices(t *testing.T) {
 	}
 	r := newFormRequest(t, form)
 
-	choices, err := constructChoices(r, 12)
+	choices, err := ConstructChoices(r, 12)
 	if err != nil {
-		t.Fatalf("constructChoices returned unexpected error: %v", err)
+		t.Fatalf("ConstructChoices returned unexpected error: %v", err)
 	}
 	if len(choices) != 4 {
 		t.Fatalf("got %d choices, want 4", len(choices))
@@ -56,7 +56,7 @@ func TestConstructChoices(t *testing.T) {
 
 func TestConstructChoices_MissingChoiceID(t *testing.T) {
 	// option2_choiceID is missing entirely - formInt should surface a descriptive
-	// error rather than constructChoices silently defaulting it to 0 (see BUG-03's
+	// error rather than ConstructChoices silently defaulting it to 0 (see BUG-03's
 	// root cause: a bare strconv.Atoi with the error discarded did exactly that).
 	form := url.Values{
 		"option1":          {"1/2"},
@@ -69,7 +69,7 @@ func TestConstructChoices_MissingChoiceID(t *testing.T) {
 	}
 	r := newFormRequest(t, form)
 
-	if _, err := constructChoices(r, 12); err == nil {
-		t.Fatal("constructChoices returned nil error for a missing choiceID form field, want an error")
+	if _, err := ConstructChoices(r, 12); err == nil {
+		t.Fatal("ConstructChoices returned nil error for a missing choiceID form field, want an error")
 	}
 }

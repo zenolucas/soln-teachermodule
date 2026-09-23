@@ -51,6 +51,14 @@ function solnInitCharts(root) {
 				return response.json();
 			})
 			.then(function (results) {
+				// A question with no attempts/responses yet returned either an empty
+				// array or a single all-zero row - Chart.js still drew axes for it, so
+				// a teacher saw an empty box with no explanation of whether that meant
+				// "no one has tried this" or "something's broken" (see FE-20).
+				if (solnChartIsEmpty(canvas.dataset.chartType, results)) {
+					solnRenderNoDataMessage(canvas);
+					return;
+				}
 				if (canvas.dataset.chartType === "attempts") {
 					solnRenderAttemptsChart(canvas, results);
 				} else if (canvas.dataset.chartType === "choices") {
@@ -58,6 +66,30 @@ function solnInitCharts(root) {
 				}
 			});
 	});
+}
+
+function solnChartIsEmpty(chartType, results) {
+	if (!results || results.length === 0) {
+		return true;
+	}
+	if (chartType === "attempts") {
+		return results.every(function (item) {
+			return !item.num_right_attempts && !item.num_wrong_attempts;
+		});
+	}
+	if (chartType === "choices") {
+		return results.every(function (item) {
+			return !item.count;
+		});
+	}
+	return false;
+}
+
+function solnRenderNoDataMessage(canvas) {
+	var message = document.createElement("p");
+	message.className = "text-white text-opacity-60";
+	message.textContent = "No responses yet.";
+	canvas.replaceWith(message);
 }
 
 // "attempts" charts: the fraction/worded per-question breakdown - always exactly one

@@ -65,6 +65,11 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
+	if len(questions) == 0 {
+		renderNoQuestionStatistics(w)
+		return nil
+	}
+
 	// Each question used to get its own inline <script> defining numbered
 	// getClassStatisticsN/renderChartN globals - identical apart from the URL and
 	// number. A shared renderer in public/js/index.js now does this for every
@@ -80,6 +85,13 @@ func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error 
 	}
 
 	return nil
+}
+
+// renderNoQuestionStatistics is shared by the fraction/worded/quiz question-chart
+// fragments above - a minigame with no questions yet was rendering a blank statistics
+// page with no charts and no explanation why (see FE-20).
+func renderNoQuestionStatistics(w http.ResponseWriter) {
+	fmt.Fprint(w, `<p class="text-white text-opacity-60 mt-4">This minigame doesn't have any questions yet.</p>`)
 }
 
 func HandleFractionResponseStatistics(w http.ResponseWriter, r *http.Request) error {
@@ -125,6 +137,11 @@ func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	questions, err := database.GetWordedQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	if len(questions) == 0 {
+		renderNoQuestionStatistics(w)
+		return nil
 	}
 
 	// See the matching comment in HandleFractionQuestionCharts above (FE-34) - this
@@ -226,6 +243,11 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	if len(questions) == 0 {
+		renderNoQuestionStatistics(w)
+		return nil
 	}
 
 	// See the matching comment in HandleFractionQuestionCharts above (FE-34) - this
@@ -480,6 +502,15 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// This is a JOIN against multiple_choice_scores, not the enrolled-students list -
+	// an enrolled student who simply hasn't played this quiz yet doesn't get a row at
+	// all, so an empty result here means "no one has played yet," not "no one's
+	// enrolled" (see FE-20).
+	if len(studentScores) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="3" class="text-center text-white text-opacity-60">No scores recorded yet.</td></tr>`)
+		return nil
+	}
+
 	for i, students := range studentScores {
 		fmt.Fprintf(w, `
 			<tr>
@@ -535,6 +566,15 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
+	// This is a LEFT JOIN from fraction_questions, so a row exists per question even
+	// when the student hasn't attempted it (with 0/0 counts) - an empty result here
+	// means the minigame itself has no questions yet, not that the student skipped it
+	// (see FE-20).
+	if len(statistics) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
+		return nil
+	}
+
 	for _, statistic := range statistics {
 		fmt.Fprintf(w, `
 			<tr>
@@ -569,6 +609,12 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// See the matching comment in HandleGetStudentFractionScore above.
+	if len(statistics) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
+		return nil
+	}
+
 	for _, statistic := range statistics {
 		fmt.Fprintf(w, `
 			<tr>
@@ -600,6 +646,12 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 	statistics, err := database.GetStudentQuizStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
+	}
+
+	// See the matching comment in HandleGetStudentFractionScore above.
+	if len(statistics) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
+		return nil
 	}
 
 	for _, statistic := range statistics {

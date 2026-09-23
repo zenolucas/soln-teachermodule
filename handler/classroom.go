@@ -65,6 +65,19 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// A brand-new teacher's very first view of the app was blank space with no hint
+	// of what to do next - the "+" that opens the create-classroom modal isn't
+	// obviously connected to this empty area (see FE-20).
+	if len(classrooms) == 0 {
+		fmt.Fprint(w, `
+		<div class="flex flex-col items-center justify-center w-full py-20 text-white">
+			<p class="text-xl mb-4">No classrooms yet.</p>
+			<label for="my_modal_6" class="btn btn-primary text-white">Create classroom</label>
+		</div>
+		`)
+		return nil
+	}
+
 	for _, classroom := range classrooms {
 		fmt.Fprintf(w, `
 		<div class="glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8">
@@ -75,7 +88,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 					<h2 class="card-title">%s - %s</h2>
 					<p>%s</p>
 					<div class="card-actions justify-end">
-						<a href="/classroom?classroom_id=%s" class="btn btn-secondary"> Open </a> 
+						<a href="/classroom?classroom_id=%s" class="btn btn-secondary"> Open </a>
 					</div>
 				</div>
 			</div>
@@ -94,6 +107,11 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 	classrooms, err := database.GetClassrooms(r.Context(), teacherID)
 	if err != nil {
 		return err
+	}
+
+	if len(classrooms) == 0 {
+		fmt.Fprint(w, `<p class="text-white text-opacity-60 px-6 mt-2">No classrooms yet.</p>`)
+		return nil
 	}
 
 	for _, classroom := range classrooms {
@@ -133,6 +151,11 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
+	}
+
+	if len(students) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="3" class="text-center text-white text-opacity-60">No students enrolled yet.</td></tr>`)
+		return nil
 	}
 
 	for i, student := range students {
@@ -213,13 +236,20 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// Every student was already enrolled - the modal's checkbox table (and its "select
+	// all" checkbox) had nothing to show and no explanation why (see FE-20).
+	if len(students) == 0 {
+		fmt.Fprint(w, `<tr><td colspan="2" class="text-center text-white text-opacity-60">All students are already enrolled in this classroom.</td></tr>`)
+		return nil
+	}
+
 	// output student array here
 	for _, student := range students {
 		fmt.Fprintf(w, `
 			<tr>
 				<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item"/></td>
 				<td>%s %s</td>
-			</tr>	
+			</tr>
 		`, esc(student.UserID), esc(student.Firstname), esc(student.Lastname))
 	}
 
