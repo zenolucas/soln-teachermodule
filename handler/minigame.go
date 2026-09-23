@@ -24,13 +24,22 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// classroomName and sceneName are for the breadcrumb only (see FE-13) - the page
+	// itself already dispatches by minigameKinds[minigameIDStr] below, same as before.
+	classroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	minigameID, _ := strconv.Atoi(minigameIDStr)
+	scene, _ := types.SceneByID(minigameID)
+
 	switch minigameKinds[minigameIDStr] {
 	case kindFractions:
-		return render(w, r, minigame.Fractions(minigameIDStr, classroomIDStr))
+		return render(w, r, minigame.Fractions(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 	case kindWorded:
-		return render(w, r, minigame.Worded(minigameIDStr, classroomIDStr))
+		return render(w, r, minigame.Worded(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 	case kindQuiz:
-		return render(w, r, minigame.Quiz(minigameIDStr, classroomIDStr))
+		return render(w, r, minigame.Quiz(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
