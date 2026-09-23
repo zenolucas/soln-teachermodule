@@ -140,3 +140,44 @@ function solnRenderChoicesChart(canvas, results) {
 document.body.addEventListener("htmx:afterSettle", function (evt) {
 	solnInitCharts(evt.detail.elt);
 });
+
+// Disables a form's submit button just after it's submitted, so a double-click (or an
+// impatient second click while a request is still in flight) can't create a duplicate
+// classroom, question, or account (see FE-25). This listens for the native `submit`
+// event itself - which still fires for an htmx-managed form, since htmx only calls
+// preventDefault on it, not stopPropagation - so one listener covers every form in the
+// app, htmx-managed or a plain POST, without changing each one individually.
+document.body.addEventListener("submit", function (evt) {
+	var form = evt.target;
+	var submitter = evt.submitter || form.querySelector('button[type="submit"]');
+	if (!submitter || submitter.disabled) {
+		return;
+	}
+
+	// Deferred to the next tick rather than disabled synchronously in this handler -
+	// htmx handles this same event, in this same dispatch, to read the form and start
+	// its request; mutating the submitter's disabled state before that finishes is a
+	// known cross-browser footgun that can interfere with the in-flight submission
+	// itself (reproduced here: it crashed the tab under headless Chromium during
+	// verification). A same-tick disable isn't actually needed anyway - nothing
+	// user-triggered can land between this handler returning and the next tick.
+	setTimeout(function () {
+		submitter.disabled = true;
+	}, 0);
+
+	// A plain form submission navigates away, so there's nothing left to re-enable.
+	// An htmx-managed form almost always replaces itself entirely on response
+	// (hx-swap="outerHTML"), which discards this disabled button along with it - a
+	// fresh, enabled one comes back in the swapped-in HTML. Re-enable defensively
+	// anyway, in case a future form targets somewhere other than itself and so
+	// survives the request with this same button still in the DOM.
+	if (form.hasAttribute("hx-post") || form.hasAttribute("hx-get")) {
+		form.addEventListener(
+			"htmx:afterRequest",
+			function () {
+				submitter.disabled = false;
+			},
+			{ once: true }
+		);
+	}
+});

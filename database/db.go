@@ -814,7 +814,7 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	// construct choices[]
-	choices, err := constructChoices(r, correctAnswerID)
+	choices, err := ConstructChoices(r, correctAnswerID)
 	if err != nil {
 		return err
 	}
@@ -844,7 +844,11 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 }
 
 // helper func to construct choices[]
-func constructChoices(r *http.Request, correctAnswerID int) ([]types.Choice, error) {
+// ConstructChoices is exported so handler.HandleUpdateMCQuestions can reuse the exact
+// same option/choiceID/correct-answer parsing to rebuild the just-saved question's
+// choices for its response, instead of duplicating this logic or doing an extra
+// round-trip query (see FE-22).
+func ConstructChoices(r *http.Request, correctAnswerID int) ([]types.Choice, error) {
 	var choices []types.Choice
 
 	optionKeys := []string{"option1", "option2", "option3", "option4"}
