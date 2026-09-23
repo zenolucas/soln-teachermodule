@@ -1,10 +1,14 @@
 package minigame
 
-import "soln-teachermodule/view/layout"
+import (
+     "soln-teachermodule/view/layout"
+     "soln-teachermodule/view/ui"
+)
 
 
-templ Fractions(minigameID string, classroomID string) {
+templ Fractions(minigameID string, classroomID string, classroomName string, sceneName string) {
 @layout.App(true, false, false, "Simple Fraction Questions · Sol'n Teacher Portal") {
+@ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <div>
 </div>
 <form hx-post="/getfractions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
@@ -25,8 +29,9 @@ templ Fractions(minigameID string, classroomID string) {
 }
 }
 
-templ Worded(minigameID string, classroomID string) {
+templ Worded(minigameID string, classroomID string, classroomName string, sceneName string) {
 @layout.App(true, false, false, "Worded Fraction Questions · Sol'n Teacher Portal") {
+@ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <form hx-post="/getwordedquestions" hx-trigger="load" hx-swap="outerHTML" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />
@@ -43,8 +48,9 @@ templ Worded(minigameID string, classroomID string) {
 }
 }
 
-templ Quiz(minigameID string, classroomID string) {
+templ Quiz(minigameID string, classroomID string, classroomName string, sceneName string) {
 @layout.App(true, false, false, "Quiz Questions · Sol'n Teacher Portal") {
+@ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
 <form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
      <input type="hidden" name="minigameID" value={ minigameID } />
      <input type="hidden" name="classroomID" value={ classroomID } />
