@@ -1,0 +1,25 @@
+package errorpage
+
+import "soln-teachermodule/view/layout"
+import "strconv"
+
+// Error renders a full styled page for a full-page navigation that hit an error -
+// previously these came back as unstyled http.Error plain text with no way back into
+// the app (see FE-05). It's deliberately only used for genuine full-page browser
+// navigations (see handler.respondError/handler.Make): an htmx fragment request or a
+// JSON API caller must keep getting a plain-text/JSON response, since swapping this
+// full HTML document into a fragment target or parsing it as JSON would break the
+// caller instead of helping it.
+templ Error(code int, message string) {
+	@layout.App(false, false, strconv.Itoa(code)+" · Sol'n Teacher Portal") {
+		<div class="hero min-h-screen">
+			<div class="hero-content text-center">
+				<div class="max-w-md">
+					<h1 class="text-6xl font-bold">{ strconv.Itoa(code) }</h1>
+					<p class="py-6 text-xl">{ message }</p>
+					<a href="/home" class="btn btn-primary">Back to Home</a>
+				</div>
+			</div>
+		</div>
+	}
+}

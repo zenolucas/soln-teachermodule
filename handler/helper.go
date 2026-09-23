@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
+	"soln-teachermodule/view/errorpage"
 	"strconv"
 	"strings"
 
@@ -41,10 +43,41 @@ func Make(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
 		if err := h(rec, r); err != nil {
 			slog.Error("internal server error", "err", err, "path", r.URL.Path)
 			if !rec.wroteHeader {
-				http.Error(w, "internal server error", http.StatusInternalServerError)
+				renderErrorPage(w, r, http.StatusInternalServerError, "Something went wrong on our end. Please try again.")
 			}
 		}
 	}
+}
+
+// wantsErrorPage reports whether r looks like a real browser navigation that a full
+// styled error page would help, as opposed to an htmx fragment request, a JSON API
+// call (the statistics/chart endpoints fetched with plain fetch()), or the Godot
+// client's /game/* requests, none of which should get an HTML document back (see
+// FE-05 and the longer note on Make above).
+func wantsErrorPage(r *http.Request) bool {
+	if r.Header.Get("HX-Request") == "true" {
+		return false
+	}
+	if strings.HasPrefix(r.URL.Path, "/game/") {
+		return false
+	}
+	return strings.Contains(r.Header.Get("Accept"), "text/html")
+}
+
+// renderErrorPage responds with code, choosing between the full styled HTML page (a
+// genuine full-page browser navigation - see wantsErrorPage) and a plain-text
+// http.Error otherwise. This makes it safe to call from any handler no matter how
+// it's reached - a full-page route, an htmx fragment endpoint, a JSON API call, or a
+// hand-crafted request pretending to be one of those - without each call site having
+// to reason about which is which (see FE-05; Make's own fallback below and three
+// direct callers use this the same way).
+func renderErrorPage(w http.ResponseWriter, r *http.Request, code int, message string) error {
+	if !wantsErrorPage(r) {
+		http.Error(w, message, code)
+		return nil
+	}
+	w.WriteHeader(code)
+	return errorpage.Error(code, message).Render(r.Context(), w)
 }
 
 func render(w http.ResponseWriter, r *http.Request, component templ.Component) error {
@@ -80,6 +113,13 @@ func assertOwnsClassroom(w http.ResponseWriter, r *http.Request, classroomID int
 
 	ownerID, err := database.GetClassroomTeacherID(r.Context(), classroomID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// A classroom ID that doesn't exist at all previously fell through to
+			// the generic 500 in Make - misleading, since nothing actually went
+			// wrong server-side (see FE-05).
+			http.Error(w, "not found", http.StatusNotFound)
+			return fmt.Errorf("classroom %d not found", classroomID)
+		}
 		return err
 	}
 

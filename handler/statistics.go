@@ -41,7 +41,7 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	case kindQuiz:
 		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID))
 	default:
-		http.Error(w, "invalid minigame id", http.StatusBadRequest)
+		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
 	}
 }

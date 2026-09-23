@@ -20,7 +20,7 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if room.ClassroomID == "" {
-		http.Error(w, "Missing classroom_id", http.StatusBadRequest)
+		renderErrorPage(w, r, http.StatusBadRequest, "Missing classroom.")
 		return errors.New("bad request")
 	}
 
