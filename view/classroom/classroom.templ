@@ -4,135 +4,160 @@ import "soln-teachermodule/view/layout"
 import "soln-teachermodule/types"
 import "fmt"
 
-// tab keeps the teacher on the tab they were on across a full-page reload/redirect
-// (e.g. after adding students) instead of always resetting to Overview (see FE-08).
-// room carries the classroom's name/section/description purely for display (see
-// FE-12 - previously the page showed only tabs, with the classroom's name visible
-// nowhere except the sidebar list). classroomID is passed separately, rather than
-// read off room, since every link below already builds its URL from it.
-templ Classroom(p layout.Page, classroomID string, tab string, room types.Classroom) {
-@layout.Base(p) {
-<!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04).
-     No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
-     authenticated page now, this page just fills the remaining width (see FE-11, D4). -->
-<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+// classroomHeader is shared by Overview/Minigames/Students - each is now its own route
+// (T1.1) instead of a tab panel in one page, but they still show the same classroom
+// name/section/description header (see FE-12).
+templ classroomHeader(room types.Classroom) {
 	<div class="px-4 pt-4">
 		<h2 class="text-2xl font-bold">{ room.ClassroomName } &mdash; Section { room.Section }</h2>
 		if len(room.Description) > 0 {
 			<p class="text-sm opacity-70">{ room.Description }</p>
 		}
 	</div>
-		<div role="tablist" class="tabs tabs-bordered tabs-lg mx-1">
-			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Overview" checked?={ tab == "" || tab == "overview" } />
-			<div role="tabpanel" class="tab-content p-10">
-				<div class="hero bg-base-200">
-					<div class="hero-content flex-col lg:flex-row">
-						<div>
+}
+
+// classroomNav is a temporary stand-in for the daisyUI radio tabs it replaces, until
+// the sidebar (T1.4) gives every classroom-scoped page real navigation. active is one
+// of "overview"|"minigames"|"students".
+templ classroomNav(classroomID string, active string) {
+	<div class="flex gap-2 px-4 pt-2 pb-4">
+		<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", classroomID)) }
+			class={ "btn btn-sm", templ.KV("btn-primary", active == "overview"), templ.KV("btn-ghost", active != "overview") }>Overview</a>
+		<a href={ templ.URL(fmt.Sprintf("/classroom/minigames?classroom_id=%s", classroomID)) }
+			class={ "btn btn-sm", templ.KV("btn-primary", active == "minigames"), templ.KV("btn-ghost", active != "minigames") }>Minigames</a>
+		<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s", classroomID)) }
+			class={ "btn btn-sm", templ.KV("btn-primary", active == "students"), templ.KV("btn-ghost", active != "students") }>Students</a>
+	</div>
+}
+
+templ Overview(p layout.Page, room types.Classroom) {
+	@layout.Base(p) {
+		<!-- No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for
+		     every authenticated page now, this page just fills the remaining width (see
+		     FE-11, D4). -->
+		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+			@classroomHeader(room)
+			@classroomNav(room.ClassroomID, "overview")
+			<!-- Still the placeholder heroes T0.6 carried over - T1.2 replaces this with the
+			     real Overview content (C3 summary, Needs attention, etc). -->
+			<div class="hero bg-base-200">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
 						<h1 class="text-5xl font-bold">Welcome to the</h1>
 						<h1 class="text-5xl font-bold">Sol'n Teacher Portal</h1>
 						<p class="py-6 text-2xl">
 							Sol’n is a pixel-based game designed to be a supplementary tool to teach Grade 6 students at Saint Louis University Basic Education School fundamental Math concepts, starting with fractions.
-							The game aims to enhance students' interest and deepen their understanding of the subject. 
+							The game aims to enhance students' interest and deepen their understanding of the subject.
 						</p>
 						<p class="text-2xl mt-8">
 							We thank you for taking the time to be a part of this project!
 						</p>
-						</div>
-						<img src="/public/images/bg/lighthouse.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
 					</div>
-				</div>
-				<div class="hero bg-base-200 mt-8">
-					<div class="hero-content flex-col lg:flex-row">
-						<div>
-							<h1 class="text-5xl font-bold">Fraction Minigames</h1>
-							<p class="py-6 text-2xl">
-								Characters throughout the world present students with minigames related to fractions. 
-								You can modify the questions inside these minigames in the minigames tab.
-							</p>
-						</div>
-						<img src="/public/images/bg/fraction-addition.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
-					</div>
-				</div>
-				<div class="hero bg-base-200 mt-8">
-					<div class="hero-content flex-col lg:flex-row">
-						<div>
-							<h1 class="text-5xl font-bold">Quizzes (Boss Levels)</h1>
-							<p class="py-6 text-2xl">
-								At the end of the world there is a boss level which simulates a multiple choice test. The game contains 3 boss levels (one in each world). You can edit the quiz questions in the Minigames tab.
-							</p>
-						</div>
-						<img src="/public/images/bg/quiz.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
-					</div>
-				</div>
-				<div class="hero bg-base-200 mt-8">
-					<div class="hero-content flex-col lg:flex-row">
-						<div>
-							<h1 class="text-5xl font-bold">View Statistics</h1>
-							<p class="py-6 text-2xl">
-								When the student is connected to the network, their responses are recorded and can be viewed as statistics in the Minigames tab.
-							</p>
-						</div>
-						<img src="/public/images/bg/statistics.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
-					</div>
+					<img src="/public/images/bg/lighthouse.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
 				</div>
 			</div>
-			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Minigames" checked?={ tab == "minigames" } />
-			<div role="tabpanel" class="tab-content p-10">
-				<!-- One Go slice (types.Worlds/types.Scene) replaces what used to be these
-				     12 copy-pasted hero blocks, one per scene (see FE-13). -->
-				for _, world := range types.Worlds {
-					<h1 class="text-5xl font-bold">{ world.Title }</h1>
-					<p class="py-6 text-xl">{ world.Intro }</p>
-					for _, scene := range world.Scenes {
-						<div class="hero bg-base-200 mb-4">
-							<div class="hero-content flex-col lg:flex-row">
-								<img src={ scene.Image } alt={ scene.Alt }
-									class="max-w-sm rounded-lg shadow-2xl" />
-								<div>
-									<h1 class="text-2xl font-bold">{ scene.Name }</h1>
-									<p class="py-6 text-xl">{ scene.Blurb }</p>
-									<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%d&classroomID=%s", scene.MinigameID, classroomID))} class="btn btn-primary text-white">Edit Questions</a>
-									<a href={ templ.URL(fmt.Sprintf("%s?minigameID=%d&classroomID=%s", scene.StatsPath(), scene.MinigameID, classroomID))} class="btn btn-primary text-white">View Statistics</a>
-								</div>
-							</div>
-						</div>
-					}
-				}
-			</div>
-			<input type="radio" name="my_tabs_1" role="tab" class="tab" aria-label="Students" checked?={ tab == "students" } />
-			<div role="tabpanel" class="tab-content p-10">
-				<div class="overflow-x-auto">
-					<!-- get unenrolled students for add students -->
-					<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"
-						hx-target="#getunenrolledstudents">
-						<input type="hidden" name="classroomID" value={ classroomID } />
-					</form>
-
-					<div class="flex justify-center">
-						<button type="button" class="btn btn-primary text-white" data-modal-open="modal_add_students">Add Students</button>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-5xl font-bold">Fraction Minigames</h1>
+						<p class="py-6 text-2xl">
+							Characters throughout the world present students with minigames related to fractions.
+							You can modify the questions inside these minigames in the minigames tab.
+						</p>
 					</div>
-					<table class="table table-zebra text-xl">
-						<thead>
-							<tr>
-								<th></th>
-								<th class="text-xl">Name</th>
-								<th></th>
-							</tr>
-						</thead>
-					<!-- get enrolled students -->
-						<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
-							<input type="hidden" name="classroomID" value={ classroomID } />
-						</form>
-							<tbody id="getstudents">
-								<tr><td colspan="3" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-							</tbody>
-					</table>
+					<img src="/public/images/bg/fraction-addition.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
 				</div>
-				@AddStudentsForm(classroomID)
+			</div>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-5xl font-bold">Quizzes (Boss Levels)</h1>
+						<p class="py-6 text-2xl">
+							At the end of the world there is a boss level which simulates a multiple choice test. The game contains 3 boss levels (one in each world). You can edit the quiz questions in the Minigames tab.
+						</p>
+					</div>
+					<img src="/public/images/bg/quiz.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
+			</div>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-5xl font-bold">View Statistics</h1>
+						<p class="py-6 text-2xl">
+							When the student is connected to the network, their responses are recorded and can be viewed as statistics in the Minigames tab.
+						</p>
+					</div>
+					<img src="/public/images/bg/statistics.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
 			</div>
 		</div>
-	</div>
+	}
 }
+
+templ Minigames(p layout.Page, room types.Classroom) {
+	@layout.Base(p) {
+		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+			@classroomHeader(room)
+			@classroomNav(room.ClassroomID, "minigames")
+			<!-- One Go slice (types.Worlds/types.Scene) replaces what used to be these
+			     12 copy-pasted hero blocks, one per scene (see FE-13). -->
+			for _, world := range types.Worlds {
+				<h1 class="text-5xl font-bold">{ world.Title }</h1>
+				<p class="py-6 text-xl">{ world.Intro }</p>
+				for _, scene := range world.Scenes {
+					<div class="hero bg-base-200 mb-4">
+						<div class="hero-content flex-col lg:flex-row">
+							<img src={ scene.Image } alt={ scene.Alt }
+								class="max-w-sm rounded-lg shadow-2xl" />
+							<div>
+								<h1 class="text-2xl font-bold">{ scene.Name }</h1>
+								<p class="py-6 text-xl">{ scene.Blurb }</p>
+								<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%d&classroomID=%s", scene.MinigameID, room.ClassroomID))} class="btn btn-primary text-white">Edit Questions</a>
+								<a href={ templ.URL(fmt.Sprintf("%s?minigameID=%d&classroomID=%s", scene.StatsPath(), scene.MinigameID, room.ClassroomID))} class="btn btn-primary text-white">View Statistics</a>
+							</div>
+						</div>
+					</div>
+				}
+			}
+		</div>
+	}
+}
+
+templ Students(p layout.Page, room types.Classroom) {
+	@layout.Base(p) {
+		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+			@classroomHeader(room)
+			@classroomNav(room.ClassroomID, "students")
+			<div class="overflow-x-auto">
+				<!-- get unenrolled students for add students -->
+				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"
+					hx-target="#getunenrolledstudents">
+					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
+				</form>
+
+				<div class="flex justify-center">
+					<button type="button" class="btn btn-primary text-white" data-modal-open="modal_add_students">Add Students</button>
+				</div>
+				<table class="table table-zebra text-xl">
+					<thead>
+						<tr>
+							<th></th>
+							<th class="text-xl">Name</th>
+							<th></th>
+						</tr>
+					</thead>
+				<!-- get enrolled students -->
+					<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
+						<input type="hidden" name="classroomID" value={ room.ClassroomID } />
+					</form>
+						<tbody id="getstudents">
+							<tr><td colspan="3" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
+						</tbody>
+				</table>
+			</div>
+			@AddStudentsForm(room.ClassroomID)
+		</div>
+	}
 }
 
 templ AddStudentsForm(classroomID string) {
