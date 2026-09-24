@@ -1,0 +1,61 @@
+package ui
+
+import "fmt"
+
+// CreateClassForm moved out of view/home (DEC-2) so the sidebar's "+" can open it from
+// any page, not just /home. It's rendered once by layout.Base whenever p.Shell is true
+// (see layout/app.templ), so the dialog id create-classroom-modal only ever appears
+// once in the document. Don't reuse the spec's mockup id for this dialog: it's also the
+// id of the three "Add question" dialogs on /minigame until P3 deletes them (DEC-2).
+type CreateParams struct {
+	Classname   string
+	Section     string
+	Description string
+}
+
+type CreateErrors struct {
+	ErrorMessage string
+}
+
+templ CreateClassForm(data CreateParams, errors CreateErrors) {
+<!-- data-autoopen re-shows this after an htmx swap re-renders it with an error, so the
+     modal stays open instead of silently closing on the client with the teacher's
+     input discarded (FE-02); see solnOpenPendingModals in public/js/index.js. -->
+<dialog id="create-classroom-modal" class="modal" data-autoopen={ fmt.Sprint(len(errors.ErrorMessage) > 0) }>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Create Classroom</h3>
+		if len(errors.ErrorMessage) > 0 {
+			<div role="alert" class="alert alert-error mt-4">
+				<span>{ errors.ErrorMessage }</span>
+			</div>
+		}
+		<form id="create-classroom-form" hx-post="/createclassroom" hx-swap="outerHTML" hx-target="#create-classroom-modal">
+			<label class="form-control w-full max-w-s">
+				<div class="label">
+					<span class="label-text">Class name</span>
+				</div>
+				<input type="text" name="classname" value={ data.Classname } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
+			</label>
+			<label class="form-control w-full max-w-s">
+				<div class="label">
+					<span class="label-text">Section</span>
+				</div>
+				<input type="text" name="section" value={ data.Section } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
+			</label>
+			<label class="form-control w-full max-w-s">
+				<div class="label">
+					<span class="label-text">Description</span>
+				</div>
+				<textarea name="description" placeholder="Type here" maxlength="200" class="textarea textarea-bordered w-full">{ data.Description }</textarea>
+			</label>
+		</form>
+		<div class="modal-action">
+			<button type="button" class="btn" data-modal-close>Cancel</button>
+			<button type="submit" form="create-classroom-form" class="btn btn-secondary">Create</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+}

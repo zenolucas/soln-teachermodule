@@ -10,7 +10,7 @@ import (
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
-	"soln-teachermodule/view/home"
+	"soln-teachermodule/view/ui"
 	"strconv"
 )
 
@@ -130,10 +130,14 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 	// of what to do next - the "+" that opens the create-classroom modal isn't
 	// obviously connected to this empty area (see FE-20).
 	if len(classrooms) == 0 {
+		// The label-for-checkbox toggle this once was has been dead since modals
+		// became <dialog> elements in #43 - a for= attribute does nothing on a
+		// <dialog>, and it named a ghost id besides. Opening it now goes through
+		// the same data-modal-open JS every other modal uses (see X10).
 		fmt.Fprint(w, `
 		<div class="flex flex-col items-center justify-center w-full py-20 text-white">
 			<p class="text-xl mb-4">No classrooms yet.</p>
-			<label for="my_modal_6" class="btn btn-primary text-white">Create classroom</label>
+			<button type="button" class="btn btn-primary text-white" data-modal-open="create-classroom-modal">Create classroom</button>
 		</div>
 		`)
 		return nil
@@ -369,7 +373,7 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	section := strings.TrimSpace(r.FormValue("section"))
 	description := strings.TrimSpace(r.FormValue("description"))
 
-	createParams := home.CreateParams{
+	createParams := ui.CreateParams{
 		Classname:   classname,
 		Section:     section,
 		Description: description,
@@ -381,27 +385,27 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	// over-length one hit classrooms.classroom_name VARCHAR(100) as an opaque MySQL
 	// truncation error the teacher never saw either way (see FE-02).
 	if classname == "" {
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Class name is required.",
 		}))
 	}
 	if len(classname) > 100 {
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Class name must be 100 characters or fewer.",
 		}))
 	}
 	if section == "" {
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Section is required.",
 		}))
 	}
 	if len(section) > 100 {
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Section must be 100 characters or fewer.",
 		}))
 	}
 	if len(description) > 200 {
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Description must be 200 characters or fewer.",
 		}))
 	}
@@ -423,7 +427,7 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 		// isn't something a teacher can act on - log it for us and show a generic
 		// message instead of leaking it into the form (see FE-02).
 		slog.Error("failed to create classroom", "err", err, "teacher_id", teacherID)
-		return render(w, r, home.CreateClassForm(createParams, home.CreateErrors{
+		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
 			ErrorMessage: "Couldn't create the classroom. Please try again.",
 		}))
 	}

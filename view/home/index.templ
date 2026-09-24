@@ -1,7 +1,6 @@
 package home
 
 import (
-	"fmt"
 	"soln-teachermodule/view/layout"
 )
 
@@ -16,67 +15,15 @@ templ Index(p layout.Page) {
 	<div class="flex justify-between items-center mb-4">
 		<h2 class="text-2xl font-bold text-white">Classrooms</h2>
 		<!-- A visible button here instead of only inside the navbar's "+" dropdown, which
-		     used to be the only way to create a classroom (see FE-14, D4). -->
-		<button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">+ Create Classroom</button>
+		     used to be the only way to create a classroom (see FE-14, D4). The modal
+		     itself moved to view/ui (DEC-2) - layout.Base renders it once for every Shell
+		     page, so this button just needs to open it by id. -->
+		<button type="button" class="btn btn-primary text-white" data-modal-open="create-classroom-modal">+ Create Classroom</button>
 	</div>
 	<div class="flex flex-wrap w-full text-white" hx-get="/getclassrooms" hx-trigger="load" hx-target="this">
 		<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
 	</div>
-	@CreateClassForm(CreateParams{}, CreateErrors{})
 </div>
 
 }
-}
-
-type CreateParams struct {
-Classname string
-Section string
-Description string
-}
-
-type CreateErrors struct {
-ErrorMessage string
-}
-
-templ CreateClassForm(data CreateParams, errors CreateErrors) {
-<!-- data-autoopen re-shows this after an htmx swap re-renders it with an error, so the
-     modal stays open instead of silently closing on the client with the teacher's
-     input discarded (FE-02); see solnOpenPendingModals in public/js/index.js. -->
-<dialog id="my_modal_6" class="modal" data-autoopen={ fmt.Sprint(len(errors.ErrorMessage) > 0) }>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Create Classroom</h3>
-		if len(errors.ErrorMessage) > 0 {
-			<div role="alert" class="alert alert-error mt-4">
-				<span>{ errors.ErrorMessage }</span>
-			</div>
-		}
-		<form id="create-classroom-form" hx-post="/createclassroom" hx-swap="outerHTML" hx-target="#my_modal_6">
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Class name</span>
-				</div>
-				<input type="text" name="classname" value={ data.Classname } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
-			</label>
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Section</span>
-				</div>
-				<input type="text" name="section" value={ data.Section } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
-			</label>
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Description</span>
-				</div>
-				<textarea name="description" placeholder="Type here" maxlength="200" class="textarea textarea-bordered w-full">{ data.Description }</textarea>
-			</label>
-		</form>
-		<div class="modal-action">
-			<button type="button" class="btn" data-modal-close>Cancel</button>
-			<button type="submit" form="create-classroom-form" class="btn btn-secondary">Create</button>
-		</div>
-	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button>close</button>
-	</form>
-</dialog>
 }

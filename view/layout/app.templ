@@ -80,6 +80,11 @@ templ Base(p Page) {
 	} else {
 	{ children... }
 	}
+	if p.Shell {
+	<!-- Rendered once here, not by each page, so the sidebar "+" (T1.4) and the
+	     /home empty state can open the same dialog by id from anywhere (DEC-2). -->
+	@ui.CreateClassForm(ui.CreateParams{}, ui.CreateErrors{})
+	}
 </body>
 
 </html>
