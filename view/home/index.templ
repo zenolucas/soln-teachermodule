@@ -6,14 +6,13 @@ import (
 
 templ Index(p layout.Page) {
 @layout.Base(p) {
-<!-- The navbar is h-20 (5rem/80px), not 65px - the mismatch was making this pane 15px
-     taller than the viewport, so both the window and the pane scrolled (see FE-04).
-     No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
+<!-- No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
      authenticated page now, instead of this page's half being permanently empty
-     (see FE-11, D4). -->
-<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 p-4">
+     (see FE-11, D4). The navbar is gone too (T1.4, DEC-1), so this no longer needs to
+     account for its height. -->
+<div class="w-full min-h-full bg-base-300 justify-center gap-4 p-4">
 	<div class="flex justify-between items-center mb-4">
-		<h2 class="text-2xl font-bold text-white">Classrooms</h2>
+		<h2 class="text-2xl font-bold">Classrooms</h2>
 		<!-- A visible button here instead of only inside the navbar's "+" dropdown, which
 		     used to be the only way to create a classroom (see FE-14, D4). The modal
 		     itself moved to view/ui (DEC-2) - layout.Base renders it once for every Shell
