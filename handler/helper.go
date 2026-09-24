@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"soln-teachermodule/database"
 	"soln-teachermodule/view/errorpage"
+	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
 	"strconv"
 	"strings"
 
@@ -95,6 +97,28 @@ func getTeacherID(r *http.Request) (int, error) {
 		return 0, errors.New("no teacherID in session")
 	}
 	return teacherID, nil
+}
+
+// pageFor builds the layout.Page every Shell page passes to layout.Base: it reads the
+// signed-in teacher's ID from the session and looks up their display name, so callers
+// don't each have to repeat that lookup. classroomID is "" for pages that aren't
+// classroom-scoped.
+func pageFor(r *http.Request, title, active, classroomID string) (layout.Page, error) {
+	teacherID, err := getTeacherID(r)
+	if err != nil {
+		return layout.Page{}, err
+	}
+	teacher, err := database.GetTeacher(r.Context(), teacherID)
+	if err != nil {
+		return layout.Page{}, err
+	}
+	return layout.Page{
+		Title:       title,
+		Shell:       true,
+		Active:      active,
+		ClassroomID: classroomID,
+		Teacher:     layout.TeacherNav{DisplayName: ui.DisplayName(teacher.Firstname, teacher.Username)},
+	}, nil
 }
 
 // assertOwnsClassroom verifies the authenticated teacher owns the given classroom,
