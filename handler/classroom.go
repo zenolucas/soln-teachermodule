@@ -174,22 +174,10 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if len(classrooms) == 0 {
-		fmt.Fprint(w, `<p class="text-white text-opacity-60 px-6 mt-2">No classrooms yet.</p>`)
-		return nil
-	}
+	openID := r.URL.Query().Get("classroom_id")
+	active := r.URL.Query().Get("active")
 
-	for _, classroom := range classrooms {
-		// Was missing a closing </i>, had a stray `//` left inside the <i> tag, and
-		// closed with </div> instead of </a> - browsers recover from this, but
-		// unpredictably (see FE-03).
-		fmt.Fprintf(w, `
-		<a href="/classroom?classroom_id=%s" class="btn btn-wide btn-ghost w-full text-white text-left justify-start mt-2">
-				<i class="fa-solid fa-users fa-2xl ml-6" style="color: #ffffff;"></i> %s - Section %s</a>
-		`, esc(classroom.ClassroomID), esc(classroom.ClassroomName), esc(classroom.Section))
-	}
-
-	return nil
+	return render(w, r, ui.ClassroomMenu(classrooms, openID, active))
 }
 
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
