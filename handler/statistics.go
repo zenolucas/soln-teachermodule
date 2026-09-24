@@ -43,13 +43,32 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDInt, _ := strconv.Atoi(minigameID)
 	scene, _ := types.SceneByID(minigameIDInt)
 
+	var title string
 	switch minigameKinds[minigameID] {
 	case kindFractions:
-		return render(w, r, statistics.FractionStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		title = "Simple Fraction Statistics · Sol'n Teacher Portal"
 	case kindWorded:
-		return render(w, r, statistics.WordedStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		title = "Worded Questions Statistics · Sol'n Teacher Portal"
 	case kindQuiz:
-		return render(w, r, statistics.QuizStatistics(classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		title = "Quiz Statistics · Sol'n Teacher Portal"
+	default:
+		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
+		return errors.New("bad request")
+	}
+
+	page, err := pageFor(r, title, "stats", classroomIDStr)
+	if err != nil {
+		return err
+	}
+	page.Charts = true
+
+	switch minigameKinds[minigameID] {
+	case kindFractions:
+		return render(w, r, statistics.FractionStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+	case kindWorded:
+		return render(w, r, statistics.WordedStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+	case kindQuiz:
+		return render(w, r, statistics.QuizStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
@@ -221,7 +240,13 @@ func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) e
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	scene, _ := types.SceneByID(minigameID)
 
-	return render(w, r, statistics.QuestionStatistics(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+	page, err := pageFor(r, "Question Statistics · Sol'n Teacher Portal", "stats", classroomIDStr)
+	if err != nil {
+		return err
+	}
+	page.Charts = true
+
+	return render(w, r, statistics.QuestionStatistics(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 }
 
 func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
@@ -543,7 +568,13 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, statistics.StudentScores(student.Firstname, student.Lastname, studentIDStr, classroomIDStr, classroom.ClassroomName))
+	title := fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", student.Firstname, student.Lastname)
+	page, err := pageFor(r, title, "students", classroomIDStr)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, statistics.StudentScores(page, student.Firstname, student.Lastname, studentIDStr, classroomIDStr, classroom.ClassroomName))
 }
 
 // different score formats

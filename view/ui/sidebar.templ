@@ -3,7 +3,7 @@ package ui
 // Sidebar used to exist only inline inside classroom.templ, so it showed up on the
 // classroom page and nowhere else - /home rendered a permanently empty w-1/4 column
 // where it should have been, and the minigame/statistics pages had no sidebar at all
-// (see FE-11, D4). It's now rendered once by layout.App for every authenticated page.
+// (see FE-11, D4). It's now rendered once by layout.Base for every authenticated page.
 // Self-contained: loads its own classroom list via htmx, same as the inline version did.
 templ Sidebar() {
 	<div class="w-64 bg-neutral flex flex-col overflow-x-auto min-h-full">
