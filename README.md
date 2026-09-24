@@ -55,6 +55,14 @@ Usage
 
     The portal will be available at http://localhost: [ insert port number / HTTP_LISTEN_ADDRESS ]
 
+Demo data
+
+    `testdata/demo_seed.sql` is optional, dev-only data (19 enrolled students, quiz retakes,
+    misconception-triggering answers) layered on top of the base seed, for exercising screens
+    that need more than a couple of students to look real. Load both together with:
+
+    cd ~/.local/share/soln-devtools/setupdb && go run . --reset --demo
+
 Contributing
 
 Contributions are welcome! Please fork the repository and make a pull request with a clear description of changes.
