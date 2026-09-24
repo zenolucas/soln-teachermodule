@@ -5,8 +5,8 @@ import "soln-teachermodule/view/ui"
 import "soln-teachermodule/types"
 import "fmt"
 
-templ FractionStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, true, "Simple Fraction Statistics · Sol'n Teacher Portal") {
+templ FractionStatistics(p layout.Page, classroomID string, minigameID string, classroomName string, sceneName string) {
+@layout.Base(p) {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-3xl font-bold mt-2 mb-4">Simple Fraction Statistics</h1>
@@ -23,8 +23,8 @@ templ FractionStatistics(classroomID string, minigameID string, classroomName st
 }
 
 
-templ WordedStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, true, "Worded Questions Statistics · Sol'n Teacher Portal") {
+templ WordedStatistics(p layout.Page, classroomID string, minigameID string, classroomName string, sceneName string) {
+@layout.Base(p) {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-3xl font-bold mt-2 mb-4">Worded Questions Statistics</h1>
@@ -40,8 +40,8 @@ templ WordedStatistics(classroomID string, minigameID string, classroomName stri
     }
 }
 
-templ QuizStatistics(classroomID string, minigameID string, classroomName string, sceneName string) {
-@layout.App(true, true, "Quiz Statistics · Sol'n Teacher Portal") {
+templ QuizStatistics(p layout.Page, classroomID string, minigameID string, classroomName string, sceneName string) {
+@layout.Base(p) {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
 <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
     <h1 class="text-3xl font-bold mt-2 mb-4">Quiz Statistics</h1>
@@ -145,8 +145,8 @@ templ QuizStatistics(classroomID string, minigameID string, classroomName string
 }
 
 // let this be for Quiz Question Statistics
-templ QuestionStatistics(minigameID string, classroomID string, classroomName string, sceneName string) {
-@layout.App(true, true, "Question Statistics · Sol'n Teacher Portal") {
+templ QuestionStatistics(p layout.Page, minigameID string, classroomID string, classroomName string, sceneName string) {
+@layout.Base(p) {
 @ui.Breadcrumb(classroomID, classroomName, sceneName, "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-3xl font-bold mt-2 mb-4">Question Statistics</h1>
@@ -166,8 +166,8 @@ templ QuestionStatistics(minigameID string, classroomID string, classroomName st
 }
 
 
-templ StudentScores(firstname string, lastname string, userID string, classroomID string, classroomName string) {
-@layout.App(true, false, fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", firstname, lastname)) {
+templ StudentScores(p layout.Page, firstname string, lastname string, userID string, classroomID string, classroomName string) {
+@layout.Base(p) {
 @ui.Breadcrumb(classroomID, classroomName, fmt.Sprintf("%s %s", firstname, lastname), "Statistics")
     <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
         <h1 class="text-3xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>

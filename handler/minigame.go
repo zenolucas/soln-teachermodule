@@ -33,13 +33,31 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameID, _ := strconv.Atoi(minigameIDStr)
 	scene, _ := types.SceneByID(minigameID)
 
+	var title string
 	switch minigameKinds[minigameIDStr] {
 	case kindFractions:
-		return render(w, r, minigame.Fractions(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+		title = "Simple Fraction Questions · Sol'n Teacher Portal"
 	case kindWorded:
-		return render(w, r, minigame.Worded(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+		title = "Worded Fraction Questions · Sol'n Teacher Portal"
 	case kindQuiz:
-		return render(w, r, minigame.Quiz(minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+		title = "Quiz Questions · Sol'n Teacher Portal"
+	default:
+		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
+		return errors.New("bad request")
+	}
+
+	page, err := pageFor(r, title, "minigames", classroomIDStr)
+	if err != nil {
+		return err
+	}
+
+	switch minigameKinds[minigameIDStr] {
+	case kindFractions:
+		return render(w, r, minigame.Fractions(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+	case kindWorded:
+		return render(w, r, minigame.Worded(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+	case kindQuiz:
+		return render(w, r, minigame.Quiz(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")

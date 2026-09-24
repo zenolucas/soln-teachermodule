@@ -13,7 +13,7 @@ import "fmt"
 templ Classroom(p layout.Page, classroomID string, tab string, room types.Classroom) {
 @layout.Base(p) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04).
-     No sidebar column here anymore - layout.App renders one shared ui.Sidebar for every
+     No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
      authenticated page now, this page just fills the remaining width (see FE-11, D4). -->
 <div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
 	<div class="px-4 pt-4">

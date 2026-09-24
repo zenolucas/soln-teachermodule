@@ -9,7 +9,7 @@ templ Index(p layout.Page) {
 @layout.Base(p) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - the mismatch was making this pane 15px
      taller than the viewport, so both the window and the pane scrolled (see FE-04).
-     No sidebar column here anymore - layout.App renders one shared ui.Sidebar for every
+     No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
      authenticated page now, instead of this page's half being permanently empty
      (see FE-11, D4). -->
 <div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 p-4">

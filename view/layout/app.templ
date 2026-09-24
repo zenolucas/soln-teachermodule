@@ -84,10 +84,3 @@ templ Base(p Page) {
 
 </html>
 }
-
-// App is kept for callers not yet migrated to Base(Page{...}) directly (T0.5-T0.7).
-templ App(nav bool, charts bool, title string) {
-	@Base(Page{Title: title, Charts: charts, Shell: nav}) {
-		{ children... }
-	}
-}
