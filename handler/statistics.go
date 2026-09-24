@@ -90,7 +90,7 @@ func sortWeakestFirst(summaries []types.StudentFractionStatistics) {
 // attribute - clicking a header re-sorts by that column without a server round trip.
 func renderQuestionSummaryTable(w http.ResponseWriter, summaries []types.StudentFractionStatistics, questionLabel func(types.StudentFractionStatistics) string) {
 	fmt.Fprint(w, `
-		<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+		<div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
 			<table class="table table-zebra text-lg" data-sortable>
 				<thead>
 					<tr>
@@ -259,7 +259,7 @@ func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 		fmt.Fprintf(w, `
-			<div class="w-3/5 bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
+			<div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
 				<div class="text-2xl mt-2 mb-2">Question %d: %s</div>
 				<canvas data-chart-type="choices" data-chart-url="%s" data-colors='%s' width="300" height="200"></canvas>
 			</div>

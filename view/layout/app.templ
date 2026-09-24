@@ -7,7 +7,9 @@ import "soln-teachermodule/view/ui"
 // history indistinguishable when several are open). charts loads Chart.js - only the
 // statistics pages that actually render a canvas[data-chart-url] need it (see FE-50);
 // every other page was paying for an unused ~200KB download, including the login page.
-templ App(nav bool, create bool, charts bool, title string) {
+// nav also now controls the shared sidebar (see FE-11, D4) - every page that shows the
+// navbar gets the same drawer/sidebar shell, so there's no separate flag for it.
+templ App(nav bool, charts bool, title string) {
 <!DOCTYPE html>
 <!-- data-theme intentionally omitted: tailwind.config.js only ever compiles the nord
      theme (see D2), so an "emerald" attribute here did nothing but claim a theme that
@@ -38,9 +40,26 @@ templ App(nav bool, create bool, charts bool, title string) {
 
 <body class="antialiased">
 	if nav {
-	@ui.Navigation(create)
-	}
+	@ui.Navigation()
+	<!-- lg:drawer-open keeps the sidebar permanently visible (not just toggleable) at
+	     the lg breakpoint and above - below that it's off-canvas, opened via the
+	     hamburger's for="app-drawer" label and closed via the overlay or its own
+	     toggle (see FE-10, FE-11, D4). The navbar itself stays outside the drawer so
+	     it still spans the full width above the sidebar, matching the layout every
+	     page already assumed (see FE-04's h-[calc(100vh-5rem)] note). -->
+	<div class="drawer lg:drawer-open">
+		<input id="app-drawer" type="checkbox" class="drawer-toggle" />
+		<div class="drawer-content overflow-x-auto">
+			{ children... }
+		</div>
+		<div class="drawer-side z-30 h-[calc(100vh-5rem)]">
+			<label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
+			@ui.Sidebar()
+		</div>
+	</div>
+	} else {
 	{ children... }
+	}
 </body>
 
 </html>
