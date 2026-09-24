@@ -169,6 +169,22 @@ func GetStudentID(ctx context.Context, username string) (int, error) {
 	return studentID, nil
 }
 
+// GetTeacher reads a teacher's display identity. firstname is scanned via
+// sql.NullString because it's NULL for every teacher registered through the current
+// Register form, which only asks for a username (see 02 "Facts about the current data
+// model").
+func GetTeacher(ctx context.Context, teacherID int) (types.Teacher, error) {
+	teacher := types.Teacher{UserID: teacherID}
+	var firstname sql.NullString
+	err := db.QueryRowContext(ctx, "SELECT username, firstname FROM users WHERE user_id = ?", teacherID).
+		Scan(&teacher.Username, &firstname)
+	if err != nil {
+		return types.Teacher{}, err
+	}
+	teacher.Firstname = firstname.String
+	return teacher, nil
+}
+
 func GetStudent(ctx context.Context, userID int) (types.Student, error) {
 	var student types.Student
 
