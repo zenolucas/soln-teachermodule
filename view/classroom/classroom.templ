@@ -38,57 +38,31 @@ templ Overview(p layout.Page, room types.Classroom) {
 		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
 			@classroomHeader(room)
 			@classroomNav(room.ClassroomID, "overview")
-			<!-- Still the placeholder heroes T0.6 carried over - T1.2 replaces this with the
-			     real Overview content (C3 summary, Needs attention, etc). -->
-			<div class="hero bg-base-200">
-				<div class="hero-content flex-col lg:flex-row">
-					<div>
-						<h1 class="text-5xl font-bold">Welcome to the</h1>
-						<h1 class="text-5xl font-bold">Sol'n Teacher Portal</h1>
-						<p class="py-6 text-2xl">
-							Sol’n is a pixel-based game designed to be a supplementary tool to teach Grade 6 students at Saint Louis University Basic Education School fundamental Math concepts, starting with fractions.
-							The game aims to enhance students' interest and deepen their understanding of the subject.
-						</p>
-						<p class="text-2xl mt-8">
-							We thank you for taking the time to be a part of this project!
-						</p>
+			<!-- Interim Overview: just links to the other three sections. T4.7 replaces this
+			     grid with the real summary (C3: student count, quiz average, students per
+			     world, flagged count, Needs attention). -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 pb-4">
+				<a href={ templ.URL(fmt.Sprintf("/classroom/minigames?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
+					<div class="card-body items-center text-center">
+						<i class="fa-solid fa-gamepad fa-2xl" aria-hidden="true"></i>
+						<h2 class="card-title">Minigames</h2>
+						<p class="text-sm opacity-70">Edit questions and view per-scene statistics.</p>
 					</div>
-					<img src="/public/images/bg/lighthouse.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
-				</div>
-			</div>
-			<div class="hero bg-base-200 mt-8">
-				<div class="hero-content flex-col lg:flex-row">
-					<div>
-						<h1 class="text-5xl font-bold">Fraction Minigames</h1>
-						<p class="py-6 text-2xl">
-							Characters throughout the world present students with minigames related to fractions.
-							You can modify the questions inside these minigames in the minigames tab.
-						</p>
+				</a>
+				<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
+					<div class="card-body items-center text-center">
+						<i class="fa-solid fa-users fa-2xl" aria-hidden="true"></i>
+						<h2 class="card-title">Students</h2>
+						<p class="text-sm opacity-70">Manage who's enrolled in this classroom.</p>
 					</div>
-					<img src="/public/images/bg/fraction-addition.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
-				</div>
-			</div>
-			<div class="hero bg-base-200 mt-8">
-				<div class="hero-content flex-col lg:flex-row">
-					<div>
-						<h1 class="text-5xl font-bold">Quizzes (Boss Levels)</h1>
-						<p class="py-6 text-2xl">
-							At the end of the world there is a boss level which simulates a multiple choice test. The game contains 3 boss levels (one in each world). You can edit the quiz questions in the Minigames tab.
-						</p>
+				</a>
+				<a href={ templ.URL(fmt.Sprintf("/classroom/statistics?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
+					<div class="card-body items-center text-center">
+						<i class="fa-solid fa-chart-simple fa-2xl" aria-hidden="true"></i>
+						<h2 class="card-title">Statistics</h2>
+						<p class="text-sm opacity-70">See how students are doing across every scene.</p>
 					</div>
-					<img src="/public/images/bg/quiz.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
-				</div>
-			</div>
-			<div class="hero bg-base-200 mt-8">
-				<div class="hero-content flex-col lg:flex-row">
-					<div>
-						<h1 class="text-5xl font-bold">View Statistics</h1>
-						<p class="py-6 text-2xl">
-							When the student is connected to the network, their responses are recorded and can be viewed as statistics in the Minigames tab.
-						</p>
-					</div>
-					<img src="/public/images/bg/statistics.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
-				</div>
+				</a>
 			</div>
 		</div>
 	}

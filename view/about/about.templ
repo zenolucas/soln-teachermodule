@@ -1,0 +1,65 @@
+package about
+
+import "soln-teachermodule/view/layout"
+
+// Index holds the game-overview heroes Overview used to open with, before the classroom
+// page became the 3-card grid it is now (T1.2). Moved here verbatim except for type
+// scale: text-5xl headings become text-2xl and text-2xl body copy becomes text-sm, per
+// the design spec's token table (01 Tokens) - this page is reference material a teacher
+// visits occasionally, not the first thing they see on every login.
+templ Index(p layout.Page) {
+	@layout.Base(p) {
+		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 p-4">
+			<div class="hero bg-base-200">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-2xl font-bold">Welcome to the</h1>
+						<h1 class="text-2xl font-bold">Sol'n Teacher Portal</h1>
+						<p class="py-6 text-sm">
+							Sol’n is a pixel-based game designed to be a supplementary tool to teach Grade 6 students at Saint Louis University Basic Education School fundamental Math concepts, starting with fractions.
+							The game aims to enhance students' interest and deepen their understanding of the subject.
+						</p>
+						<p class="text-sm mt-8">
+							We thank you for taking the time to be a part of this project!
+						</p>
+					</div>
+					<img src="/public/images/bg/lighthouse.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
+			</div>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-2xl font-bold">Fraction Minigames</h1>
+						<p class="py-6 text-sm">
+							Characters throughout the world present students with minigames related to fractions.
+							You can modify the questions inside these minigames in the minigames tab.
+						</p>
+					</div>
+					<img src="/public/images/bg/fraction-addition.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
+			</div>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-2xl font-bold">Quizzes (Boss Levels)</h1>
+						<p class="py-6 text-sm">
+							At the end of the world there is a boss level which simulates a multiple choice test. The game contains 3 boss levels (one in each world). You can edit the quiz questions in the Minigames tab.
+						</p>
+					</div>
+					<img src="/public/images/bg/quiz.gif" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
+			</div>
+			<div class="hero bg-base-200 mt-8">
+				<div class="hero-content flex-col lg:flex-row">
+					<div>
+						<h1 class="text-2xl font-bold">View Statistics</h1>
+						<p class="py-6 text-sm">
+							When the student is connected to the network, their responses are recorded and can be viewed as statistics in the Minigames tab.
+						</p>
+					</div>
+					<img src="/public/images/bg/statistics.png" alt="" width="544" height="353" class="rounded-lg mb-8" />
+				</div>
+			</div>
+		</div>
+	}
+}
