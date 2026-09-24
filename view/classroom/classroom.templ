@@ -10,8 +10,8 @@ import "fmt"
 // FE-12 - previously the page showed only tabs, with the classroom's name visible
 // nowhere except the sidebar list). classroomID is passed separately, rather than
 // read off room, since every link below already builds its URL from it.
-templ Classroom(classroomID string, tab string, room types.Classroom) {
-@layout.App(true, false, fmt.Sprintf("%s · Sol'n Teacher Portal", room.ClassroomName)) {
+templ Classroom(p layout.Page, classroomID string, tab string, room types.Classroom) {
+@layout.Base(p) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - see the same note in home/index.templ (FE-04).
      No sidebar column here anymore - layout.App renders one shared ui.Sidebar for every
      authenticated page now, this page just fills the remaining width (see FE-11, D4). -->
