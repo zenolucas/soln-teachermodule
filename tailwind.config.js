@@ -7,6 +7,15 @@ module.exports = {
   // hand-written script rather than a .templ/.go file).
   content: [ "./**/*.html", "./**/*.templ", "./**/*.go", "./public/js/**/*.js", ],
  safelist: [],
+ theme: {
+   extend: {
+     colors: {
+       // Not a nord theme token - the revamp's design spec (01 Tokens) calls for this
+       // one extra color outside daisyUI's "nord" palette (see DEC-1/DEC-12).
+       polar1: "#3B4252",
+     },
+   },
+ },
  plugins: [require("daisyui")],
  daisyui: {
    themes: ["nord"]

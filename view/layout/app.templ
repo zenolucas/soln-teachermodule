@@ -2,14 +2,34 @@ package layout
 
 import "soln-teachermodule/view/ui"
 
-// title is the full <title> text for the page (see FE-17 - every page previously
-// shared the one hardcoded "Sol'n Teacher Portal" title, which makes browser tabs and
-// history indistinguishable when several are open). charts loads Chart.js - only the
-// statistics pages that actually render a canvas[data-chart-url] need it (see FE-50);
-// every other page was paying for an unused ~200KB download, including the login page.
-// nav also now controls the shared sidebar (see FE-11, D4) - every page that shows the
-// navbar gets the same drawer/sidebar shell, so there's no separate flag for it.
-templ App(nav bool, charts bool, title string) {
+// TeacherNav is the shell's display identity for the signed-in teacher (greeting,
+// sidebar footer, ...). Populated by handler.pageFor from T0.4 on.
+type TeacherNav struct {
+	DisplayName string
+}
+
+// Page replaces App's positional bool/bool/string parameters (nav, charts, title) with
+// one struct, so a caller can't accidentally swap the two bools, and so the revamp's
+// later tasks (sidebar Active state, classroom-scoped breadcrumbs, the teacher's name)
+// have somewhere to add fields without changing every call site's signature again.
+type Page struct {
+	Title       string
+	Charts      bool
+	Shell       bool   // false for landing/login/register
+	Active      string // "home"|"overview"|"minigames"|"students"|"stats"|"about"|""
+	ClassroomID string // "" when not classroom-scoped
+	Teacher     TeacherNav
+}
+
+// Base renders the page shell. title is the full <title> text (see FE-17 - every page
+// previously shared the one hardcoded "Sol'n Teacher Portal" title, which makes browser
+// tabs and history indistinguishable when several are open). Charts loads Chart.js -
+// only the statistics pages that actually render a canvas[data-chart-url] need it (see
+// FE-50); every other page was paying for an unused ~200KB download, including the
+// login page. Shell also now controls the shared sidebar (see FE-11, D4) - every page
+// that shows the navbar gets the same drawer/sidebar shell, so there's no separate flag
+// for it.
+templ Base(p Page) {
 <!DOCTYPE html>
 <!-- data-theme intentionally omitted: tailwind.config.js only ever compiles the nord
      theme (see D2), so an "emerald" attribute here did nothing but claim a theme that
@@ -17,7 +37,7 @@ templ App(nav bool, charts bool, title string) {
 <html lang="en" class="bg-base-300">
 
 <head>
-	<title>{ title }</title>
+	<title>{ p.Title }</title>
 	<link rel="icon" type="image/x-icon" href="/public/images/assets/chip-favicon.png" />
 
 	<meta charset="UTF-8" />
@@ -31,7 +51,7 @@ templ App(nav bool, charts bool, title string) {
 	     side at all (see D3). jQuery was dropped outright: unused anywhere in the app. -->
 	<script src="/public/vendor/htmx.min.js" defer></script>
 	<script src="/public/vendor/fontawesome.min.js" defer></script>
-	if charts {
+	if p.Charts {
 	<script src="/public/vendor/chart.min.js" defer></script>
 	}
 	<script src="/public/js/index.js" defer></script>
@@ -39,7 +59,7 @@ templ App(nav bool, charts bool, title string) {
 </head>
 
 <body class="antialiased">
-	if nav {
+	if p.Shell {
 	@ui.Navigation()
 	<!-- lg:drawer-open keeps the sidebar permanently visible (not just toggleable) at
 	     the lg breakpoint and above - below that it's off-canvas, opened via the
@@ -63,4 +83,11 @@ templ App(nav bool, charts bool, title string) {
 </body>
 
 </html>
+}
+
+// App is kept for callers not yet migrated to Base(Page{...}) directly (T0.5-T0.7).
+templ App(nav bool, charts bool, title string) {
+	@Base(Page{Title: title, Charts: charts, Shell: nav}) {
+		{ children... }
+	}
 }
