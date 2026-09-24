@@ -16,28 +16,14 @@ templ classroomHeader(room types.Classroom) {
 	</div>
 }
 
-// classroomNav is a temporary stand-in for the daisyUI radio tabs it replaces, until
-// the sidebar (T1.4) gives every classroom-scoped page real navigation. active is one
-// of "overview"|"minigames"|"students".
-templ classroomNav(classroomID string, active string) {
-	<div class="flex gap-2 px-4 pt-2 pb-4">
-		<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", classroomID)) }
-			class={ "btn btn-sm", templ.KV("btn-primary", active == "overview"), templ.KV("btn-ghost", active != "overview") }>Overview</a>
-		<a href={ templ.URL(fmt.Sprintf("/classroom/minigames?classroom_id=%s", classroomID)) }
-			class={ "btn btn-sm", templ.KV("btn-primary", active == "minigames"), templ.KV("btn-ghost", active != "minigames") }>Minigames</a>
-		<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s", classroomID)) }
-			class={ "btn btn-sm", templ.KV("btn-primary", active == "students"), templ.KV("btn-ghost", active != "students") }>Students</a>
-	</div>
-}
-
 templ Overview(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
 		<!-- No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for
-		     every authenticated page now, this page just fills the remaining width (see
-		     FE-11, D4). -->
-		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+		     every authenticated page now (T1.4 gives it real Active-state navigation, so
+		     T1.1's temporary link row is gone), this page just fills the remaining width
+		     (see FE-11, D4). -->
+		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
 			@classroomHeader(room)
-			@classroomNav(room.ClassroomID, "overview")
 			<!-- Interim Overview: just links to the other three sections. T4.7 replaces this
 			     grid with the real summary (C3: student count, quiz average, students per
 			     world, flagged count, Needs attention). -->
@@ -70,9 +56,8 @@ templ Overview(p layout.Page, room types.Classroom) {
 
 templ Minigames(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
-		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
 			@classroomHeader(room)
-			@classroomNav(room.ClassroomID, "minigames")
 			<!-- One Go slice (types.Worlds/types.Scene) replaces what used to be these
 			     12 copy-pasted hero blocks, one per scene (see FE-13). -->
 			for _, world := range types.Worlds {
@@ -99,9 +84,8 @@ templ Minigames(p layout.Page, room types.Classroom) {
 
 templ Students(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
-		<div class="w-full min-h-[calc(100vh-5rem)] bg-base-300 justify-center gap-4 overflow-x-auto">
+		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
 			@classroomHeader(room)
-			@classroomNav(room.ClassroomID, "students")
 			<div class="overflow-x-auto">
 				<!-- get unenrolled students for add students -->
 				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"

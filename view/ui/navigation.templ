@@ -1,48 +1,13 @@
 package ui
 
-// The "+" create-classroom dropdown that used to live here is gone - "Create
-// classroom" is now a visible button on /home itself instead of hidden two clicks deep
-// in a navbar dropdown (see FE-14, D4). The hamburger is now a real control: it toggles
-// the shared sidebar's drawer on narrow viewports (see FE-10, FE-11, D4) instead of
-// being a bare, non-interactive <i> icon.
-templ Navigation() {
-	<div class="navbar h-20 bg-base-content">
-		<div class="flex-none">
-			<label for="app-drawer" aria-label="Open menu" class="btn btn-square btn-ghost lg:hidden">
-				<i class="fa-solid fa-bars fa-xl" style="color: #ffffff;" aria-hidden="true"></i>
-			</label>
-		</div>
-		<div class="flex-1">
-			<a href="/home" class="btn btn-ghost text-white text-xl">Sol'n Teacher Portal</a>
-		</div>
-		<div class="flex-none">
-			<div class="dropdown dropdown-end">
-				<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar mr-[20px]" aria-label="Account menu">
-					<div class="w-10 rounded-full">
-						<img
-							alt=""
-							src="/public/images/bg/sample_user.png"
-						/>
-					</div>
-				</div>
-				<ul
-					tabindex="0"
-					class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
-				>
-					<li>
-						@LogoutForm()
-					</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-}
-
 // LogoutForm used to nest a <li> inside its <form>, which itself sat inside the
 // caller's own <li> - li>form>li is invalid list markup and confuses screen readers
-// (see FE-16). The <li> now wraps the form, matching every other <li> in the menu.
+// (see FE-16). It's now a plain icon button in the sidebar footer (see sidebar.templ,
+// 01 §Shell item 6), submitting the same POST /logout it always did.
 templ LogoutForm() {
 	<form method="POST" action="/logout">
-		<button type="submit" class="btn btn-link w-full">Logout</button>
+		<button type="submit" aria-label="Log out" class="text-[14px] opacity-80 hover:opacity-100">
+			<i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+		</button>
 	</form>
 }

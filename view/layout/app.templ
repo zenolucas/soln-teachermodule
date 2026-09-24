@@ -60,30 +60,19 @@ templ Base(p Page) {
 
 <body class="antialiased">
 	if p.Shell {
-	@ui.Navigation()
-	<!-- lg:drawer-open keeps the sidebar permanently visible (not just toggleable) at
-	     the lg breakpoint and above - below that it's off-canvas, opened via the
-	     hamburger's for="app-drawer" label and closed via the overlay or its own
-	     toggle (see FE-10, FE-11, D4). The navbar itself stays outside the drawer so
-	     it still spans the full width above the sidebar, matching the layout every
-	     page already assumed (see FE-04's h-[calc(100vh-5rem)] note). -->
-	<div class="drawer lg:drawer-open">
-		<input id="app-drawer" type="checkbox" class="drawer-toggle" />
-		<div class="drawer-content overflow-x-auto">
+	<!-- The daisyUI drawer + navbar (FE-10, FE-11, D4) are gone - the sidebar is
+	     always visible at this size, since mobile is out of scope (DEC-1). -->
+	<div class="flex h-screen">
+		@ui.Sidebar(p.Active, p.ClassroomID, p.Teacher.DisplayName)
+		<main class="flex-1 min-w-0 overflow-y-auto bg-base-300">
 			{ children... }
-		</div>
-		<div class="drawer-side z-30 h-[calc(100vh-5rem)]">
-			<label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
-			@ui.Sidebar()
-		</div>
+		</main>
 	</div>
+	<!-- Rendered once here, not by each page, so the sidebar "+" and the /home empty
+	     state can open the same dialog by id from anywhere (DEC-2). -->
+	@ui.CreateClassForm(ui.CreateParams{}, ui.CreateErrors{})
 	} else {
 	{ children... }
-	}
-	if p.Shell {
-	<!-- Rendered once here, not by each page, so the sidebar "+" (T1.4) and the
-	     /home empty state can open the same dialog by id from anywhere (DEC-2). -->
-	@ui.CreateClassForm(ui.CreateParams{}, ui.CreateErrors{})
 	}
 </body>
 
