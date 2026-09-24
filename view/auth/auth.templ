@@ -6,7 +6,7 @@ import (
 )
 
 templ Login(to string, registered bool) {
-	@layout.App(false, false, "Log In · Sol'n Teacher Portal") {
+	@layout.Base(layout.Page{Title: "Log In · Sol'n Teacher Portal"}) {
 		@LoginForm(LoginParams{}, LoginErrors{}, to, registered)
 	}
 }
@@ -77,7 +77,7 @@ type RegisterErrors struct {
 }
 
 templ Register() {
-	@layout.App(false, false, "Register · Sol'n Teacher Portal") {
+	@layout.Base(layout.Page{Title: "Register · Sol'n Teacher Portal"}) {
 		@RegisterForm(RegisterParams{}, RegisterErrors{})
 	}
 }
