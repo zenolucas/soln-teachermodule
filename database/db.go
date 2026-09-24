@@ -489,6 +489,10 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	ClassroomID, err := formInt(r, "classroom_id")
+	if err != nil {
+		return err
+	}
 	Fraction1_Numerator, err := formInt(r, "fraction1_numerator")
 	if err != nil {
 		return err
@@ -506,8 +510,21 @@ func UpdateFractions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	_, err = db.ExecContext(r.Context(), "UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ?",
-		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID)
+	// A teacher's session is only checked against the classroom_id they claim
+	// (handler.assertOwnsClassroom), so a foreign question_id posted alongside their
+	// own classroom_id would otherwise update someone else's question (see X5/SEC-06).
+	// RowsAffected can't stand in for this check: MySQL/MariaDB reports 0 rows affected
+	// when an UPDATE's new values match the existing row, not just when no row matched.
+	var count int
+	if err := db.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM fraction_questions WHERE question_id = ? AND minigame_id = ? AND classroom_id = ?", QuestionID, MinigameID, ClassroomID).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("UpdateFractions: no question found with question_id=%d minigame_id=%d classroom_id=%d", QuestionID, MinigameID, ClassroomID)
+	}
+
+	_, err = db.ExecContext(r.Context(), "UPDATE fraction_questions SET fraction1_numerator = ?,  fraction1_denominator = ?, fraction2_numerator = ?, fraction2_denominator = ? WHERE minigame_id = ? AND question_id = ? AND classroom_id = ?",
+		Fraction1_Numerator, Fraction1_Denominator, Fraction2_Numerator, Fraction2_Denominator, MinigameID, QuestionID, ClassroomID)
 	if err != nil {
 		return err
 	}
@@ -823,24 +840,45 @@ func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-
-	_, err = db.ExecContext(r.Context(), "UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ?",
-		question.QuestionText, questionID)
+	classroomID, err := formInt(r, "classroomID")
 	if err != nil {
+		return err
+	}
+
+	// A teacher's session is only checked against the classroomID they claim
+	// (handler.assertOwnsClassroom), so a foreign questionID posted alongside their own
+	// classroomID would otherwise update someone else's question and choices (see
+	// X5/SEC-06). Everything below runs in one transaction, following DeleteMCQuestions'
+	// pattern, so a classroom mismatch leaves nothing partially applied.
+	tx, err := db.BeginTx(r.Context(), nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var count int
+	if err := tx.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM multiple_choice_questions WHERE question_id = ? AND classroom_id = ?", questionID, classroomID).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		return fmt.Errorf("UpdateMCQuestions: no question found with question_id=%d classroom_id=%d", questionID, classroomID)
+	}
+
+	if _, err = tx.ExecContext(r.Context(), "UPDATE multiple_choice_questions SET question_text = ? WHERE question_id = ? AND classroom_id = ?",
+		question.QuestionText, questionID, classroomID); err != nil {
 		return err
 	}
 
 	// given the choices[]
 	// loop through, each choice gets to execute an update
 	for _, choice := range choices {
-		_, err = db.ExecContext(r.Context(), "UPDATE multiple_choice_choices SET choice_text = ?, is_correct = ? WHERE choice_id = ?",
-			choice.ChoiceText, choice.IsCorrect, choice.ChoiceID)
-		if err != nil {
+		if _, err = tx.ExecContext(r.Context(), "UPDATE multiple_choice_choices SET choice_text = ?, is_correct = ? WHERE choice_id = ? AND question_id = ?",
+			choice.ChoiceText, choice.IsCorrect, choice.ChoiceID, questionID); err != nil {
 			return err
 		}
 	}
 
-	return err
+	return tx.Commit()
 }
 
 // helper func to construct choices[]
