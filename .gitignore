@@ -13,3 +13,4 @@ node_modules
 # an unrelated full regeneration of this file, and any two such PRs landing close
 # together reconflicted on it every time (see D1).
 /public/styles.css
+.claude/settings.local.json
