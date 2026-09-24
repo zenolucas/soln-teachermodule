@@ -34,6 +34,35 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Print("loading up statistics, we got minigameID: ", minigameID)
 
+	return renderStatisticsPage(w, r, classroomID, minigameID)
+}
+
+// HandleClassroomStatistics is the T1.1-style /classroom/* route for the same page
+// (see 02 §A1) - it dispatches exactly like HandleStatisticsIndex, just reached via
+// classroom_id instead of classroomID, and with a default minigameID so a bare
+// /classroom/statistics?classroom_id= link (e.g. from the future sidebar) has
+// something to show instead of erroring on a missing minigame.
+func HandleClassroomStatistics(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	classroomIDStr := r.URL.Query().Get("classroom_id")
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	minigameID := r.URL.Query().Get("minigameID")
+	if minigameID == "" {
+		minigameID = "1"
+	}
+
+	return renderStatisticsPage(w, r, classroomID, minigameID)
+}
+
+// renderStatisticsPage is the shared body of HandleStatisticsIndex and
+// HandleClassroomStatistics - both already called assertOwnsClassroom against
+// classroomID before reaching here.
+func renderStatisticsPage(w http.ResponseWriter, r *http.Request, classroomID int, minigameID string) error {
 	// classroomName and sceneName are for the breadcrumb only (see FE-13) - dispatch
 	// below is unchanged.
 	classroom, err := database.GetClassroom(r.Context(), classroomID)
@@ -56,6 +85,7 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("bad request")
 	}
 
+	classroomIDStr := strconv.Itoa(classroomID)
 	page, err := pageFor(r, title, "stats", classroomIDStr)
 	if err != nil {
 		return err

@@ -68,6 +68,8 @@ func main() {
 		auth.Get("/classroom", handler.Make(handler.HandleClassroomIndex))
 		auth.Get("/classroom/minigames", handler.Make(handler.HandleClassroomMinigames))
 		auth.Get("/classroom/students", handler.Make(handler.HandleClassroomStudents))
+		auth.Get("/classroom/statistics", handler.Make(handler.HandleClassroomStatistics))
+		auth.Get("/about", handler.Make(handler.HandleAboutIndex))
 		auth.Post("/createclassroom", handler.Make(handler.HandleClassroomCreate))
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))
 		auth.Get("/getclassrooms_menu", handler.Make(handler.HandleGetClassroomsMenu))
