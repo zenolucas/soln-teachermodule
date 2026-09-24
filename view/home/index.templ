@@ -5,8 +5,8 @@ import (
 	"soln-teachermodule/view/layout"
 )
 
-templ Index() {
-@layout.App(true, false, "Home · Sol'n Teacher Portal") {
+templ Index(p layout.Page) {
+@layout.Base(p) {
 <!-- The navbar is h-20 (5rem/80px), not 65px - the mismatch was making this pane 15px
      taller than the viewport, so both the window and the pane scrolled (see FE-04).
      No sidebar column here anymore - layout.App renders one shared ui.Sidebar for every

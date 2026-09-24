@@ -51,7 +51,12 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, classroom.Classroom(room.ClassroomID, tab, fullClassroom))
+	page, err := pageFor(r, fullClassroom.ClassroomName+" · Sol'n Teacher Portal", "overview", room.ClassroomID)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, classroom.Classroom(page, room.ClassroomID, tab, fullClassroom))
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
