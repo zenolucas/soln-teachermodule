@@ -31,6 +31,13 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// Old bookmarks/links use ?tab=minigames|students - keep them working by sending
+	// them on to the new dedicated routes (see T1.1) instead of breaking them outright.
+	if tab := r.URL.Query().Get("tab"); tab == "minigames" || tab == "students" {
+		http.Redirect(w, r, "/classroom/"+tab+"?classroom_id="+room.ClassroomID, http.StatusFound)
+		return nil
+	}
+
 	// save classroomID in session
 	// store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
@@ -42,7 +49,6 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 
 	// fmt.Print("classroomID is ", session.Values["classroomID"])
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	tab := r.URL.Query().Get("tab")
 
 	// So the page can show which classroom the teacher is looking at (see FE-12) -
 	// ownership was already checked above, so this is just fetching the display text.
@@ -56,7 +62,57 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, classroom.Classroom(page, room.ClassroomID, tab, fullClassroom))
+	return render(w, r, classroom.Overview(page, fullClassroom))
+}
+
+func HandleClassroomMinigames(w http.ResponseWriter, r *http.Request) error {
+	classroomIDStr := r.URL.Query().Get("classroom_id")
+	if classroomIDStr == "" {
+		renderErrorPage(w, r, http.StatusBadRequest, "Missing classroom.")
+		return errors.New("bad request")
+	}
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	fullClassroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+
+	page, err := pageFor(r, fullClassroom.ClassroomName+" · Sol'n Teacher Portal", "minigames", classroomIDStr)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, classroom.Minigames(page, fullClassroom))
+}
+
+func HandleClassroomStudents(w http.ResponseWriter, r *http.Request) error {
+	classroomIDStr := r.URL.Query().Get("classroom_id")
+	if classroomIDStr == "" {
+		renderErrorPage(w, r, http.StatusBadRequest, "Missing classroom.")
+		return errors.New("bad request")
+	}
+	classroomID, _ := strconv.Atoi(classroomIDStr)
+
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	fullClassroom, err := database.GetClassroom(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+
+	page, err := pageFor(r, fullClassroom.ClassroomName+" · Sol'n Teacher Portal", "students", classroomIDStr)
+	if err != nil {
+		return err
+	}
+
+	return render(w, r, classroom.Students(page, fullClassroom))
 }
 
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
@@ -301,10 +357,9 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 
 	database.AddStudents(r.Context(), studentIDs, classroomID)
 
-	// tab=students keeps the teacher on the Students tab after this redirect, instead
-	// of landing back on Overview with no sign the students they just added were
-	// actually added (see FE-08).
-	url := "/classroom?classroom_id=" + classroomIDStr + "&tab=students"
+	// Redirect back to the Students route, instead of landing on Overview with no sign
+	// the students they just added were actually added (see FE-08).
+	url := "/classroom/students?classroom_id=" + classroomIDStr
 	hxRedirect(w, r, url)
 	return nil
 }
