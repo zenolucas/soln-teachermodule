@@ -1,0 +1,45 @@
+package ui
+
+import (
+	"fmt"
+	"soln-teachermodule/types"
+)
+
+// ClassroomMenu is the sidebar's lazy-loaded classroom list (see 01 §Shell items 4-5).
+// openID is the classroom whose section links (Overview/Minigames/Students/Statistics)
+// should expand - it needs no ownership check, since rooms only ever holds the
+// requesting teacher's own classrooms, and an id that matches none of them just
+// expands nothing. active is which of those four sections is the current page.
+templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
+	if len(rooms) == 0 {
+		<p class="opacity-60 px-3 mt-2 text-sm">No classrooms yet.</p>
+	} else {
+		for _, room := range rooms {
+			<div class="flex flex-col gap-0.5">
+				<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) }
+					class="h-[38px] flex items-center gap-3 px-3 rounded text-sm">
+					<i class="fa-solid fa-users w-[18px] text-center text-accent text-[13px]" aria-hidden="true"></i>
+					<span class="flex-1 truncate">{ room.ClassroomName } – { room.Section }</span>
+				</a>
+				if room.ClassroomID == openID {
+					<!-- #434C5E: the mockup's own left-border color for this indent (Sidebar.dc.html) -
+					     part of the full Nord palette, but not one of the daisyUI nord theme's tokens
+					     or polar1. Used literally, per this task's own steps. -->
+					<div class="flex flex-col gap-0.5 ml-[21px] pl-[10px] border-l border-[#434C5E] mb-1.5">
+						@classroomMenuLink(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID), "overview", "Overview", "fa-chart-pie", active)
+						@classroomMenuLink(fmt.Sprintf("/classroom/minigames?classroom_id=%s", room.ClassroomID), "minigames", "Minigames", "fa-gamepad", active)
+						@classroomMenuLink(fmt.Sprintf("/classroom/students?classroom_id=%s", room.ClassroomID), "students", "Students", "fa-user-graduate", active)
+						@classroomMenuLink(fmt.Sprintf("/classroom/statistics?classroom_id=%s", room.ClassroomID), "stats", "Statistics", "fa-chart-column", active)
+					</div>
+				}
+			</div>
+		}
+	}
+}
+
+templ classroomMenuLink(href string, key string, label string, icon string, active string) {
+	<a href={ templ.URL(href) }
+		class={ "h-[34px] flex items-center gap-2.5 px-2.5 rounded text-[13.5px]", templ.KV("bg-primary text-white font-semibold", key == active) }>
+		<i class={ fmt.Sprintf("fa-solid %s w-4 text-center text-xs", icon) } aria-hidden="true"></i>{ label }
+	</a>
+}
