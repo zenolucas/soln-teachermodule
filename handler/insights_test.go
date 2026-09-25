@@ -171,6 +171,60 @@ func TestWorldOf(t *testing.T) {
 	}
 }
 
+func TestCollapseActivity(t *testing.T) {
+	played := func(user, classroom, minigame int) types.Activity {
+		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}
+	}
+	scored := func(user, classroom, minigame, score, total int) types.Activity {
+		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "scored", Score: score, Total: total}
+	}
+
+	tests := []struct {
+		name string
+		rows []types.Activity
+		want []types.Activity
+	}{
+		{
+			name: "consecutive played rows for the same student+scene collapse to one",
+			rows: []types.Activity{played(3, 1, 1), played(3, 1, 1), played(3, 1, 1)},
+			want: []types.Activity{played(3, 1, 1)},
+		},
+		{
+			name: "played rows for different students don't collapse",
+			rows: []types.Activity{played(3, 1, 1), played(4, 1, 1)},
+			want: []types.Activity{played(3, 1, 1), played(4, 1, 1)},
+		},
+		{
+			name: "played rows for different scenes don't collapse",
+			rows: []types.Activity{played(3, 1, 1), played(3, 1, 2)},
+			want: []types.Activity{played(3, 1, 1), played(3, 1, 2)},
+		},
+		{
+			name: "scored rows are never collapsed, even when identical and adjacent",
+			rows: []types.Activity{scored(3, 1, 5, 8, 10), scored(3, 1, 5, 8, 10)},
+			want: []types.Activity{scored(3, 1, 5, 8, 10), scored(3, 1, 5, 8, 10)},
+		},
+		{
+			name: "a scored row breaks up a run of played rows",
+			rows: []types.Activity{played(3, 1, 1), scored(3, 1, 5, 8, 10), played(3, 1, 1)},
+			want: []types.Activity{played(3, 1, 1), scored(3, 1, 5, 8, 10), played(3, 1, 1)},
+		},
+		{
+			name: "empty input",
+			rows: nil,
+			want: nil,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := collapseActivity(tc.rows)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("collapseActivity(%+v) = %+v, want %+v", tc.rows, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestFlagLabel(t *testing.T) {
 	tests := []struct {
 		kind types.FlagKind

@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // Shared thresholds for the insight logic (DEC-20). Views and handlers import these,
 // so no literal 60 appears in markup logic. There's deliberately no WrongStreakMin:
 // DEC-24 drops the wrong_streak flag until the pending game-client audit resolves V1.
@@ -42,4 +44,19 @@ type FractionAggRow struct {
 	MinigameID int
 	Right      int
 	Wrong      int
+}
+
+// Activity is one Recent activity event (02 §D1, 01 §1a). Kind is "played" (a
+// fraction or worded scene - DEC-24 rules out "finished"/"started" copy) or "scored"
+// (a quiz attempt). Score and Total are only meaningful when Kind == "scored".
+type Activity struct {
+	UserID      int
+	First, Last string
+	ClassroomID int
+	ClassName   string
+	MinigameID  int
+	Kind        string
+	Score       int
+	Total       int
+	At          time.Time
 }
