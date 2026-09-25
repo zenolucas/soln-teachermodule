@@ -324,36 +324,59 @@ func buildFractionQuestionStats(summaries []types.StudentFractionStatistics, op 
 
 	rows := make([]statistics.FractionQuestionStat, 0, len(summaries))
 	for _, s := range summaries {
-		a := util.Frac{Num: s.Fraction1_Numerator, Den: s.Fraction1_Denominator}
-		b := util.Frac{Num: s.Fraction2_Numerator, Den: s.Fraction2_Denominator}
-		ansNum, ansDen := 0, 0
-		if ans, ok := util.Combine(a, b, op); ok {
-			ansNum, ansDen = ans.Num, ans.Den
-		}
-
-		attempts := s.RightAttemptsCount + s.WrongAttemptsCount
-		accuracy := -1
-		if attempts > 0 {
-			accuracy = s.RightAttemptsCount * 100 / attempts
-		}
-
-		rows = append(rows, statistics.FractionQuestionStat{
-			Number:      numberByID[s.QuestionID],
-			IsWorded:    worded,
-			Text:        s.QuestionText,
-			Num1:        s.Fraction1_Numerator,
-			Den1:        s.Fraction1_Denominator,
-			Num2:        s.Fraction2_Numerator,
-			Den2:        s.Fraction2_Denominator,
-			Op:          op,
-			AnsNum:      ansNum,
-			AnsDen:      ansDen,
-			Right:       s.RightAttemptsCount,
-			Wrong:       s.WrongAttemptsCount,
-			AccuracyPct: accuracy,
-		})
+		rows = append(rows, fractionStatRow(s, op, worded, numberByID[s.QuestionID]))
 	}
 	return rows
+}
+
+// buildStudentFractionRows is buildFractionQuestionStats' single-student equivalent
+// for the scene-detail panel (T5.8, 01 §1h): the same per-question row shape, numbered
+// and ordered by question_id ascending - there's no "hardest first" framing for one
+// student's own scores, so it skips sortWeakestFirst.
+func buildStudentFractionRows(stats []types.StudentFractionStatistics, op string, worded bool) []statistics.FractionQuestionStat {
+	sorted := append([]types.StudentFractionStatistics(nil), stats...)
+	sort.SliceStable(sorted, func(i, j int) bool { return sorted[i].QuestionID < sorted[j].QuestionID })
+
+	rows := make([]statistics.FractionQuestionStat, len(sorted))
+	for i, s := range sorted {
+		rows[i] = fractionStatRow(s, op, worded, i+1)
+	}
+	return rows
+}
+
+// fractionStatRow builds one question's row (X7's aggregated right/wrong counts, plus
+// the class's computed answer via util.Combine) - shared by the classroom-wide
+// By-question table and a single student's scene-detail panel, which differ only in
+// which rows they pass in and how they're numbered/ordered.
+func fractionStatRow(s types.StudentFractionStatistics, op string, worded bool, number int) statistics.FractionQuestionStat {
+	a := util.Frac{Num: s.Fraction1_Numerator, Den: s.Fraction1_Denominator}
+	b := util.Frac{Num: s.Fraction2_Numerator, Den: s.Fraction2_Denominator}
+	ansNum, ansDen := 0, 0
+	if ans, ok := util.Combine(a, b, op); ok {
+		ansNum, ansDen = ans.Num, ans.Den
+	}
+
+	attempts := s.RightAttemptsCount + s.WrongAttemptsCount
+	accuracy := -1
+	if attempts > 0 {
+		accuracy = s.RightAttemptsCount * 100 / attempts
+	}
+
+	return statistics.FractionQuestionStat{
+		Number:      number,
+		IsWorded:    worded,
+		Text:        s.QuestionText,
+		Num1:        s.Fraction1_Numerator,
+		Den1:        s.Fraction1_Denominator,
+		Num2:        s.Fraction2_Numerator,
+		Den2:        s.Fraction2_Denominator,
+		Op:          op,
+		AnsNum:      ansNum,
+		AnsDen:      ansDen,
+		Right:       s.RightAttemptsCount,
+		Wrong:       s.WrongAttemptsCount,
+		AccuracyPct: accuracy,
+	}
 }
 
 // buildStudentAccuracyRows converts each student's raw right/wrong sum into a display
@@ -910,6 +933,7 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 	journey := buildJourney(ins, quiz, frac)
 	finished := finishedCount(ins.Current, ins.Completed)
+	attempts := buildMinigameAttempts(studentID, frac)
 
 	q := parseStudentQuery(r.URL.Query())
 	prevID, nextID := neighbours(sortedStudentIDs(insights, q.Sort), studentIDStr)
@@ -920,7 +944,36 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, statistics.StudentPage(page, classroomIDStr, classroom, ins, journey, finished, prevID, nextID, q.Sort))
+	return render(w, r, statistics.StudentPage(page, classroomIDStr, classroom, ins, journey, finished, prevID, nextID, q.Sort, attempts))
+}
+
+// buildMinigameAttempts is the student page's Minigame attempts card (01 §1h): one row
+// per fraction/worded scene in play order - quiz scenes are scored, not attempted, and
+// already summarized by the Quiz average stat card - with 0/0/no-data for a scene the
+// student hasn't touched yet.
+func buildMinigameAttempts(studentID int, frac []types.FractionAggRow) []statistics.MinigameAttemptRow {
+	byScene := map[int]types.FractionAggRow{}
+	for _, f := range frac {
+		if f.StudentID == studentID {
+			byScene[f.MinigameID] = f
+		}
+	}
+
+	rows := make([]statistics.MinigameAttemptRow, 0, len(sceneOrder))
+	for _, id := range sceneOrder {
+		scene, _ := types.SceneByID(id)
+		if scene.Kind == types.KindQuiz {
+			continue
+		}
+		agg := byScene[id]
+		attempts := agg.Right + agg.Wrong
+		accuracy := -1
+		if attempts > 0 {
+			accuracy = agg.Right * 100 / attempts
+		}
+		rows = append(rows, statistics.MinigameAttemptRow{Scene: scene, Right: agg.Right, Wrong: agg.Wrong, AccuracyPct: accuracy})
+	}
+	return rows
 }
 
 // sortedStudentIDs orders every insight's UserID the same way applyStudentQuery
@@ -955,6 +1008,11 @@ func sortedStudentIDs(insights []types.StudentInsight, sortKey string) []string 
 // 1. fraction
 // 2. worded
 // 3. quiz
+// different score formats, rendered via view/statistics' QuizDetail/FractionDetail
+// (T5.8) into the student page's #scene-detail panel:
+// 1. fraction
+// 2. worded
+// 3. quiz
 func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
@@ -970,35 +1028,19 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	var statistics []types.StudentFractionStatistics
-
-	statistics, err := database.GetStudentFractionStatistics(r.Context(), studentID, minigameID, classroomID)
-	if err != nil {
-		return err
-	}
+	scene, _ := types.SceneByID(minigameID)
 
 	// This is a LEFT JOIN from fraction_questions, so a row exists per question even
 	// when the student hasn't attempted it (with 0/0 counts) - an empty result here
 	// means the minigame itself has no questions yet, not that the student skipped it
-	// (see FE-20).
-	if len(statistics) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
-		return nil
+	// (see FE-20). FractionDetail shows the same empty-state copy for that case.
+	stats, err := database.GetStudentFractionStatistics(r.Context(), studentID, minigameID, classroomID)
+	if err != nil {
+		return err
 	}
 
-	for _, statistic := range statistics {
-		fmt.Fprintf(w, `
-			<tr>
-				<td>%d/%d + %d/%d ?</td>
-				<td class="text-center">%d</td>
-				<td class="text-center">%d</td>
-				<td class="text-center">%s</td>
-			</tr>
-		`, statistic.Fraction1_Numerator, statistic.Fraction1_Denominator, statistic.Fraction2_Numerator, statistic.Fraction2_Denominator,
-			statistic.RightAttemptsCount, statistic.WrongAttemptsCount, pctCorrect(statistic.RightAttemptsCount, statistic.WrongAttemptsCount))
-	}
-
-	return nil
+	rows := buildStudentFractionRows(stats, scene.Op, false)
+	return render(w, r, statistics.FractionDetail(scene, rows))
 }
 
 func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
@@ -1016,31 +1058,16 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var statistics []types.StudentFractionStatistics
+	scene, _ := types.SceneByID(minigameID)
 
-	statistics, err := database.GetStudentWordedStatistics(r.Context(), studentID, minigameID, classroomID)
+	// See the matching comment in HandleGetStudentFractionScore above.
+	stats, err := database.GetStudentWordedStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
 
-	// See the matching comment in HandleGetStudentFractionScore above.
-	if len(statistics) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
-		return nil
-	}
-
-	for _, statistic := range statistics {
-		fmt.Fprintf(w, `
-			<tr>
-				<td>%s</td>
-				<td class="text-center">%d</td>
-				<td class="text-center">%d</td>
-				<td class="text-center">%s</td>
-			</tr>
-		`, esc(statistic.QuestionText), statistic.RightAttemptsCount, statistic.WrongAttemptsCount, pctCorrect(statistic.RightAttemptsCount, statistic.WrongAttemptsCount))
-	}
-
-	return nil
+	rows := buildStudentFractionRows(stats, scene.Op, true)
+	return render(w, r, statistics.FractionDetail(scene, rows))
 }
 
 func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
@@ -1058,29 +1085,28 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var statistics []types.StudentQuizStatistics
+	scene, _ := types.SceneByID(minigameID)
 
-	statistics, err := database.GetStudentQuizStatistics(r.Context(), studentID, minigameID, classroomID)
+	stats, err := database.GetStudentQuizStatistics(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
 
-	// See the matching comment in HandleGetStudentFractionScore above.
-	if len(statistics) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="4" class="text-center text-white text-opacity-60">This minigame doesn't have any questions yet.</td></tr>`)
-		return nil
+	rows := make([]statistics.QuizDetailRow, len(stats))
+	var wrong []struct{ Question, Chosen string }
+	score := 0
+	for i, s := range stats {
+		right := s.Score == 1
+		rows[i] = statistics.QuizDetailRow{Question: s.QuestionText, Correct: s.CorrectAnswer, Answer: s.UserAnswer, Right: right}
+		if right {
+			score++
+		} else {
+			wrong = append(wrong, struct{ Question, Chosen string }{s.QuestionText, s.UserAnswer})
+		}
 	}
+	// StudentHint (02 §B6, T5.3) fires when >=2 of this student's wrong answers in the
+	// quiz match the same misconception rule.
+	hint, _ := StudentHint(wrong)
 
-	for _, statistic := range statistics {
-		fmt.Fprintf(w, `
-			<tr>
-				<td>%s</td>
-				<td class="text-center">%s</td>
-				<td class="text-center">%s</td>
-				<td class="text-center">%d</td>
-			</tr>	
-		`, esc(statistic.QuestionText), esc(statistic.CorrectAnswer), esc(statistic.UserAnswer), statistic.Score)
-	}
-
-	return nil
+	return render(w, r, statistics.QuizDetail(scene, score, len(stats), hint, rows))
 }
