@@ -95,93 +95,44 @@ templ Worded(p layout.Page, classroomID string, classroomName string, scene type
 }
 }
 
-templ Quiz(p layout.Page, minigameID string, classroomID string, classroomName string, sceneName string) {
+// Quiz mirrors Fractions (01 §1f, T3.7) - same list + drawer shell, with QuizRows/
+// QuizDrawer instead of FractionRows/FractionDrawer.
+templ Quiz(p layout.Page, classroomID string, classroomName string, scene types.Scene, world types.World) {
 @layout.Base(p) {
-@ui.Breadcrumb(classroomID, classroomName, sceneName, "Edit Questions")
-<form hx-post="/getmcquestions" hx-swap="outerHTML" hx-trigger="load" hx-target="#questions-container">
-     <input type="hidden" name="minigameID" value={ minigameID } />
-     <input type="hidden" name="classroomID" value={ classroomID } />
-</form>
-<div class="flex justify-center items-center flex-col w-full h-140 mt-8">
-     <h1 class="text-3xl font-bold">Quiz Questions (Multiple Choice)</h1>
-     <div class="flex justify-center mt-4">
-          <button type="button" class="btn btn-primary text-white" data-modal-open="my_modal_6">Add Question</button>
-     </div>
-     <div id="questions-container">
-     <div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
-     </div>
-</div>
-
-
-@CreateMCQuestionForm(QuestionParams{}, minigameID, classroomID)
-}
-}
-
-type QuestionParams struct {
-QuestionText string
-Option1 string
-Option2 string
-Option3 string
-Option4 string
-}
-
-templ CreateMCQuestionForm(data QuestionParams, minigameID string, classroomID string) {
-<dialog id="my_modal_6" class="modal">
-     <div class="modal-box">
-          <h3 class="text-lg font-bold">Add Question</h3>
-          <form id="add-mc-question-form" hx-post="/add/mcquestions" hx-swap="outerHTML">
-               <input type="hidden" name="minigameID" value={ minigameID } />
-               <input type="hidden" name="classroomID" value={ classroomID } />
-               <label class="form-control w-full max-w-s">
-                    <div class="label">
-                         <span class="label-text">Question Text</span>
+<div class="flex">
+     <div class="flex-1 min-w-0">
+          @ui.PageHeader(ui.Header{
+               Crumbs: []ui.Crumb{
+                    {Label: classroomName, Href: "/classroom?classroom_id=" + classroomID},
+                    {Label: "Minigames", Href: "/classroom/minigames?classroom_id=" + classroomID},
+                    {Label: scene.Name},
+               },
+               Sprite: scene.Image,
+               Title:  scene.Name,
+               Badges: []string{"Quiz", fmt.Sprintf("World %d · %s", world.Number, world.Topic)},
+          }) {
+               <a href={ templ.URL(fmt.Sprintf("%s?classroom_id=%s&minigameID=%d", scene.StatsPath(), classroomID, scene.MinigameID)) } class="btn btn-sm">Statistics</a>
+               <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    hx-get={ fmt.Sprintf("/question/new?minigameID=%d&classroomID=%s", scene.MinigameID, classroomID) }
+                    hx-target="#question-drawer"
+                    hx-swap="innerHTML"
+               >+ Add question</button>
+          }
+          <div class="px-4 pb-4">
+               <div class="bg-base-100 rounded-box border border-base-content/10 overflow-hidden">
+                    <div
+                         id="question-rows"
+                         hx-get={ fmt.Sprintf("/getmcquestions?minigameID=%d&classroomID=%s", scene.MinigameID, classroomID) }
+                         hx-trigger="load"
+                    >
+                         <div class="flex justify-center p-8"><span class="loading loading-spinner" aria-label="Loading"></span></div>
                     </div>
-                    <input type="text" name="question_text" placeholder="Type here" required
-                         class="input input-bordered w-full" />
-               </label>
-               <label class="form-control w-full max-w-s">
-                    <div class="label">
-                         <span class="label-text">Option 1</span>
-                    </div>
-                    <input type="text" name="option_1" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
-               </label>
-               <label class="form-control w-full max-w-s">
-                    <div class="label">
-                         <span class="label-text">Option 2</span>
-                    </div>
-                    <input type="text" name="option_2" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
-               </label>
-               <label class="form-control w-full max-w-s">
-                    <div class="label">
-                         <span class="label-text">Option 3</span>
-                    </div>
-                    <input type="text" name="option_3" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
-               </label>
-               <label class="form-control w-full max-w-s">
-                    <div class="label">
-                         <span class="label-text">Option 4</span>
-                    </div>
-                    <input type="text" name="option_4" placeholder="Type here" required maxlength="255" class="input input-bordered w-full" />
-               </label>
-               <label class="form-control w-full max-w-xs">
-                    <div class="label">
-                         <span class="label-text">Correct Answer</span>
-                    </div>
-                    <select name="correct_answer" class="select select-bordered w-full max-w-xs">
-                         <option value="option_1">Option 1</option>
-                         <option value="option_2">Option 2</option>
-                         <option value="option_3">Option 3</option>
-                         <option value="option_4">Option 4</option>
-                    </select>
-               </label>
-          </form>
-          <div class="modal-action">
-               <button type="button" class="btn" data-modal-close>Cancel</button>
-               <button type="submit" form="add-mc-question-form" class="btn btn-secondary">Add Question</button>
+               </div>
           </div>
      </div>
-     <form method="dialog" class="modal-backdrop">
-          <button>close</button>
-     </form>
-</dialog>
+     <aside id="question-drawer" hidden class="w-[392px] shrink-0 sticky top-0 h-screen overflow-y-auto bg-base-100 border-l border-base-content/10"></aside>
+</div>
+}
 }

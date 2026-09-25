@@ -59,7 +59,7 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 	case kindWorded:
 		return render(w, r, minigame.Worded(page, classroomIDStr, classroom.ClassroomName, scene, worldForScene(minigameID)))
 	case kindQuiz:
-		return render(w, r, minigame.Quiz(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+		return render(w, r, minigame.Quiz(page, classroomIDStr, classroom.ClassroomName, scene, worldForScene(minigameID)))
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
@@ -392,218 +392,169 @@ func HandleDeleteWorded(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetMCQuestions(w http.ResponseWriter, r *http.Request) error {
-
-	// fmt.Print("GET MC QUESTIONS IS TRIGGERED")
-	// get minigameID
-	minigameIDStr := r.FormValue("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	// get classroomID
-	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
 
-	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
+	rows, err := quizRows(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
+	return render(w, r, minigame.QuizRows(rows))
+}
 
-	if len(questions) == 0 {
-		renderNoQuestions(w)
-		return nil
+// quizRows builds the quiz editor list's rows (T3.7): each question's text, its
+// correct choice's text, and its class accuracy (GetQuizQuestionAccuracy, 02 §B3).
+func quizRows(ctx context.Context, minigameID, classroomID int) ([]minigame.QuizRow, error) {
+	questions, err := database.GetQuizQuestions(ctx, minigameID, classroomID)
+	if err != nil {
+		return nil, err
 	}
 
-	for i, question := range questions {
-		// A question is always created with exactly 4 choices, but a partially failed
-		// insert, a manual DB edit, or choices deleted independently of their question
-		// could leave that invariant broken. renderMCCard indexes
-		// question.Choices[0..3] unconditionally, so guard against a panic here.
-		if len(question.Choices) != 4 {
-			slog.Warn("skipping MC question render: expected exactly 4 choices",
-				"question_id", question.QuestionID, "got", len(question.Choices))
+	accuracy, err := database.GetQuizQuestionAccuracy(ctx, classroomID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows := make([]minigame.QuizRow, 0, len(questions))
+	number := 0
+	for _, q := range questions {
+		// A question is always created with exactly 4 choices, but a partially
+		// failed insert, a manual DB edit, or choices deleted independently of
+		// their question could leave that invariant broken - skip rather than
+		// show a row with no correct answer to point to.
+		if len(q.Choices) != 4 {
+			slog.Warn("skipping MC question row: expected exactly 4 choices",
+				"question_id", q.QuestionID, "got", len(q.Choices))
 			continue
 		}
+		number++
 
-		renderMCCard(w, question, minigameID, classroomID, i+1, false)
+		row := minigame.QuizRow{
+			MinigameID:   minigameID,
+			ClassroomID:  classroomID,
+			QuestionID:   q.QuestionID,
+			Number:       number,
+			QuestionText: q.QuestionText,
+		}
+		for _, c := range q.Choices {
+			if c.IsCorrect {
+				row.Answer = c.ChoiceText
+				break
+			}
+		}
+		if a, ok := accuracy[q.QuestionID]; ok {
+			row.AccuracyTotal = a.Total
+			if a.Total > 0 {
+				row.AccuracyPct = a.Right * 100 / a.Total
+			}
+		}
+		rows = append(rows, row)
 	}
-	return nil
+	return rows, nil
 }
 
-// renderMCCard is the multiple-choice equivalent of renderFractionCard above - see
-// its comment for why the update form is hx-post now instead of a plain POST (FE-22).
-// number is the question's 1-based display position ("Question N:"), passed in
-// separately since it isn't part of the question data itself.
-func renderMCCard(w http.ResponseWriter, question types.MultipleChoiceQuestion, minigameID int, classroomID int, number int, saved bool) {
-	savedText := ""
-	if saved {
-		savedText = `<span class="text-success mr-2">Saved <i class="fa-solid fa-check"></i></span>`
+// respondQuizRowsSaved re-renders the whole #question-rows list after a successful
+// add/update/delete and sets the HX-Trigger toast event (DEC-4) - mirrors
+// respondFractionRowsSaved (T3.4); QuizRows doesn't take a sel highlight parameter.
+func respondQuizRowsSaved(w http.ResponseWriter, r *http.Request, minigameID, classroomID int, event, message string) error {
+	rows, err := quizRows(r.Context(), minigameID, classroomID)
+	if err != nil {
+		return err
 	}
-	// See the matching comment in renderFractionCard above for why this form now
-	// targets/swaps itself instead of a wrapping ancestor div.
-	fmt.Fprintf(w, `
-		<div class="w-full max-w-3xl bg-neutral py-10 px-8 rounded-xl mt-4">
-		<div class="flex justify-end">
-			<form action="/delete/mcquestions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
-				<input type="hidden" name="questionID" value="%d" />
-				<input type="hidden" name="minigameID" value= "%d" />
-				<input type="hidden" name="classroomID" value= "%d" />
-				<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
-			</form>
-		</div>
-		<form hx-post="/update/mcquestions" hx-swap="outerHTML">
-			<input type="hidden" name="minigameID" value="%d" />
-			<input type="hidden" name="questionID" value= "%d" />
-			<input type="hidden" name="classroomID" value= "%d" />
-			<input type="hidden" name="question_number" value="%d" />
-			<label class="form-control w-3/4">
-				<div class="label">
-					<span class="label-text text-white">Question %d:</span>
-				</div>
-				<input type="text" value="%s" name="question" required class="input input-bordered input-primary w-3/4 text-lg" />
-			</label>
-			<div class="flex flex-wrap gap-4 mt-4">
-				<label class="form-control w-full max-w-xs">
-					<div class="label">
-						<span class="label-text text-white">Option 1:</span>
-					</div>
-					<input type="text" value="%s" name="option1" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-				</label>
-				<input type="hidden"  value="%d" name="option1_choiceID" />
-				<label class="form-control w-full max-w-xs">
-					<div class="label">
-						<span class="label-text text-white">Option 2:</span>
-					</div>
-					<input type="text" value="%s" name="option2" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-				</label>
-				<input type="hidden"  value="%d" name="option2_choiceID" />
-			</div>
-			<div class="flex flex-wrap gap-4 mt-4">
-				<label class="form-control w-full max-w-xs">
-					<div class="label">
-						<span class="label-text text-white">Option 3:</span>
-					</div>
-					<input type="text" value="%s" name="option3" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-				</label>
-				<input type="hidden"  value="%d" name="option3_choiceID" />
-				<label class="form-control w-full max-w-xs">
-					<div class="label">
-						<span class="label-text text-white">Option 4:</span>
-					</div>
-					<input type="text" value="%s" name="option4" required maxlength="255" class="input input-bordered input-primary w-full max-w-xs text-lg" />
-				</label>
-				<input type="hidden"  value="%d" name="option4_choiceID" />
-			</div>
-			<div class="flex mt-4 relative inline-block w-64">
-				<label class="form-control w-full max-w-xs">
-					<div class="label">
-						<span class="label-text text-white">Correct Answer: </span>
-					</div>
-					<select name="correct_answer" class="select select-bordered w-full max-w-xs">
-						<option value="%d" %s>Option 1</option>
-						<option value="%d" %s>Option 2</option>
-						<option value="%d" %s>Option 3</option>
-						<option value="%d" %s>Option 4</option>
-					</select>
-				</label>
-			</div>
-
-			<div class="flex justify-end items-center">
-				%s
-				<button type="submit" class="btn btn-primary text-white">Save changes</button>
-			</div>
-		</form>
-		</div>
-	`, question.QuestionID, minigameID, classroomID, minigameID, question.QuestionID, classroomID, number, number, esc(question.QuestionText),
-		esc(question.Choices[0].ChoiceText), question.Choices[0].ChoiceID,
-		esc(question.Choices[1].ChoiceText), question.Choices[1].ChoiceID,
-		esc(question.Choices[2].ChoiceText), question.Choices[2].ChoiceID,
-		esc(question.Choices[3].ChoiceText), question.Choices[3].ChoiceID,
-		// correct_answer's <option value> is the choice_id, not the choice text -
-		// text can collide between options, choice_id can't (see BUG-02 fix).
-		question.Choices[0].ChoiceID, getCorrectAnswer(question.Choices[0].IsCorrect),
-		question.Choices[1].ChoiceID, getCorrectAnswer(question.Choices[1].IsCorrect),
-		question.Choices[2].ChoiceID, getCorrectAnswer(question.Choices[2].IsCorrect),
-		question.Choices[3].ChoiceID, getCorrectAnswer(question.Choices[3].IsCorrect),
-		savedText)
+	triggerEvent(w, event, message)
+	return render(w, r, minigame.QuizRows(rows))
 }
 
-// helper function to get correct answer for GetMCQuestion function above
-func getCorrectAnswer(isCorrect bool) string {
-	if isCorrect {
-		return "selected"
+// respondQuizDrawerErrors re-renders the drawer in place with inline field errors
+// (DEC-4) - mirrors respondFractionDrawerErrors.
+func respondQuizDrawerErrors(w http.ResponseWriter, r *http.Request, minigameID, classroomID, questionID int, q types.MultipleChoiceQuestion, errs map[string]string) error {
+	data, err := buildQuizDrawerData(r.Context(), minigameID, classroomID, questionID, q, errs)
+	if err != nil {
+		return err
 	}
-	return ""
+	w.Header().Set("HX-Retarget", "#question-drawer")
+	w.Header().Set("HX-Reswap", "innerHTML")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	return render(w, r, minigame.QuizDrawer(data))
 }
 
 func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	// get minigameID
-	minigameIDStr := r.FormValue("minigameID")
-	// get classroomID
-	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+	if err := r.ParseForm(); err != nil {
 		return err
 	}
-
-	err := database.AddMCQuestions(w, r, classroomID)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
 	if err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
-	return nil
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	q, errs := validateQuizForm(r.Form, true)
+	if len(errs) > 0 {
+		return respondQuizDrawerErrors(w, r, minigameID, classroomID, 0, q, errs)
+	}
+
+	if err := database.AddMCQuestions(w, r, classroomID); err != nil {
+		return err
+	}
+
+	return respondQuizRowsSaved(w, r, minigameID, classroomID, "questionSaved", "Saved ✓")
 }
 
 func HandleUpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
+	questionID, err := formInt(r, "questionID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
+	}
+
+	// The edit form doesn't post minigameID (it's fixed for an existing question, not
+	// something the teacher can change) - GetQuizQuestion hands it back alongside the
+	// question itself, the same lookup buildQuizDrawerData uses for the edit drawer.
+	_, minigameID, err := database.GetQuizQuestion(r.Context(), questionID, classroomID)
+	if err != nil {
+		return err
+	}
+
+	q, errs := validateQuizForm(r.Form, false)
+	if len(errs) > 0 {
+		return respondQuizDrawerErrors(w, r, minigameID, classroomID, questionID, q, errs)
 	}
 
 	if err := database.UpdateMCQuestions(w, r); err != nil {
 		return err
 	}
 
-	// Re-render just this card instead of redirecting back to the whole /minigame
-	// page (see FE-22) - reading back the same form fields database.UpdateMCQuestions
-	// just validated and saved (including reusing database.ConstructChoices, the same
-	// helper it used to build the choices it saved), not a fresh DB query.
-	questionID, err := formInt(r, "questionID")
-	if err != nil {
-		return err
-	}
-	number, err := formInt(r, "question_number")
-	if err != nil {
-		return err
-	}
-	correctAnswerID, err := formInt(r, "correct_answer")
-	if err != nil {
-		return err
-	}
-	choices, err := database.ConstructChoices(r, correctAnswerID)
-	if err != nil {
-		return err
-	}
-
-	renderMCCard(w, types.MultipleChoiceQuestion{
-		QuestionID:   questionID,
-		QuestionText: r.FormValue("question"),
-		Choices:      choices,
-	}, minigameID, classroomID, number, true)
-	return nil
+	return respondQuizRowsSaved(w, r, minigameID, classroomID, "questionSaved", "Saved ✓")
 }
 
 func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigameID")
-	classroomIDStr := r.FormValue("classroomID")
-
 	minigameID, err := formInt(r, "minigameID")
 	if err != nil {
 		return err
@@ -625,6 +576,5 @@ func HandleDeleteMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameIDStr+"&classroomID="+classroomIDStr)
-	return nil
+	return respondQuizRowsSaved(w, r, minigameID, classroomID, "questionDeleted", "Question deleted")
 }

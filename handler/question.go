@@ -16,15 +16,8 @@ import (
 	"soln-teachermodule/view/minigame"
 )
 
-// isQuestionDrawerKind reports whether minigameID's kind has a FractionDrawer wired up
-// - fraction (T3.4) and worded (T3.5) share it (FractionDrawerData.Worded); quiz
-// (T3.7) gets its own drawer and isn't handled by /question/new or /question/edit.
-func isQuestionDrawerKind(minigameID int) bool {
-	kind := minigameKinds[strconv.Itoa(minigameID)]
-	return kind == kindFractions || kind == kindWorded
-}
-
-// HandleQuestionNew renders an empty FractionDrawer for "+ Add question" (T3.4/T3.5).
+// HandleQuestionNew renders an empty drawer for "+ Add question" - FractionDrawer for
+// fraction/worded (T3.4/T3.5), QuizDrawer for quiz (T3.7).
 func HandleQuestionNew(w http.ResponseWriter, r *http.Request) error {
 	minigameID, err := formInt(r, "minigameID")
 	if err != nil {
@@ -38,20 +31,29 @@ func HandleQuestionNew(w http.ResponseWriter, r *http.Request) error {
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
-	if !isQuestionDrawerKind(minigameID) {
+
+	switch minigameKinds[strconv.Itoa(minigameID)] {
+	case kindFractions, kindWorded:
+		data, err := buildFractionDrawerData(r.Context(), minigameID, classroomID, 0, types.FractionQuestion{}, nil)
+		if err != nil {
+			return err
+		}
+		return render(w, r, minigame.FractionDrawer(data))
+	case kindQuiz:
+		data, err := buildQuizDrawerData(r.Context(), minigameID, classroomID, 0, types.MultipleChoiceQuestion{}, nil)
+		if err != nil {
+			return err
+		}
+		return render(w, r, minigame.QuizDrawer(data))
+	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That question type isn't supported yet.")
 		return errors.New("unsupported minigame kind for /question/new")
 	}
-
-	data, err := buildFractionDrawerData(r.Context(), minigameID, classroomID, 0, types.FractionQuestion{}, nil)
-	if err != nil {
-		return err
-	}
-	return render(w, r, minigame.FractionDrawer(data))
 }
 
-// HandleQuestionEdit renders a FractionDrawer pre-filled with an existing question,
-// for a list row's hx-get (T3.4/T3.5).
+// HandleQuestionEdit renders a drawer pre-filled with an existing question, for a list
+// row's hx-get - FractionDrawer for fraction/worded (T3.4/T3.5), QuizDrawer for quiz
+// (T3.7).
 func HandleQuestionEdit(w http.ResponseWriter, r *http.Request) error {
 	minigameID, err := formInt(r, "minigameID")
 	if err != nil {
@@ -69,25 +71,40 @@ func HandleQuestionEdit(w http.ResponseWriter, r *http.Request) error {
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
-	if !isQuestionDrawerKind(minigameID) {
+
+	switch minigameKinds[strconv.Itoa(minigameID)] {
+	case kindFractions, kindWorded:
+		q, _, err := database.GetFractionQuestion(r.Context(), questionID, classroomID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				renderErrorPage(w, r, http.StatusNotFound, "That question doesn't exist.")
+				return err
+			}
+			return err
+		}
+		data, err := buildFractionDrawerData(r.Context(), minigameID, classroomID, questionID, q, nil)
+		if err != nil {
+			return err
+		}
+		return render(w, r, minigame.FractionDrawer(data))
+	case kindQuiz:
+		q, _, err := database.GetQuizQuestion(r.Context(), questionID, classroomID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				renderErrorPage(w, r, http.StatusNotFound, "That question doesn't exist.")
+				return err
+			}
+			return err
+		}
+		data, err := buildQuizDrawerData(r.Context(), minigameID, classroomID, questionID, q, nil)
+		if err != nil {
+			return err
+		}
+		return render(w, r, minigame.QuizDrawer(data))
+	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That question type isn't supported yet.")
 		return errors.New("unsupported minigame kind for /question/edit")
 	}
-
-	q, _, err := database.GetFractionQuestion(r.Context(), questionID, classroomID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			renderErrorPage(w, r, http.StatusNotFound, "That question doesn't exist.")
-			return err
-		}
-		return err
-	}
-
-	data, err := buildFractionDrawerData(r.Context(), minigameID, classroomID, questionID, q, nil)
-	if err != nil {
-		return err
-	}
-	return render(w, r, minigame.FractionDrawer(data))
 }
 
 // buildFractionDrawerData assembles everything FractionDrawer needs. q is the values
@@ -219,4 +236,110 @@ func validateFractionField(vals url.Values, field string, min int, errs map[stri
 // regardless of what characters it contains.
 func triggerEvent(w http.ResponseWriter, event, message string) {
 	w.Header().Set("HX-Trigger", fmt.Sprintf(`{%s:{"message":%s}}`, escJS(event), escJS(message)))
+}
+
+// buildQuizDrawerData assembles everything QuizDrawer needs - mirrors
+// buildFractionDrawerData (T3.4). q is the values to show: a freshly fetched question
+// when editing, the zero-value MultipleChoiceQuestion for a new one, or the teacher's
+// just-submitted values when errs is non-empty (DEC-4).
+func buildQuizDrawerData(ctx context.Context, minigameID, classroomID, questionID int, q types.MultipleChoiceQuestion, errs map[string]string) (minigame.QuizDrawerData, error) {
+	scene, ok := types.SceneByID(minigameID)
+	if !ok {
+		return minigame.QuizDrawerData{}, fmt.Errorf("no such minigame: %d", minigameID)
+	}
+
+	data := minigame.QuizDrawerData{
+		MinigameID:   minigameID,
+		ClassroomID:  classroomID,
+		QuestionID:   questionID,
+		SceneName:    scene.Name,
+		QuestionText: q.QuestionText,
+		Errors:       errs,
+	}
+	for i := 0; i < 4 && i < len(q.Choices); i++ {
+		data.Options[i] = minigame.QuizOption{
+			Text:     q.Choices[i].ChoiceText,
+			ChoiceID: q.Choices[i].ChoiceID,
+			Correct:  q.Choices[i].IsCorrect,
+		}
+	}
+
+	if questionID == 0 {
+		return data, nil
+	}
+	data.Editing = true
+
+	// RowNumber must skip malformed (not-exactly-4-choices) questions the same way
+	// quizRows does, so "Edit question N" matches the row the teacher actually clicked.
+	all, err := database.GetQuizQuestions(ctx, minigameID, classroomID)
+	if err != nil {
+		return minigame.QuizDrawerData{}, err
+	}
+	number := 0
+	for _, mq := range all {
+		if len(mq.Choices) != 4 {
+			continue
+		}
+		number++
+		if mq.QuestionID == questionID {
+			data.RowNumber = number
+			break
+		}
+	}
+
+	return data, nil
+}
+
+// validateQuizForm reads and validates a quiz question's text and 4 choices from vals.
+// Field names differ between new and edit mode (X4; quiz.templ's quizOptionField/
+// quizRadioValue mirror this exactly): new mode uses question_text/option_1..4/
+// correct_answer=option_N, edit mode uses question/option1..4/correct_answer=choice_id.
+// Pure over url.Values so it's cheap to table-test (question_test.go).
+func validateQuizForm(vals url.Values, isNew bool) (types.MultipleChoiceQuestion, map[string]string) {
+	errs := map[string]string{}
+	var q types.MultipleChoiceQuestion
+
+	textField := "question"
+	if isNew {
+		textField = "question_text"
+	}
+	q.QuestionText = vals.Get(textField)
+	if strings.TrimSpace(q.QuestionText) == "" {
+		errs[textField] = "Question text can't be blank."
+	} else if len(q.QuestionText) > 500 {
+		errs[textField] = "Question text must be 500 characters or fewer."
+	}
+
+	correctAnswer := vals.Get("correct_answer")
+	haveCorrect := false
+	q.Choices = make([]types.Choice, 4)
+	for i := 0; i < 4; i++ {
+		field := fmt.Sprintf("option_%d", i+1)
+		if !isNew {
+			field = fmt.Sprintf("option%d", i+1)
+		}
+		text := vals.Get(field)
+		q.Choices[i].ChoiceText = text
+		if strings.TrimSpace(text) == "" {
+			errs[field] = "Option text can't be blank."
+		} else if len(text) > 255 {
+			errs[field] = "Option text must be 255 characters or fewer."
+		}
+
+		if isNew {
+			q.Choices[i].IsCorrect = correctAnswer == fmt.Sprintf("option_%d", i+1)
+		} else {
+			choiceID, _ := strconv.Atoi(vals.Get(fmt.Sprintf("option%d_choiceID", i+1)))
+			q.Choices[i].ChoiceID = choiceID
+			q.Choices[i].IsCorrect = correctAnswer != "" && strconv.Itoa(choiceID) == correctAnswer
+		}
+		if q.Choices[i].IsCorrect {
+			haveCorrect = true
+		}
+	}
+	if !haveCorrect {
+		errs["correct_answer"] = "Choose the correct answer."
+	}
+
+	return q, errs
 }
