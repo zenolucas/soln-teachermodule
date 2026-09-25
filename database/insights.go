@@ -243,3 +243,60 @@ func GetTeacherClassroomIDs(ctx context.Context, teacherID int) ([]int, error) {
 	}
 	return ids, nil
 }
+
+// GetQuestionCounts returns each minigame's question count in this classroom (02
+// §C4), from a UNION of the two question tables. A minigame_id only ever appears in
+// one of them, so there's nothing to deduplicate.
+func GetQuestionCounts(ctx context.Context, classroomID int) (map[int]int, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT minigame_id, COUNT(*) FROM fraction_questions WHERE classroom_id = ? GROUP BY minigame_id
+		UNION ALL
+		SELECT minigame_id, COUNT(*) FROM multiple_choice_questions WHERE classroom_id = ? GROUP BY minigame_id
+	`, classroomID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	counts := map[int]int{}
+	for rows.Next() {
+		var minigameID, count int
+		if err := rows.Scan(&minigameID, &count); err != nil {
+			return nil, fmt.Errorf("GetQuestionCounts: %v", err)
+		}
+		counts[minigameID] = count
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetQuestionCounts: %v", err)
+	}
+	return counts, nil
+}
+
+// GetSceneAccuracy sums enrolled students' right/wrong attempts per fraction/worded
+// minigame in this classroom, as [2]int{right, wrong}.
+func GetSceneAccuracy(ctx context.Context, classroomID int) (map[int][2]int, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT fr.minigame_id, SUM(fr.num_right_attempts), SUM(fr.num_wrong_attempts)
+		FROM fraction_responses fr
+		JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
+		WHERE fr.classroom_id = ?
+		GROUP BY fr.minigame_id
+	`, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	acc := map[int][2]int{}
+	for rows.Next() {
+		var minigameID, right, wrong int
+		if err := rows.Scan(&minigameID, &right, &wrong); err != nil {
+			return nil, fmt.Errorf("GetSceneAccuracy: %v", err)
+		}
+		acc[minigameID] = [2]int{right, wrong}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetSceneAccuracy: %v", err)
+	}
+	return acc, nil
+}
