@@ -76,3 +76,170 @@ func GetRecentActivity(ctx context.Context, teacherID int, limit int) ([]types.A
 	}
 	return activity, nil
 }
+
+// GetFinishedScenes returns, per enrolled student, the set of minigame IDs they have
+// at least one row for in this classroom - a fraction_responses row for a
+// fraction/worded scene, or a multiple_choice_scores row for a quiz. The same map is
+// meant to be passed as both the played and quizScored arguments to
+// handler.currentScene (DEC-10): for a quiz scene, the only way a row exists at all
+// is if it was scored, so "has a row" and "was scored" are the same fact there.
+func GetFinishedScenes(ctx context.Context, classroomID int) (map[int]map[int]bool, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT fr.student_id, fr.minigame_id
+		FROM fraction_responses fr
+		JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
+		WHERE fr.classroom_id = ?
+		UNION
+		SELECT mcs.student_id, mcs.minigame_id
+		FROM multiple_choice_scores mcs
+		JOIN enrollments e ON e.classroom_id = mcs.classroom_id AND e.student_id = mcs.student_id
+		WHERE mcs.classroom_id = ?
+	`, classroomID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	finished := map[int]map[int]bool{}
+	for rows.Next() {
+		var studentID, minigameID int
+		if err := rows.Scan(&studentID, &minigameID); err != nil {
+			return nil, fmt.Errorf("GetFinishedScenes: %v", err)
+		}
+		if finished[studentID] == nil {
+			finished[studentID] = map[int]bool{}
+		}
+		finished[studentID][minigameID] = true
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetFinishedScenes: %v", err)
+	}
+	return finished, nil
+}
+
+// latestQuizScoresSQL keeps DEC-9's "latest attempt" rule (MAX(statistic_id) per
+// student per quiz) in one place, so switching to best-attempt later is a one-line
+// change here instead of a hunt through every quiz query.
+const latestQuizScoresSQL = `
+SELECT mcs.student_id, mcs.minigame_id, mcs.score,
+       (SELECT COUNT(*) FROM multiple_choice_questions q
+        WHERE q.minigame_id = mcs.minigame_id AND q.classroom_id = mcs.classroom_id) AS total
+FROM multiple_choice_scores mcs
+JOIN enrollments e ON e.classroom_id = mcs.classroom_id AND e.student_id = mcs.student_id
+JOIN (
+	SELECT student_id, minigame_id, MAX(statistic_id) AS latest_id
+	FROM multiple_choice_scores
+	WHERE classroom_id = ?
+	GROUP BY student_id, minigame_id
+) latest ON latest.latest_id = mcs.statistic_id
+WHERE mcs.classroom_id = ?
+`
+
+// GetLatestQuizScores returns each enrolled student's latest attempt at every quiz
+// they've taken in this classroom, with Total filled in from a count of that quiz's
+// questions.
+func GetLatestQuizScores(ctx context.Context, classroomID int) ([]types.QuizScoreRow, error) {
+	rows, err := db.QueryContext(ctx, latestQuizScoresSQL, classroomID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var scores []types.QuizScoreRow
+	for rows.Next() {
+		var s types.QuizScoreRow
+		if err := rows.Scan(&s.StudentID, &s.MinigameID, &s.Score, &s.Total); err != nil {
+			return nil, fmt.Errorf("GetLatestQuizScores: %v", err)
+		}
+		scores = append(scores, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetLatestQuizScores: %v", err)
+	}
+	return scores, nil
+}
+
+// GetFractionAggregates sums each enrolled student's right/wrong attempts per
+// fraction/worded minigame in this classroom. It doesn't compute MAX(num_wrong_attempts)
+// (02 §C2's wrong_streak input): DEC-24 drops the wrong_streak flag pending the
+// game-client audit, and types.FractionAggRow has no field for it - adding one back is
+// a matter for whoever revisits DEC-24.
+func GetFractionAggregates(ctx context.Context, classroomID int) ([]types.FractionAggRow, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT fr.student_id, fr.minigame_id, SUM(fr.num_right_attempts), SUM(fr.num_wrong_attempts)
+		FROM fraction_responses fr
+		JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
+		WHERE fr.classroom_id = ?
+		GROUP BY fr.student_id, fr.minigame_id
+	`, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var aggs []types.FractionAggRow
+	for rows.Next() {
+		var a types.FractionAggRow
+		if err := rows.Scan(&a.StudentID, &a.MinigameID, &a.Right, &a.Wrong); err != nil {
+			return nil, fmt.Errorf("GetFractionAggregates: %v", err)
+		}
+		aggs = append(aggs, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetFractionAggregates: %v", err)
+	}
+	return aggs, nil
+}
+
+// GetEnrolledStudents is GetStudents' enrollments+users join, but ordered by
+// lastname, firstname - GetStudents itself has no ORDER BY today, so its result order
+// isn't guaranteed, and this task's file list doesn't include changing it.
+func GetEnrolledStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT u.firstname, u.lastname, u.user_id
+		FROM enrollments e
+		JOIN users u ON u.user_id = e.student_id
+		WHERE e.classroom_id = ?
+		ORDER BY u.lastname, u.firstname
+	`, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var students []types.Student
+	for rows.Next() {
+		var s types.Student
+		if err := rows.Scan(&s.Firstname, &s.Lastname, &s.UserID); err != nil {
+			return nil, fmt.Errorf("GetEnrolledStudents: %v", err)
+		}
+		students = append(students, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetEnrolledStudents: %v", err)
+	}
+	return students, nil
+}
+
+// GetTeacherClassroomIDs lists the classroom IDs a teacher owns, for callers (e.g.
+// loadTeacherSummaries) that need to loop over every classroom a teacher has.
+func GetTeacherClassroomIDs(ctx context.Context, teacherID int) ([]int, error) {
+	rows, err := db.QueryContext(ctx, "SELECT classroom_id FROM classrooms WHERE teacher_id = ?", teacherID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("GetTeacherClassroomIDs: %v", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetTeacherClassroomIDs: %v", err)
+	}
+	return ids, nil
+}
