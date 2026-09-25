@@ -149,8 +149,79 @@ func renderQuizStatisticsPage(w http.ResponseWriter, r *http.Request, page layou
 		Sprite:   scene.Image,
 	}
 
-	byQuestion := statistics.LegacyByQuestionFragment(classroomIDStr, minigameID)
+	questions, err := database.GetQuizQuestions(r.Context(), minigameIDInt, classroomID)
+	if err != nil {
+		return err
+	}
+	dist, err := database.GetQuizChoiceDistribution(r.Context(), classroomID, minigameIDInt)
+	if err != nil {
+		return err
+	}
+	byQuestion := buildQuestionStats(questions, dist)
+
+	// T5.3: the By-question section no longer loads the legacy Chart.js fragment, so
+	// this page needs neither chart.min.js nor its trailing <script> (see layout/app.templ).
+	page.Charts = false
+
 	return render(w, r, statistics.QuizPage(page, h, classroomIDStr, minigameID, sum, scores, questionCount, byQuestion))
+}
+
+// buildQuestionStats composes each quiz question's classroom-wide rollup (T5.3):
+// accuracy (the correct choice's share of all responses), an optional misconception
+// hint (T4.11's ClassHint), and every choice's tally. A choice's display bar scales to
+// the question's most-picked choice, not to its total responses. Number is assigned
+// by original question order, before the hardest-first sort, so it stays stable
+// regardless of display order.
+func buildQuestionStats(questions []types.MultipleChoiceQuestion, dist map[int][]types.ChoiceCount) []statistics.QuestionStat {
+	rows := make([]statistics.QuestionStat, 0, len(questions))
+	for i, q := range questions {
+		counts := dist[q.QuestionID]
+
+		hintChoices := make([]ChoiceStat, len(counts))
+		viewChoices := make([]statistics.ChoiceStat, len(counts))
+		total, maxCount, correctCount := 0, 0, 0
+		for j, c := range counts {
+			letter := string(rune('A' + j))
+			hintChoices[j] = ChoiceStat{Letter: letter, Text: c.Text, Correct: c.IsCorrect, Count: c.Count}
+			viewChoices[j] = statistics.ChoiceStat{Letter: letter, Text: c.Text, IsCorrect: c.IsCorrect, Count: c.Count}
+			total += c.Count
+			if c.Count > maxCount {
+				maxCount = c.Count
+			}
+			if c.IsCorrect {
+				correctCount = c.Count
+			}
+		}
+		for j := range viewChoices {
+			viewChoices[j].Pct = pctOfMax(viewChoices[j].Count, maxCount)
+		}
+
+		accuracy := -1
+		if total > 0 {
+			accuracy = correctCount * 100 / total
+		}
+		hint, _ := ClassHint(q.QuestionText, hintChoices)
+
+		rows = append(rows, statistics.QuestionStat{
+			Number:      i + 1,
+			Text:        q.QuestionText,
+			AccuracyPct: accuracy,
+			Hint:        hint,
+			Choices:     viewChoices,
+		})
+	}
+
+	sort.SliceStable(rows, func(i, j int) bool {
+		return pctAscNoDataLast(rows[i].AccuracyPct, rows[j].AccuracyPct)
+	})
+	return rows
+}
+
+func pctOfMax(count, max int) int {
+	if max == 0 {
+		return 0
+	}
+	return count * 100 / max
 }
 
 // renderNoQuestionStatistics is shared by the fraction/worded/quiz question-chart
