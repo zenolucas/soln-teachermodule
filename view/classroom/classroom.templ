@@ -54,30 +54,73 @@ templ Overview(p layout.Page, room types.Classroom) {
 	}
 }
 
+// kindLabel is the scene-card Kind badge's display text (01 §1c: "Fractions"/"Worded"/
+// "Quiz"), distinct from the lowercase types.MinigameKind values used internally for
+// dispatch (e.g. minigameKinds in handler/minigame.go).
+func kindLabel(k types.MinigameKind) string {
+	switch k {
+	case types.KindWorded:
+		return "Worded"
+	case types.KindQuiz:
+		return "Quiz"
+	default:
+		return "Fractions"
+	}
+}
+
 templ Minigames(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: "Minigames"})
-			<!-- One Go slice (types.Worlds/types.Scene) replaces what used to be these
-			     12 copy-pasted hero blocks, one per scene (see FE-13). -->
-			for _, world := range types.Worlds {
-				<h1 class="text-5xl font-bold">{ world.Title }</h1>
-				<p class="py-6 text-xl">{ world.Intro }</p>
-				for _, scene := range world.Scenes {
-					<div class="hero bg-base-200 mb-4">
-						<div class="hero-content flex-col lg:flex-row">
-							<img src={ scene.Image } alt={ scene.Alt }
-								class="max-w-sm rounded-lg shadow-2xl" />
-							<div>
-								<h1 class="text-2xl font-bold">{ scene.Name }</h1>
-								<p class="py-6 text-xl">{ scene.Blurb }</p>
-								<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%d&classroomID=%s", scene.MinigameID, room.ClassroomID))} class="btn btn-primary text-white">Edit Questions</a>
-								<a href={ templ.URL(fmt.Sprintf("%s?minigameID=%d&classroomID=%s", scene.StatsPath(), scene.MinigameID, room.ClassroomID))} class="btn btn-primary text-white">View Statistics</a>
-							</div>
+			@ui.PageHeader(ui.Header{
+				Crumbs:   classroomCrumbs(room),
+				Title:    "Minigames",
+				Subtitle: "Edit the questions students see in each scene, and check how the class is doing.",
+			}) {
+				<!-- Client-side only (see public/js/index.js): toggles `hidden` on the
+				     [data-world] blocks below, so the world filter needs no server round trip
+				     (01 §1c). -->
+				<div class="join">
+					<button type="button" class="btn btn-sm join-item btn-active" data-world-filter="all">All worlds</button>
+					<button type="button" class="btn btn-sm join-item" data-world-filter="1">World 1</button>
+					<button type="button" class="btn btn-sm join-item" data-world-filter="2">World 2</button>
+					<button type="button" class="btn btn-sm join-item" data-world-filter="3">World 3</button>
+				</div>
+			}
+			<div class="flex flex-col gap-5 px-4 pb-4">
+				for _, world := range types.Worlds {
+					<div data-world={ fmt.Sprint(world.Number) } class="flex flex-col gap-2.5">
+						<div class="flex items-baseline gap-2.5">
+							<span class="text-base font-bold">World { fmt.Sprint(world.Number) } · { world.Topic }</span>
+							<span class="text-[12.5px] opacity-60">{ fmt.Sprint(len(world.Scenes)) } scenes</span>
+							<button type="button" aria-label="About this world" data-tip={ world.Intro } class="tooltip opacity-60 hover:opacity-100">
+								<i class="fa-solid fa-circle-info text-xs" aria-hidden="true"></i>
+							</button>
+						</div>
+						<div class="grid grid-cols-6 gap-3">
+							for _, scene := range world.Scenes {
+								<div class="bg-base-100 rounded-box border border-base-content/10 overflow-hidden flex flex-col">
+									<div class="relative h-[104px] bg-base-content">
+										<img src={ scene.Image } alt={ scene.Alt } class="w-full h-full object-cover object-[center_35%] [image-rendering:pixelated]" />
+										<span class="absolute left-2 top-2 px-[7px] py-0.5 rounded-box bg-base-100 text-[11px] font-bold">{ kindLabel(scene.Kind) }</span>
+									</div>
+									<div class="p-2.5 flex flex-col gap-2 flex-1">
+										<span class="text-[13px] font-bold leading-tight min-h-8 line-clamp-2">{ scene.Name }</span>
+										<!-- Question count and class accuracy fill in with T4.8 - this task is
+										     the layout only (see 02 §C4, "New data" in the design handoff). -->
+										<div class="flex flex-col gap-0.5 text-[11.5px] opacity-70 min-h-[28px]"></div>
+										<div class="flex gap-1.5 mt-auto">
+											<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%d&classroomID=%s", scene.MinigameID, room.ClassroomID)) } class="btn btn-primary btn-sm flex-1">Edit</a>
+											<a href={ templ.URL(fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%d", room.ClassroomID, scene.MinigameID)) } aria-label="View statistics" class="btn btn-sm w-[34px] px-0">
+												<i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+											</a>
+										</div>
+									</div>
+								</div>
+							}
 						</div>
 					</div>
 				}
-			}
+			</div>
 		</div>
 	}
 }

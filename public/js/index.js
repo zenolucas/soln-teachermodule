@@ -326,3 +326,29 @@ document.body.addEventListener("click", function (evt) {
 		localStorage.setItem("soln.sidebar", next);
 	} catch (e) {}
 });
+
+// The Minigames page's "All worlds / World 1 / World 2 / World 3" filter (see
+// classroom.templ's Minigames, T2.1) is client-side only - every world's scenes are
+// already on the page, so there's nothing to fetch, just [data-world] blocks to
+// show/hide. Sets style.display directly rather than the `hidden` attribute/property -
+// each block also carries Tailwind's `flex` utility, and `[hidden]` loses to a `.flex`
+// class rule of equal specificity that happens to come later in the stylesheet, so
+// `block.hidden = true` silently doesn't hide anything. An inline style always wins on
+// specificity regardless of class order.
+document.body.addEventListener("click", function (evt) {
+	var filterBtn = evt.target.closest("[data-world-filter]");
+	if (!filterBtn) {
+		return;
+	}
+	var value = filterBtn.dataset.worldFilter;
+	var join = filterBtn.closest(".join");
+	if (join) {
+		join.querySelectorAll("[data-world-filter]").forEach(function (btn) {
+			btn.classList.toggle("btn-active", btn === filterBtn);
+		});
+	}
+	document.querySelectorAll("[data-world]").forEach(function (block) {
+		var hide = value !== "all" && block.dataset.world !== value;
+		block.style.display = hide ? "none" : "";
+	});
+});
