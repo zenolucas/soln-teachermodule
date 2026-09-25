@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
@@ -167,16 +166,6 @@ func formInt(r *http.Request, key string) (int, error) {
 	return n, nil
 }
 
-// esc escapes a string for safe interpolation into HTML markup built by hand with
-// fmt.Fprintf. These fragments (classroom names/descriptions, student names, question
-// text, all teacher- or registration-supplied) are the only part of the app that
-// doesn't use templ, which escapes automatically - until they're ported, every %s
-// argument that carries string data must go through this (see SEC-07). Safe to use on
-// IDs and other non-string-typed values too; escaping plain digits is a no-op.
-func esc(s string) string {
-	return html.EscapeString(s)
-}
-
 // escJS renders s as a JSON string literal (quotes included), safe to embed directly
 // inside a hand-built <script> block - a plain %s there could break out of the script
 // via a literal quote, backslash, or "</script>". encoding/json escapes '<', '>', and
@@ -250,17 +239,6 @@ func isLocalRedirect(to string) bool {
 		return false
 	}
 	return true
-}
-
-// pctCorrect renders a right/wrong attempt count as a percentage string for display,
-// e.g. "75%" - or "—" when there have been no attempts yet, since 0/0 would otherwise
-// render as a misleading "0%" (see FE-31).
-func pctCorrect(right, wrong int) string {
-	total := right + wrong
-	if total == 0 {
-		return "—"
-	}
-	return fmt.Sprintf("%.0f%%", 100*float64(right)/float64(total))
 }
 
 func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {

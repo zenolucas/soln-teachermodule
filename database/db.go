@@ -1073,64 +1073,6 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int
 }
 
 
-func GetQuizClassStatistics(ctx context.Context, classroomID int, minigameID int) ([]types.QuizClassStatistics, error) {
-	var statistics []types.QuizClassStatistics
-
-	// get scores and count per score
-	rows, err := db.QueryContext(ctx, "SELECT score, COUNT(*) AS count_per_score FROM multiple_choice_scores WHERE classroom_id = ? AND minigame_id = ? GROUP BY score ORDER BY score", classroomID, minigameID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var statistic types.QuizClassStatistics
-		if err := rows.Scan(&statistic.Score, &statistic.Count); err != nil {
-			return nil, err
-		}
-		statistics = append(statistics, statistic)
-	}
-	fmt.Print("returned class statistics contains: ", statistics)
-
-	return statistics, nil
-}
-
-func GetQuizResponseStatistics(ctx context.Context, classroomID int, minigameID int, questionID int) ([]types.QuizResponseStatistics, error) {
-	var responseStatistics []types.QuizResponseStatistics
-
-	rows, err := db.QueryContext(ctx, `
-			SELECT
-			c.choice_text,
-			COUNT(r.choice_id) AS response_count
-		FROM
-			multiple_choice_choices AS c
-		LEFT JOIN
-			multiple_choice_responses AS r ON c.choice_id = r.choice_id
-			AND r.question_id = ?
-			AND r.minigame_id = ?
-			AND r.classroom_id = ?
-		WHERE
-			c.question_id = ?
-		GROUP BY
-			c.choice_id, c.choice_text;
-	`, questionID, minigameID, classroomID, questionID)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var statistic types.QuizResponseStatistics
-		if err := rows.Scan(&statistic.Choice, &statistic.Count); err != nil {
-			return nil, err
-		}
-		responseStatistics = append(responseStatistics, statistic)
-	}
-
-	return responseStatistics, nil
-}
-
 func AddQuizResponse(ctx context.Context, classroomID int, minigameID int, questionID int, studentID int, choiceID int) error {
 	_, err := db.ExecContext(ctx, "INSERT INTO multiple_choice_responses (classroom_id, minigame_id, question_id, student_id, choice_id) VALUES (?, ?, ?, ?, ?)", classroomID, minigameID, questionID, studentID, choiceID)
 	if err != nil {
@@ -1185,26 +1127,6 @@ func GetSavedData(ctx context.Context, studentID int) (types.SaveData, error) {
 	save_data.PlayerBadges = badges
 
 	return save_data, nil
-}
-
-func GetStudentScores(ctx context.Context, classroomID int, minigameID int) ([]types.StudentQuizScore, error) {
-	var studentScores []types.StudentQuizScore
-
-	rows, err := db.QueryContext(ctx, "SELECT u.firstname, u.lastname, mcs.score FROM multiple_choice_scores AS mcs JOIN users AS u ON mcs.student_id = u.user_id WHERE mcs.classroom_id = ? AND mcs.minigame_id = ? ORDER BY mcs.score DESC", classroomID, minigameID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var student types.StudentQuizScore
-		if err := rows.Scan(&student.FirstName, &student.LastName, &student.Score); err != nil {
-			return nil, fmt.Errorf("GetStudentScores: %v", err)
-		}
-		studentScores = append(studentScores, student)
-	}
-
-	return studentScores, nil
 }
 
 // GetStudentFractionStatistics is one student's per-question performance in a
