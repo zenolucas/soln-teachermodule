@@ -6,6 +6,13 @@
 // success toast is shorter-lived (~3s) than an error one (6s), since it's confirming
 // something that already worked rather than something the teacher needs time to read
 // and act on.
+//
+// pointer-events-none (T3.4): the question drawer is also docked to the bottom-right
+// corner, so a save's "Saved ✓" toast can still be up when the drawer reopens (e.g.
+// clicking "+ Add question" right after saving) and would otherwise sit on top of the
+// drawer's own footer buttons, silently eating the next click. A toast has no
+// interactive content of its own, so it's safe to let clicks pass straight through it
+// to whatever's underneath.
 function solnShowToast(message, kind) {
 	kind = kind === "success" ? "success" : "error";
 
@@ -16,7 +23,7 @@ function solnShowToast(message, kind) {
 
 	var toast = document.createElement("div");
 	toast.id = "soln-toast";
-	toast.className = "toast toast-end toast-bottom z-[1000]";
+	toast.className = "toast toast-end toast-bottom z-[1000] pointer-events-none";
 	toast.innerHTML =
 		'<div role="alert" class="alert ' +
 		(kind === "success" ? "alert-success" : "alert-error") +

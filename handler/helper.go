@@ -14,6 +14,7 @@ import (
 	"soln-teachermodule/view/ui"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/a-h/templ"
 )
@@ -182,9 +183,28 @@ func esc(s string) string {
 // via a literal quote, backslash, or "</script>". encoding/json escapes '<', '>', and
 // '&' by default specifically to make its output safe to embed in HTML/script
 // contexts, which a plain fmt %q or manual quoting would not do (see SEC-07).
+//
+// It also escapes every non-ASCII rune to \uXXXX, which json.Marshal alone does not
+// do - found while wiring up the question drawer's HX-Trigger toast (T3.4): browsers
+// decode HTTP header values as Latin-1, not UTF-8, so a raw multi-byte character
+// (e.g. "Saved ✓") embedded via escJS in a header came back on the client as mojibake.
+// Escaping keeps the result pure ASCII, which is safe in a header regardless of how
+// the far end decodes it, and is a no-op for the existing <script>-embedding callers.
 func escJS(s string) string {
 	b, _ := json.Marshal(s)
-	return string(b)
+	var out strings.Builder
+	for _, r := range string(b) {
+		switch {
+		case r < 128:
+			out.WriteRune(r)
+		case r > 0xFFFF:
+			r1, r2 := utf16.EncodeRune(r)
+			fmt.Fprintf(&out, `\u%04x\u%04x`, r1, r2)
+		default:
+			fmt.Fprintf(&out, `\u%04x`, r)
+		}
+	}
+	return out.String()
 }
 
 // minigameKind classifies which question type a minigame ID holds. HandleMinigameIndex
