@@ -306,6 +306,51 @@ func TestBuildSceneSummariesNoEnrolledStudents(t *testing.T) {
 	}
 }
 
+func TestSummarizeQuiz(t *testing.T) {
+	t.Run("odd count: median is the middle score", func(t *testing.T) {
+		scores := []types.StudentScore{{Score: 3}, {Score: 7}, {Score: 7}, {Score: 10}, {Score: 5}}
+		got := summarizeQuiz(scores, 10, 5)
+
+		want := types.QuizSummary{
+			AvgPct:    64,
+			AvgScore:  6.4,
+			Median:    7,
+			Took:      5,
+			Enrolled:  5,
+			Below:     2, // 3 and 5 are below 60% of 10
+			Histogram: []int{0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 1},
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("summarizeQuiz(...) = %+v, want %+v", got, want)
+		}
+	})
+
+	t.Run("even count: median averages the two middle scores", func(t *testing.T) {
+		scores := []types.StudentScore{{Score: 4}, {Score: 6}}
+		got := summarizeQuiz(scores, 10, 2)
+		if got.Median != 5 {
+			t.Errorf("Median = %v, want 5 (average of 4 and 6)", got.Median)
+		}
+	})
+
+	t.Run("empty: zero stats, but the histogram is still total+1 long", func(t *testing.T) {
+		got := summarizeQuiz(nil, 10, 8)
+		want := types.QuizSummary{Took: 0, Enrolled: 8, Histogram: make([]int, 11)}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("summarizeQuiz(nil, 10, 8) = %+v, want %+v", got, want)
+		}
+	})
+
+	t.Run("histogram length is always total+1", func(t *testing.T) {
+		for _, total := range []int{0, 1, 6, 10} {
+			got := summarizeQuiz([]types.StudentScore{{Score: 0}}, total, 1)
+			if len(got.Histogram) != total+1 {
+				t.Errorf("total %d: len(Histogram) = %d, want %d", total, len(got.Histogram), total+1)
+			}
+		}
+	})
+}
+
 func TestCollapseActivity(t *testing.T) {
 	played := func(user, classroom, minigame int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}

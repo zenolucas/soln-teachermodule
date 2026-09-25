@@ -306,3 +306,83 @@ func GetSceneAccuracy(ctx context.Context, classroomID int) (map[int][2]int, err
 	}
 	return acc, nil
 }
+
+// GetQuizChoiceDistribution returns, per question, how many enrolled students picked
+// each choice - across every attempt, not just each student's latest (02 §C8):
+// multiple_choice_responses rows aren't individually tied to a specific attempt
+// without a timestamp to group them by, so there's no way to isolate "the latest
+// attempt's responses" the way GetLatestQuizScores does for scores. The enrollment
+// check lives inside the LEFT JOIN's own ON clause, not a WHERE, so a choice with zero
+// (enrolled) responses still gets a row with Count 0 instead of being dropped.
+func GetQuizChoiceDistribution(ctx context.Context, classroomID, minigameID int) (map[int][]types.ChoiceCount, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT c.question_id, c.choice_id, c.choice_text, c.is_correct, COUNT(r.response_id)
+		FROM multiple_choice_choices c
+		JOIN multiple_choice_questions q ON q.question_id = c.question_id
+		LEFT JOIN multiple_choice_responses r
+			ON r.choice_id = c.choice_id
+			AND r.minigame_id = q.minigame_id
+			AND r.classroom_id = q.classroom_id
+			AND EXISTS (SELECT 1 FROM enrollments e WHERE e.classroom_id = r.classroom_id AND e.student_id = r.student_id)
+		WHERE q.minigame_id = ? AND q.classroom_id = ?
+		GROUP BY c.question_id, c.choice_id, c.choice_text, c.is_correct
+		ORDER BY c.question_id, c.choice_id
+	`, minigameID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	dist := map[int][]types.ChoiceCount{}
+	for rows.Next() {
+		var questionID int
+		var cc types.ChoiceCount
+		if err := rows.Scan(&questionID, &cc.ChoiceID, &cc.Text, &cc.IsCorrect, &cc.Count); err != nil {
+			return nil, fmt.Errorf("GetQuizChoiceDistribution: %v", err)
+		}
+		dist[questionID] = append(dist[questionID], cc)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetQuizChoiceDistribution: %v", err)
+	}
+	return dist, nil
+}
+
+// GetQuizStudentScores returns every enrolled student's latest attempt at one quiz
+// (DEC-9), with their name for display. Total is the same per-classroom question
+// count for every row (a quiz has one question count), included per row so callers
+// don't need a second query just to compute a percentage.
+func GetQuizStudentScores(ctx context.Context, classroomID, minigameID int) ([]types.StudentScore, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT u.user_id, u.firstname, u.lastname, mcs.score,
+		       (SELECT COUNT(*) FROM multiple_choice_questions q
+		        WHERE q.minigame_id = mcs.minigame_id AND q.classroom_id = mcs.classroom_id) AS total
+		FROM multiple_choice_scores mcs
+		JOIN enrollments e ON e.classroom_id = mcs.classroom_id AND e.student_id = mcs.student_id
+		JOIN users u ON u.user_id = mcs.student_id
+		JOIN (
+			SELECT student_id, MAX(statistic_id) AS latest_id
+			FROM multiple_choice_scores
+			WHERE classroom_id = ? AND minigame_id = ?
+			GROUP BY student_id
+		) latest ON latest.latest_id = mcs.statistic_id
+		WHERE mcs.classroom_id = ? AND mcs.minigame_id = ?
+	`, classroomID, minigameID, classroomID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var scores []types.StudentScore
+	for rows.Next() {
+		var s types.StudentScore
+		if err := rows.Scan(&s.UserID, &s.First, &s.Last, &s.Score, &s.Total); err != nil {
+			return nil, fmt.Errorf("GetQuizStudentScores: %v", err)
+		}
+		scores = append(scores, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetQuizStudentScores: %v", err)
+	}
+	return scores, nil
+}

@@ -99,3 +99,35 @@ type ClassroomSummary struct {
 	ReachedW3    int
 	PerWorld     [4]int
 }
+
+// ChoiceCount is one multiple-choice question's answer choice, with how many
+// enrolled students picked it across every attempt (02 §C8: individual responses
+// aren't tied to a specific attempt without timestamps, so this counts all of them,
+// not just each student's latest).
+type ChoiceCount struct {
+	ChoiceID  int
+	Text      string
+	IsCorrect bool
+	Count     int
+}
+
+// StudentScore is one enrolled student's latest attempt at a quiz (DEC-9).
+type StudentScore struct {
+	UserID      int
+	First, Last string
+	Score       int
+	Total       int
+}
+
+// QuizSummary is a quiz scene's classroom-wide rollup (02 §C8, 01 §1g's four stat
+// cards). Histogram is indexed by raw score, 0..Total inclusive (len(Histogram) ==
+// Total+1), each entry the count of students with that exact score.
+type QuizSummary struct {
+	AvgPct    int
+	AvgScore  float64
+	Median    float64
+	Took      int
+	Enrolled  int
+	Below     int
+	Histogram []int
+}
