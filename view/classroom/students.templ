@@ -16,9 +16,13 @@ templ StudentsPage(p layout.Page, room types.Classroom) {
 				<button type="button" class="btn btn-primary btn-sm" data-modal-open="modal_add_students">Add students</button>
 			}
 			<div class="px-4 pb-4">
-				<!-- get unenrolled students for add students -->
-				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"
-					hx-target="#getunenrolledstudents">
+				<!-- get unenrolled students for add students - innerHTML (the default), not
+				     outerHTML: #getunenrolledstudents is now a plain div (T2.4b), not a row
+				     wrapper, and UnenrolledRows' response doesn't re-declare that id. An
+				     outerHTML swap here would replace the div itself and take the id with
+				     it, breaking every hx-get the search box (addstudents.templ) targets at
+				     it afterward. -->
+				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-target="#getunenrolledstudents">
 					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
 				</form>
 				<!-- GET alias (DEC-7): the old /students POST stays registered too, until
@@ -36,7 +40,7 @@ templ StudentsPage(p layout.Page, room types.Classroom) {
 					</div>
 				</div>
 			</div>
-			@AddStudentsForm(room.ClassroomID)
+			@AddStudentsForm(room.ClassroomID, room.Section)
 		</div>
 	}
 }

@@ -1,0 +1,94 @@
+package classroom
+
+import "soln-teachermodule/view/ui"
+import "soln-teachermodule/types"
+
+// AddStudentsForm moved out of classroom.templ (T2.4b) and restyled per 01 §2c. The
+// list itself (UnenrolledRows) still loads via the hidden hx-trigger="load" form in
+// students.templ, same as before this task - the spec allows either that or loading on
+// modal open, and this needed no change either way.
+templ AddStudentsForm(classroomID string, section string) {
+<dialog id="modal_add_students" class="modal">
+	<!-- flex-col + the list's own min-h-0 keeps Cancel/Add always in view: the long
+	     student list scrolls inside its own flex-1 region instead of pushing the
+	     action row past the bottom of the viewport, which is what the checkbox-hack
+	     version did (see FE-43). -->
+	<div class="modal-box w-[540px] h-[600px] flex flex-col">
+		<div class="flex items-center">
+			<span class="flex-1 text-lg font-bold">Add students to { section }</span>
+			<button type="button" data-modal-close aria-label="Close" class="opacity-60 hover:opacity-100">
+				<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			</button>
+		</div>
+		<p class="text-sm opacity-70 mt-1">Students appear here after they register in the Sol'n game.</p>
+		<form id="add-students-form" hx-post="/addstudents" hx-swap="outerHTML" class="flex flex-col flex-1 min-h-0 mt-3.5">
+			<input type="hidden" name="classroomID" value={ classroomID } />
+			<div class="relative">
+				<i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-60" aria-hidden="true"></i>
+				<!-- hx-swap and hx-include are both explicit here, not left to inherit from
+				     the enclosing form:
+				     - hx-swap: the form's own hx-swap="outerHTML" (for its /addstudents
+				       submission) is otherwise inherited by every descendant htmx request,
+				       including this one - an outerHTML swap on #getunenrolledstudents
+				       replaces the div itself, taking its id with it and breaking every
+				       search after the first (confirmed live: the container vanished from
+				       the DOM after one search).
+				     - hx-include: "[name=classroomID]" alone is a page-wide selector, and
+				       every enrolled student's row (students.templ's StudentRows) has its
+				       own hidden classroomID input in its "Remove from class" form - with
+				       19+ students that's 19+ duplicate params on every search request.
+				       "closest form" scopes it to just this form's own hidden field. -->
+				<input type="search" placeholder="Search by name"
+					hx-get="/unenrolledstudents" hx-trigger="input changed delay:300ms" hx-include="closest form" hx-target="#getunenrolledstudents" hx-swap="innerHTML"
+					name="q" class="input input-bordered input-sm w-full pl-8" />
+			</div>
+			<label class="flex items-center gap-3 h-[38px] border-t border-b border-base-300 mt-3.5 text-sm font-semibold">
+				<input type="checkbox" id="select-all" class="checkbox checkbox-sm checkbox-primary" />
+				Select all
+				<span id="available-count" class="ml-auto font-normal opacity-60"></span>
+			</label>
+			<div class="overflow-y-auto flex-1 min-h-0" id="getunenrolledstudents">
+				<div class="flex justify-center p-8"><span class="loading loading-spinner" aria-label="Loading"></span></div>
+			</div>
+		</form>
+		<div class="flex items-center gap-2 border-t border-base-300 pt-3.5 mt-3">
+			<span id="selected-count" class="text-sm font-semibold">0 selected</span>
+			<button type="button" class="btn ml-auto" data-modal-close>Cancel</button>
+			<button type="submit" form="add-students-form" id="add-students-submit" class="btn btn-primary">Add students</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+}
+
+// UnenrolledRows is the add-students modal's checkbox list (see AddStudentsForm), also
+// what HandleGetUnenrolledStudents' search re-renders via hx-get. A row for a student
+// already enrolled elsewhere (OtherClass non-empty) gets a disabled checkbox and dims -
+// DEC-25's one-classroom-per-student rule means selecting them would just be silently
+// skipped by AddStudents, so index.js also excludes them from "select all" and the
+// selected/available counts.
+templ UnenrolledRows(students []types.Student) {
+	if len(students) == 0 {
+		<p class="text-center text-neutral py-8">All students are already enrolled in this classroom.</p>
+	} else {
+		for _, student := range students {
+			<label data-student-row class={ "flex items-center gap-3 h-[52px] px-1 rounded-box cursor-pointer", templ.KV("opacity-60", student.OtherClass != "") }>
+				<input type="checkbox" name="userID" value={ student.UserID } disabled?={ student.OtherClass != "" }
+					class="checkbox checkbox-sm checkbox-primary" />
+				<span class="w-[30px] h-[30px] shrink-0 rounded-full bg-secondary text-white flex items-center justify-center text-[11px] font-bold">
+					{ ui.Initials(student.Firstname, student.Lastname) }
+				</span>
+				<span class="flex-1 text-sm font-semibold">{ student.Firstname } { student.Lastname }</span>
+				<span class="text-xs opacity-60">
+					if student.OtherClass != "" {
+						In { student.OtherClass }
+					} else {
+						Not in a class
+					}
+				</span>
+			</label>
+		}
+	}
+}

@@ -256,63 +256,10 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 
 	students, err := database.GetUnenrolledStudents(r.Context(), ClassroomID, q)
 	if err != nil {
-		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
 	}
 
-	// Every student was already enrolled - the modal's checkbox table (and its "select
-	// all" checkbox) had nothing to show and no explanation why (see FE-20).
-	if len(students) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="2" class="text-center text-white text-opacity-60">All students are already enrolled in this classroom.</td></tr>`)
-		return nil
-	}
-
-	// A student already enrolled in another classroom (DEC-25: at most one) shows up
-	// here disabled, with a label naming it, rather than letting the teacher select
-	// them only to have AddStudents silently skip them with no explanation.
-	for _, student := range students {
-		if student.OtherClass != "" {
-			fmt.Fprintf(w, `
-				<tr>
-					<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item" disabled/></td>
-					<td>%s %s <span class="opacity-60">(in %s)</span></td>
-				</tr>
-			`, esc(student.UserID), esc(student.Firstname), esc(student.Lastname), esc(student.OtherClass))
-			continue
-		}
-		fmt.Fprintf(w, `
-			<tr>
-				<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item"/></td>
-				<td>%s %s</td>
-			</tr>
-		`, esc(student.UserID), esc(student.Firstname), esc(student.Lastname))
-	}
-
-	fmt.Fprintf(w, `
-	  <script>
-	    // script for the select all checkbox
-		// Get references to the "Select All" checkbox and the individual checkboxes
-		const selectAllCheckbox = document.getElementById('select-all');
-		const checkboxes = document.querySelectorAll('.checkbox-item');
-
-		// Function to handle the "Select All" checkbox toggle
-		selectAllCheckbox.addEventListener('change', () => {
-		checkboxes.forEach(checkbox => {
-			checkbox.checked = selectAllCheckbox.checked;
-		});
-		});
-
-		// Function to update "Select All" based on individual checkbox state
-		checkboxes.forEach(checkbox => {
-		checkbox.addEventListener('change', () => {
-			selectAllCheckbox.checked = [...checkboxes].every(cb => cb.checked);
-		});
-		});
-	</script>
-	
-	`)
-
-	return nil
+	return render(w, r, classroom.UnenrolledRows(students))
 }
 
 func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {

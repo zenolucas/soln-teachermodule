@@ -258,6 +258,65 @@ function solnInitSortableTables(root) {
 	});
 }
 
+// The add-students modal's select-all (with an indeterminate state when some but not
+// all rows are checked), the "n available"/"n selected" counts, the "Add n students"
+// button label, and bg-primary/10 on checked rows (see addstudents.templ, T2.4b).
+// Recomputed from scratch on every change rather than incrementally tracked, since
+// it's cheap at classroom-roster size and stays correct no matter what triggered it -
+// a checkbox toggle, or the row set itself changing after a search.
+//
+// A disabled checkbox (a student already enrolled elsewhere, DEC-25) is excluded from
+// every count and from what "select all" touches - selecting them would just be
+// silently skipped by AddStudents, so counting them as available/selectable here would
+// be misleading.
+function solnUpdateAddStudentsModal() {
+	var modal = document.getElementById("modal_add_students");
+	if (!modal) {
+		return;
+	}
+	var selectAll = modal.querySelector("#select-all");
+	var selectable = Array.from(modal.querySelectorAll('input[name="userID"]:not([disabled])'));
+	var checked = selectable.filter(function (cb) {
+		return cb.checked;
+	});
+
+	if (selectAll) {
+		selectAll.checked = selectable.length > 0 && checked.length === selectable.length;
+		selectAll.indeterminate = checked.length > 0 && checked.length < selectable.length;
+	}
+
+	modal.querySelectorAll("[data-student-row]").forEach(function (row) {
+		var cb = row.querySelector('input[name="userID"]');
+		row.classList.toggle("bg-primary/10", !!(cb && cb.checked));
+	});
+
+	var availableCount = modal.querySelector("#available-count");
+	if (availableCount) {
+		availableCount.textContent = selectable.length + " available";
+	}
+	var selectedCount = modal.querySelector("#selected-count");
+	if (selectedCount) {
+		selectedCount.textContent = checked.length + " selected";
+	}
+	var submitBtn = modal.querySelector("#add-students-submit");
+	if (submitBtn) {
+		submitBtn.textContent = checked.length > 0 ? "Add " + checked.length + " students" : "Add students";
+	}
+}
+
+document.body.addEventListener("change", function (evt) {
+	var modal = evt.target.closest("#modal_add_students");
+	if (!modal) {
+		return;
+	}
+	if (evt.target.id === "select-all") {
+		modal.querySelectorAll('input[name="userID"]:not([disabled])').forEach(function (cb) {
+			cb.checked = evt.target.checked;
+		});
+	}
+	solnUpdateAddStudentsModal();
+});
+
 // htmx:afterSettle (not the plain "load" event, which won't fire for content that
 // arrives via an htmx swap) covers both the initial hx-trigger="load" fragment and
 // any later swap into the same target.
@@ -265,6 +324,7 @@ document.body.addEventListener("htmx:afterSettle", function (evt) {
 	solnInitCharts(evt.detail.elt);
 	solnOpenPendingModals(evt.detail.elt);
 	solnInitSortableTables(evt.detail.elt);
+	solnUpdateAddStudentsModal();
 });
 
 // Disables a form's submit button just after it's submitted, so a double-click (or an
