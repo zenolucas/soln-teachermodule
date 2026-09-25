@@ -7,15 +7,20 @@ import "fmt"
 
 // StudentsPage is classroom.Students' actual content - split into its own file (T2.2)
 // since it's grown past a one-liner: the restyled table, its row-loading fragment, and
-// the add-students modal.
-templ StudentsPage(p layout.Page, room types.Classroom) {
+// the add-students modal. filter/sortKey/search seed the toolbar's initial state
+// (T4.10) - e.g. ?filter=attention, used by the T4.7 "View all"/"Struggling students"
+// links - since the toolbar itself only renders once, as part of this page, not on
+// every /students fetch (see StudentRows). They're plain strings, not
+// handler.StudentQuery, because view/classroom can't import handler (which already
+// imports this package).
+templ StudentsPage(p layout.Page, room types.Classroom, filter, sortKey, search string) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
 			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: "Students"}) {
 				<span class="text-[15px] opacity-60 mr-2"><span id="enrolled-count">…</span> enrolled</span>
 				<button type="button" class="btn btn-primary btn-sm" data-modal-open="modal_add_students">Add students</button>
 			}
-			<div class="px-4 pb-4">
+			<div class="px-4 pb-4 flex flex-col gap-3">
 				<!-- get unenrolled students for add students - innerHTML (the default), not
 				     outerHTML: #getunenrolledstudents is now a plain div (T2.4b), not a row
 				     wrapper, and UnenrolledRows' response doesn't re-declare that id. An
@@ -25,16 +30,40 @@ templ StudentsPage(p layout.Page, room types.Classroom) {
 				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-target="#getunenrolledstudents">
 					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
 				</form>
-				<!-- GET alias (DEC-7): the old /students POST stays registered too, until
-				     nothing else posts to it. The target is this wrapping div, not the
-				     <tbody>/<tr> elements directly - htmx 1.x picks its fragment parser's
-				     context by sniffing the response's first tag, so a response mixing bare
-				     <tr>s with an out-of-band element (see StudentRows) has no single tag that
-				     works for both; targeting a plain div sidesteps the whole problem, since
-				     the response's own <table> carries its own correct parsing context.
-				     Confirmed live: targeting the <tbody> directly corrupted every row
-				     (regardless of the OOB span's position) or threw htmx:swapError outright. -->
-				<div id="students-table" hx-get={ fmt.Sprintf("/students?classroomID=%s", room.ClassroomID) } hx-trigger="load" hx-target="this">
+				<!-- One toolbar form drives every /students fetch (02 §C5): search-as-you-type,
+				     a filter pill (native radios, so a click is a plain "change" event - no JS
+				     needed), the sort select, and the footer's pager buttons below (associated
+				     via form="students-query" even though they render outside this element, in
+				     StudentRows' response). "submit" is in the trigger list, not just the
+				     TASKS.md sketch's "load, input changed delay:300ms from:[name=q], change",
+				     because the pager buttons are type=submit - a plain "change" trigger alone
+				     never fires for those. GET, not POST (DEC-7): the target is a plain div, not
+				     the <tbody>/<tr> elements directly, for the same reason T2.2's StudentRows
+				     comment gives - htmx 1.x picks its fragment parser by sniffing the response's
+				     first tag, so a response mixing bare rows with an out-of-band element has no
+				     single tag that works for both. -->
+				<form id="students-query" hx-get="/students" hx-target="#getstudents" hx-trigger="load, input changed delay:300ms from:[name=q], change, submit"
+					class="flex items-center gap-2.5 flex-wrap">
+					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
+					<label class="input input-bordered input-sm flex items-center gap-2 w-[280px]">
+						<i class="fa-solid fa-magnifying-glass text-xs opacity-60" aria-hidden="true"></i>
+						<input type="text" name="q" value={ search } placeholder="Search by name" class="grow" />
+					</label>
+					<div class="flex items-center gap-1.5 text-[13px] font-semibold">
+						@filterPill("all", "All", filter)
+						@filterPill("attention", "Needs attention", filter)
+						@filterPill("w1", "In World 1", filter)
+						@filterPill("w2", "In World 2", filter)
+						@filterPill("w3", "In World 3", filter)
+					</div>
+					<select name="sort" class="select select-bordered select-sm ml-auto">
+						<option value="attention" selected?={ sortKey == "attention" }>Needs attention first</option>
+						<option value="name" selected?={ sortKey == "name" }>Name A–Z</option>
+						<option value="quiz" selected?={ sortKey == "quiz" }>Quiz avg ↑</option>
+						<option value="accuracy" selected?={ sortKey == "accuracy" }>Accuracy ↑</option>
+					</select>
+				</form>
+				<div id="getstudents">
 					<div class="overflow-x-auto bg-base-100 rounded-box border border-base-content/10 flex justify-center p-8">
 						<span class="loading loading-spinner" aria-label="Loading"></span>
 					</div>
@@ -45,60 +74,168 @@ templ StudentsPage(p layout.Page, room types.Classroom) {
 	}
 }
 
-// StudentRows is the enrolled-students table, loaded via hx-get so the page shell (and
-// the "Add students" modal it shares no dependency on) can render immediately without
-// waiting on this query. The trailing <span hx-swap-oob="true"> updates the header's
-// "{n} enrolled" count out of band, in the same response - no separate request just to
-// learn how many rows came back.
-templ StudentRows(classroomID string, students []types.Student) {
-	<div class="overflow-x-auto bg-base-100 rounded-box border border-base-content/10">
-		<table class="table table-zebra">
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				if len(students) == 0 {
-					<tr>
-						<td colspan="2" class="text-center text-neutral">No students enrolled yet.</td>
-					</tr>
+// filterPill is one search-pill radio (01 §1d: "30px, rounded-full", the active pill
+// bg-base-content text-base-100, others bg-base-100 with a border). A native radio
+// input, visually hidden but still focusable/clickable via its label, so selecting one
+// is a plain "change" event the toolbar form's hx-trigger already listens for - no
+// click handler needed. Its count number gets an id (T4.10's "OOB pill counts") so
+// HandleGetStudents can update it out of band without touching the pill's own checked
+// state.
+templ filterPill(value, label, current string) {
+	<label class="cursor-pointer">
+		<input type="radio" name="filter" value={ value } class="peer hidden" checked?={ value == current }/>
+		<span class="h-[30px] flex items-center gap-1.5 px-3 rounded-full bg-base-100 border border-base-content/15 peer-checked:bg-base-content peer-checked:text-base-100 peer-checked:border-base-content">
+			if value == "attention" {
+				<span class="w-[7px] h-[7px] rounded-full bg-error"></span>
+			}
+			{ label }
+			<span id={ fmt.Sprintf("count-%s", value) } class="opacity-70">…</span>
+		</span>
+	</label>
+}
+
+// flagLabel mirrors handler.FlagLabel's copy - view/classroom can't import handler,
+// which already imports this package - the same problem kindLabel (above) solves for
+// types.MinigameKind.
+func flagLabel(kind types.FlagKind) string {
+	switch kind {
+	case types.FlagQuizBelow60:
+		return "Quiz below 60%"
+	case types.FlagLowAccuracy:
+		return "Low accuracy"
+	default:
+		return ""
+	}
+}
+
+// studentsGridCols is shared by the header row and every data row, so their columns
+// always line up: Name · Currently in · Quiz avg · Minigame accuracy · Flags ·
+// actions (01 §1d, minus the not-yet-functional checkbox column DEC-15 omits).
+const studentsGridCols = "grid-cols-[minmax(0,1.6fr)_minmax(0,1.3fr)_110px_150px_minmax(0,1.5fr)_150px]"
+
+// StudentRows is the /students fragment (02 §C5): the enrolled-students table -
+// already filtered, sorted and paged by the caller (handler.applyStudentQuery) - plus
+// its footer pager, all swapped into #getstudents. It also carries three kinds of
+// out-of-band update in the same response: the header's "{n} enrolled" (the
+// classroom's true total, unaffected by the current search/filter - counts["all"]
+// isn't used for this, since that's scoped to the search term), and every filter
+// pill's count. search/filter/sortKey are the same plain strings StudentsPage takes,
+// echoed back here for the empty-state copy and the View-scores link (DEC-19).
+templ StudentRows(classroomID, search, filter, sortKey string, page []types.StudentInsight, total, currentPage, pageCount, enrolled int, counts map[string]int) {
+	<div class="bg-base-100 rounded-box border border-base-content/10 overflow-hidden">
+		<div class={ "grid", studentsGridCols, "items-center gap-2 px-4 h-[42px] text-xs font-bold opacity-60" }>
+			<span>Name</span>
+			<span>Currently in</span>
+			<span>Quiz avg</span>
+			<span>Minigame accuracy</span>
+			<span>Flags</span>
+			<span></span>
+		</div>
+		if len(page) == 0 {
+			<div class="px-4 py-10 text-center text-neutral">
+				if total == 0 && (search != "" || filter != "all") {
+					No students match your search.
 				} else {
-					for _, student := range students {
-						<tr id={ fmt.Sprintf("student-%s", student.UserID) } class="h-[60px]">
-							<td>
-								<div class="flex items-center gap-3">
-									<div class="w-8 h-8 shrink-0 rounded-full bg-secondary text-white flex items-center justify-center text-xs font-bold">
-										{ ui.Initials(student.Firstname, student.Lastname) }
-									</div>
-									<span>{ student.Firstname } { student.Lastname }</span>
-								</div>
-							</td>
-							<td>
-								<div class="flex justify-end items-center gap-2">
-									<a href={ templ.URL(fmt.Sprintf("/student/score?userID=%s&classroomID=%s", student.UserID, classroomID)) } class="btn btn-primary btn-sm">View scores</a>
-									<div class="dropdown dropdown-end">
-										<div tabindex="0" role="button" aria-label="More actions" class="btn btn-sm btn-ghost">
-											<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
-										</div>
-										<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-											<li>
-												<form hx-post="/delete/student" hx-target={ fmt.Sprintf("#student-%s", student.UserID) } hx-swap="outerHTML swap:1s" hx-confirm="Are you sure you want to remove this student?">
-													<input type="hidden" name="studentID" value={ student.UserID } />
-													<input type="hidden" name="classroomID" value={ classroomID } />
-													<button type="submit" class="text-error">Remove from class</button>
-												</form>
-											</li>
-										</ul>
-									</div>
-								</div>
-							</td>
-						</tr>
-					}
+					No students enrolled yet.
 				}
-			</tbody>
-		</table>
+			</div>
+		} else {
+			for _, s := range page {
+				@studentRow(classroomID, sortKey, s)
+			}
+		}
+		<div class="flex items-center justify-between px-4 h-12 border-t border-base-300 text-[13px] opacity-70">
+			<span>
+				if total == 0 {
+					Showing 0 of 0
+				} else {
+					Showing { fmt.Sprint((currentPage-1)*types.StudentsPageSize + 1) }–{ fmt.Sprint(min(currentPage*types.StudentsPageSize, total)) } of { fmt.Sprint(total) }
+				}
+			</span>
+			if pageCount > 1 {
+				<div class="join">
+					for i := 1; i <= pageCount; i++ {
+						<button type="submit" name="page" value={ fmt.Sprint(i) } form="students-query"
+							class={ "join-item btn btn-sm", templ.KV("btn-primary", i == currentPage) }>
+							{ fmt.Sprint(i) }
+						</button>
+					}
+				</div>
+			}
+		</div>
 	</div>
-	<span id="enrolled-count" hx-swap-oob="true">{ fmt.Sprint(len(students)) }</span>
+	<span id="enrolled-count" hx-swap-oob="true">{ fmt.Sprint(enrolled) }</span>
+	<span id="count-all" hx-swap-oob="true">{ fmt.Sprint(counts["all"]) }</span>
+	<span id="count-attention" hx-swap-oob="true">{ fmt.Sprint(counts["attention"]) }</span>
+	<span id="count-w1" hx-swap-oob="true">{ fmt.Sprint(counts["w1"]) }</span>
+	<span id="count-w2" hx-swap-oob="true">{ fmt.Sprint(counts["w2"]) }</span>
+	<span id="count-w3" hx-swap-oob="true">{ fmt.Sprint(counts["w3"]) }</span>
+}
+
+templ studentRow(classroomID, sortKey string, s types.StudentInsight) {
+	<!-- min-h, not a fixed h-[60px] (01 §1d's literal "60px rows"): a student can carry
+	     several flags of the same kind (e.g. low_accuracy on multiple scenes), and the
+	     Flags column wraps onto a second line rather than being clipped - a fixed height
+	     let that overflow visually collide with the row below it (found live, with the
+	     demo seed's own data). Most rows still render at exactly 60px. -->
+	<div id={ fmt.Sprintf("student-%s", s.UserID) } class={ "grid", studentsGridCols, "items-center gap-2 px-4 py-2 min-h-[60px] border-t border-base-300 text-sm" }>
+		<div class="flex items-center gap-2.5 min-w-0">
+			<span class="w-8 h-8 shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-xs font-bold">
+				{ ui.Initials(s.Firstname, s.Lastname) }
+			</span>
+			<span class="font-semibold truncate">{ s.Firstname } { s.Lastname }</span>
+		</div>
+		<div class="flex items-center gap-2 min-w-0">
+			if s.Completed {
+				<span>Completed</span>
+			} else if scene, ok := types.SceneByID(s.Current); ok {
+				<img src={ scene.Image } alt="" class="w-[22px] h-[27px] shrink-0 rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+				<div class="flex flex-col leading-tight min-w-0">
+					<span class="text-[13px] truncate">{ scene.Name }</span>
+					<span class="text-[11.5px] opacity-60">World { fmt.Sprint(s.World) }</span>
+				</div>
+			}
+		</div>
+		<span class="font-semibold">{ ui.Pct(s.QuizAvgPct) }</span>
+		<div class="flex items-center gap-2">
+			<div class="w-[70px] h-1.5 rounded bg-base-300 overflow-hidden">
+				<div class={ "h-full", progressBarPct(max(s.AccuracyPct, 0)),
+					templ.KV("bg-error", s.AccuracyPct >= 0 && s.AccuracyPct < types.PassPct),
+					templ.KV("bg-success", s.AccuracyPct >= types.PassPct) }>
+				</div>
+			</div>
+			<span class="text-[13px]">{ ui.Pct(s.AccuracyPct) }</span>
+		</div>
+		<div class="flex gap-1.5 flex-wrap">
+			if len(s.Flags) == 0 {
+				<span class="text-xs opacity-60">—</span>
+			} else {
+				for _, f := range s.Flags {
+					<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-box bg-error/15 text-[11.5px] font-semibold whitespace-nowrap">
+						<span class="w-[6px] h-[6px] rounded-full bg-error"></span>
+						{ flagLabel(f.Kind) }
+					</span>
+				}
+			}
+		</div>
+		<div class="flex justify-end items-center gap-2">
+			<!-- DEC-19: carries the current sort, so the student page can order
+			     Previous/Next by the same key the teacher was browsing with. -->
+			<a href={ templ.URL(fmt.Sprintf("/student/score?userID=%s&classroomID=%s&sort=%s", s.UserID, classroomID, sortKey)) } class="btn btn-primary btn-sm">View scores</a>
+			<div class="dropdown dropdown-end">
+				<div tabindex="0" role="button" aria-label="More actions" class="btn btn-sm btn-ghost">
+					<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+				</div>
+				<ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+					<li>
+						<form hx-post="/delete/student" hx-target={ fmt.Sprintf("#student-%s", s.UserID) } hx-swap="outerHTML swap:1s" hx-confirm="Are you sure you want to remove this student?">
+							<input type="hidden" name="studentID" value={ s.UserID } />
+							<input type="hidden" name="classroomID" value={ classroomID } />
+							<button type="submit" class="text-error">Remove from class</button>
+						</form>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
 }
