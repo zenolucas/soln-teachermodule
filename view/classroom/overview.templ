@@ -1,0 +1,147 @@
+package classroom
+
+import (
+	"fmt"
+
+	"soln-teachermodule/types"
+	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
+)
+
+// Overview is the classroom summary page (01 §1b): four stat cards, per-world
+// progress, quiz averages, and the top flagged students. sum and scenes come from
+// T4.3/T4.4's composition (loadClassroomInsights/summarize, buildSceneSummaries);
+// struggling is the same students-with-flags list sorted most-flags-first-then-name
+// as Home's Needs attention, sliced to 4 by the handler.
+templ Overview(p layout.Page, room types.Classroom, sum types.ClassroomSummary, scenes map[int]types.SceneSummary, struggling []types.StudentInsight) {
+	@layout.Base(p) {
+		<div class="w-full min-h-full bg-base-300 flex flex-col gap-4 p-4 overflow-x-auto">
+			@ui.PageHeader(ui.Header{
+				Crumbs:   classroomCrumbs(room),
+				Title:    fmt.Sprintf("%s — Section %s", room.ClassroomName, room.Section),
+				Subtitle: room.Description,
+			}) {
+				<!-- The modal itself only exists on the Students page (T2.4b) - this links
+				     there with a #add fragment that public/js/index.js opens on load. DEC-15:
+				     the edit icon next to this in the mockup isn't designed yet, so it's left
+				     out entirely rather than built as a dead button. -->
+				<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s#add", room.ClassroomID)) } class="btn btn-outline btn-primary btn-sm">
+					<i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+					Add students
+				</a>
+			}
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60">Students</span>
+					<span class="text-2xl font-bold">{ fmt.Sprint(sum.StudentCount) }</span>
+				</div>
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60">Quiz average</span>
+					<span class="text-2xl font-bold">{ ui.Pct(sum.QuizAvgPct) }</span>
+				</div>
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60">Reached World 3</span>
+					<span class="text-2xl font-bold">
+						{ fmt.Sprint(sum.ReachedW3) }
+						<span class="text-[15px] font-semibold opacity-60"> / { fmt.Sprint(sum.StudentCount) }</span>
+					</span>
+				</div>
+				<div class="bg-base-100 rounded-box border border-error/45 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60 flex items-center gap-1.5">
+						<span class="w-[7px] h-[7px] rounded-full bg-error"></span>
+						Need attention
+					</span>
+					<span class="text-2xl font-bold">{ fmt.Sprint(sum.FlaggedCount) }</span>
+				</div>
+			</div>
+			<div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-3">
+					<div class="flex items-baseline justify-between">
+						<span class="text-[15px] font-bold">Progress by world</span>
+						<span class="text-xs opacity-60">% of students who finished each scene</span>
+					</div>
+					for _, world := range types.Worlds {
+						<div class="flex flex-col gap-2 pt-3 border-t border-base-300 first:border-t-0 first:pt-0">
+							<div class="flex items-baseline gap-2">
+								<span class="text-[13.5px] font-bold">{ world.Title }</span>
+								<span class="text-[12.5px] opacity-60">{ world.Topic }</span>
+							</div>
+							<div class="grid grid-cols-6 gap-2.5">
+								for _, scene := range world.Scenes {
+									@sceneProgressCell(scene, scenes[scene.MinigameID])
+								}
+							</div>
+						</div>
+					}
+				</div>
+				<div class="flex flex-col gap-4 min-h-0">
+					<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-2">
+						<span class="text-[15px] font-bold">Quiz averages</span>
+						for _, world := range types.Worlds {
+							for _, scene := range world.Scenes {
+								if scene.Kind == types.KindQuiz {
+									@quizAverageRow(scene, scenes[scene.MinigameID], sum.StudentCount)
+								}
+							}
+						}
+					</div>
+					<div class="flex-1 min-h-0 bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+						<div class="flex items-baseline justify-between mb-1">
+							<span class="text-[15px] font-bold">Struggling students</span>
+							<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s&filter=attention", room.ClassroomID)) } class="text-[13px] link link-primary">View all</a>
+						</div>
+						if len(struggling) == 0 {
+							<p class="text-sm opacity-60 py-4">No students flagged.</p>
+						} else {
+							for _, s := range struggling {
+								@strugglingRow(s)
+							}
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+// progressBarPct is the per-scene progress bar's fill width - a templ css function
+// rather than a Tailwind class, same reasoning as barWidthPct in
+// view/minigame/fraction.templ and worldBarSegment in view/home/index.templ: a
+// runtime percentage can't be a static, JIT-compiled utility class.
+css progressBarPct(pct int) {
+	width: { fmt.Sprintf("%d%%", pct) };
+}
+
+templ sceneProgressCell(scene types.Scene, sum types.SceneSummary) {
+	<div class="flex flex-col gap-1.5 min-w-0">
+		<img src={ scene.Image } alt="" class="w-7 h-[34px] rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+		<span class="text-[11.5px] leading-tight text-base-content/80 h-[28px] overflow-hidden line-clamp-2">{ scene.Name }</span>
+		<div class="h-[5px] rounded bg-base-300 overflow-hidden">
+			<div class={ "h-full bg-primary", progressBarPct(max(sum.CompletionPct, 0)) }></div>
+		</div>
+		<span class="text-[11.5px] font-semibold">{ ui.Pct(sum.CompletionPct) }</span>
+	</div>
+}
+
+templ quizAverageRow(scene types.Scene, sum types.SceneSummary, enrolled int) {
+	<div class="flex items-center gap-3 pt-2 border-t border-base-300 first:border-t-0 first:pt-0">
+		<img src={ scene.Image } alt="" class="w-7 h-[34px] shrink-0 rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+		<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+			<span class="text-[13.5px] font-semibold truncate">{ scene.Name }</span>
+			<span class="text-xs opacity-60">{ fmt.Sprint(sum.TookCount) } of { fmt.Sprint(enrolled) } took it</span>
+		</div>
+		<span class="text-lg font-bold">{ ui.Pct(sum.QuizAvgPct) }</span>
+	</div>
+}
+
+templ strugglingRow(s types.StudentInsight) {
+	<div class="flex items-center gap-2.5 py-1.5 border-t border-base-300 first:border-t-0">
+		<span class="w-7 h-7 shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-[11px] font-bold">
+			{ ui.Initials(s.Firstname, s.Lastname) }
+		</span>
+		<span class="flex-1 min-w-0 text-[13.5px] font-semibold truncate">{ s.Firstname } { s.Lastname }</span>
+		if len(s.Flags) > 0 {
+			<span class="text-xs opacity-70 whitespace-nowrap">{ s.Flags[0].Detail }</span>
+		}
+	</div>
+}

@@ -216,6 +216,17 @@ document.body.addEventListener("click", function (evt) {
 	}
 });
 
+// The Classroom Overview's "Add students" action (01 §1b) links to
+// /classroom/students?classroom_id=...#add instead of opening the modal directly,
+// since #modal_add_students only exists on the Students page (T2.4b) - this opens it
+// once that page has loaded, if the hash says to (T4.7).
+if (location.hash === "#add") {
+	var addStudentsDialog = document.getElementById("modal_add_students");
+	if (addStudentsDialog) {
+		addStudentsDialog.showModal();
+	}
+}
+
 // A form that re-renders itself with a validation error (e.g. Create Classroom) needs
 // its modal to come back open after the htmx swap replaces it, the same "stay open on
 // error" behaviour the checkbox-hack version had via a server-rendered `checked`

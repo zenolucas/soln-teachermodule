@@ -60,12 +60,58 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	insights, err := loadClassroomInsights(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	sum := summarize(fullClassroom, insights)
+
+	finished, err := database.GetFinishedScenes(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	quiz, err := database.GetLatestQuizScores(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	counts, err := database.GetQuestionCounts(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	acc, err := database.GetSceneAccuracy(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	scenes := buildSceneSummaries(sum.StudentCount, finished, quiz, counts, acc)
+
+	// Top 4 flagged, most flags first then by name - same ordering as Home's Needs
+	// attention (T4.6), just sliced shorter and without the cross-classroom context
+	// AttentionEntry adds, since this page is already scoped to one classroom.
+	var struggling []types.StudentInsight
+	for _, in := range insights {
+		if len(in.Flags) > 0 {
+			struggling = append(struggling, in)
+		}
+	}
+	sort.SliceStable(struggling, func(i, j int) bool {
+		if len(struggling[i].Flags) != len(struggling[j].Flags) {
+			return len(struggling[i].Flags) > len(struggling[j].Flags)
+		}
+		if struggling[i].Lastname != struggling[j].Lastname {
+			return struggling[i].Lastname < struggling[j].Lastname
+		}
+		return struggling[i].Firstname < struggling[j].Firstname
+	})
+	if len(struggling) > 4 {
+		struggling = struggling[:4]
+	}
+
 	page, err := pageFor(r, fullClassroom.ClassroomName+" · Sol'n Teacher Portal", "overview", room.ClassroomID)
 	if err != nil {
 		return err
 	}
 
-	return render(w, r, classroom.Overview(page, fullClassroom))
+	return render(w, r, classroom.Overview(page, fullClassroom, sum, scenes, struggling))
 }
 
 func HandleClassroomMinigames(w http.ResponseWriter, r *http.Request) error {

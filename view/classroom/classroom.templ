@@ -16,43 +16,9 @@ func classroomCrumbs(room types.Classroom) []ui.Crumb {
 	}
 }
 
-templ Overview(p layout.Page, room types.Classroom) {
-	@layout.Base(p) {
-		<!-- No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for
-		     every authenticated page now (T1.4 gives it real Active-state navigation, so
-		     T1.1's temporary link row is gone), this page just fills the remaining width
-		     (see FE-11, D4). -->
-		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: room.ClassroomName, Subtitle: room.Description})
-			<!-- Interim Overview: just links to the other three sections. T4.7 replaces this
-			     grid with the real summary (C3: student count, quiz average, students per
-			     world, flagged count, Needs attention). -->
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 pb-4">
-				<a href={ templ.URL(fmt.Sprintf("/classroom/minigames?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
-					<div class="card-body items-center text-center">
-						<i class="fa-solid fa-gamepad fa-2xl" aria-hidden="true"></i>
-						<h2 class="card-title">Minigames</h2>
-						<p class="text-sm opacity-70">Edit questions and view per-scene statistics.</p>
-					</div>
-				</a>
-				<a href={ templ.URL(fmt.Sprintf("/classroom/students?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
-					<div class="card-body items-center text-center">
-						<i class="fa-solid fa-users fa-2xl" aria-hidden="true"></i>
-						<h2 class="card-title">Students</h2>
-						<p class="text-sm opacity-70">Manage who's enrolled in this classroom.</p>
-					</div>
-				</a>
-				<a href={ templ.URL(fmt.Sprintf("/classroom/statistics?classroom_id=%s", room.ClassroomID)) } class="card bg-base-200 hover:bg-base-100">
-					<div class="card-body items-center text-center">
-						<i class="fa-solid fa-chart-simple fa-2xl" aria-hidden="true"></i>
-						<h2 class="card-title">Statistics</h2>
-						<p class="text-sm opacity-70">See how students are doing across every scene.</p>
-					</div>
-				</a>
-			</div>
-		</div>
-	}
-}
+// Overview's actual markup is in overview.templ (T4.7) - it grew past a one-liner
+// once it needed the real classroom summary, per-scene progress, and struggling
+// students, instead of this interim page's three link cards.
 
 // kindLabel is the scene-card Kind badge's display text (01 §1c: "Fractions"/"Worded"/
 // "Quiz"), distinct from the lowercase types.MinigameKind values used internally for
