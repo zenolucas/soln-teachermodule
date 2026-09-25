@@ -18,7 +18,10 @@ import "fmt"
 // before first render - see T1.6.
 templ Sidebar(active string, classroomID string, teacherName string) {
 	<aside class="w-[248px] group-data-[sidebar=collapsed]/shell:w-16 shrink-0 bg-base-content text-base-300 flex flex-col h-screen">
-		<div class="h-16 shrink-0 flex items-center gap-2.5 px-[18px] group-data-[sidebar=collapsed]/shell:px-0 group-data-[sidebar=collapsed]/shell:justify-center border-b border-polar1">
+		<!-- The collapse/expand toggle lives here in both states (owner request: one place
+		     instead of the spec's top-when-expanded, bottom-when-collapsed split). Two
+		     buttons, one per state, so each keeps its own aria-label and tooltip. -->
+		<div class="h-16 shrink-0 flex items-center gap-2.5 px-[18px] group-data-[sidebar=collapsed]/shell:h-auto group-data-[sidebar=collapsed]/shell:flex-col group-data-[sidebar=collapsed]/shell:gap-2 group-data-[sidebar=collapsed]/shell:py-3 group-data-[sidebar=collapsed]/shell:px-0 group-data-[sidebar=collapsed]/shell:justify-center border-b border-polar1">
 			<img src="/public/images/assets/chip-favicon.png" alt="" class="w-[30px] h-[30px] shrink-0 [image-rendering:pixelated]" />
 			<div class="flex flex-col leading-tight group-data-[sidebar=collapsed]/shell:hidden">
 				<span class="font-bold text-base text-base-100">Sol'n</span>
@@ -27,6 +30,10 @@ templ Sidebar(active string, classroomID string, teacherName string) {
 			<button type="button" data-sidebar-toggle aria-label="Collapse sidebar" data-tip="Collapse sidebar"
 				class="tooltip tooltip-right ml-auto text-[13px] opacity-60 hover:opacity-100 group-data-[sidebar=collapsed]/shell:hidden">
 				<i class="fa-solid fa-angles-left" aria-hidden="true"></i>
+			</button>
+			<button type="button" data-sidebar-toggle aria-label="Expand sidebar" data-tip="Expand sidebar"
+				class="hidden group-data-[sidebar=collapsed]/shell:block tooltip tooltip-right text-[13px] opacity-60 hover:opacity-100">
+				<i class="fa-solid fa-angles-right" aria-hidden="true"></i>
 			</button>
 		</div>
 		<nav class="flex-1 flex flex-col gap-0.5 px-2.5 py-3.5 overflow-y-auto group-data-[sidebar=collapsed]/shell:items-center group-data-[sidebar=collapsed]/shell:px-0">
@@ -54,10 +61,6 @@ templ Sidebar(active string, classroomID string, teacherName string) {
 			</button>
 		</nav>
 		<div class="shrink-0 flex items-center gap-2.5 px-4 py-3 group-data-[sidebar=collapsed]/shell:flex-col group-data-[sidebar=collapsed]/shell:gap-3 group-data-[sidebar=collapsed]/shell:px-0 border-t border-polar1">
-			<button type="button" data-sidebar-toggle aria-label="Expand sidebar" data-tip="Expand sidebar"
-				class="hidden group-data-[sidebar=collapsed]/shell:block tooltip tooltip-right text-[13px] opacity-60 hover:opacity-100">
-				<i class="fa-solid fa-angles-right" aria-hidden="true"></i>
-			</button>
 			<img src="/public/images/bg/sample_user.png" alt="" class="w-[34px] h-[34px] shrink-0 rounded-full object-cover bg-base-100" />
 			<div class="flex-1 min-w-0 flex flex-col leading-[1.25] group-data-[sidebar=collapsed]/shell:hidden">
 				<span class="text-[13.5px] font-semibold text-base-100 truncate">{ teacherName }</span>
