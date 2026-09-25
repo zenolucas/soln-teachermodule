@@ -141,3 +141,14 @@ type StudentAccuracy struct {
 	Right       int
 	Wrong       int
 }
+
+// JourneyTile is one scene's tile on the student page's 12-column journey (01 §1h).
+// State is "done-pass" (finished, ≥60%), "done-fail" (finished, <60%), "current", or
+// "locked" - never "started"/"finished" alone (DEC-24). ScoreText is only set for
+// done-pass/done-fail tiles ("83%" for fraction/worded, "7/10" for quiz) - empty for
+// current (no final score yet) and locked (nothing played).
+type JourneyTile struct {
+	Scene     Scene
+	State     string
+	ScoreText string
+}
