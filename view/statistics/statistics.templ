@@ -2,7 +2,6 @@ package statistics
 
 import "soln-teachermodule/view/layout"
 import "soln-teachermodule/view/ui"
-import "soln-teachermodule/types"
 import "fmt"
 
 templ FractionStatistics(p layout.Page, classroomID string, minigameID string, classroomName string, sceneName string) {
@@ -166,52 +165,6 @@ templ QuestionStatistics(p layout.Page, minigameID string, classroomID string, c
 }
 
 
-templ StudentScores(p layout.Page, firstname string, lastname string, userID string, classroomID string, classroomName string) {
-@layout.Base(p) {
-@ui.Breadcrumb(classroomID, classroomName, fmt.Sprintf("%s %s", firstname, lastname), "Statistics")
-    <div class="flex justify-center items-center flex-col w-full h-140 mt-4">
-        <h1 class="text-3xl font-bold mt-2 mb-4">{ firstname }  { lastname } Statistics</h1>
-        for _, world := range types.Worlds {
-            <h2 class="text-3xl font-bold mt-6 mb-2 w-3/5">{ world.Title }</h2>
-            for _, scene := range world.Scenes {
-                <div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-                    <p class="text-2xl">{ scene.Name } Statistics</p>
-                    if scene.Kind == types.KindQuiz {
-                        <table class="table table-zebra text-xl">
-                            <thead>
-                                <tr>
-                                    <th class="text-xl">Question</th>
-                                    <th class="text-xl text-center">Correct Answer</th>
-                                    <th class="text-xl text-center">User Answer</th>
-                                    <th class="text-xl text-center">Score</th>
-                                </tr>
-                            </thead>
-                            <form hx-get={ string(templ.URL(fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), userID, scene.MinigameID, classroomID))) } hx-trigger="load" hx-swap="outerHTML" hx-target={ fmt.Sprintf("#minigame%d", scene.MinigameID) }>
-                            </form>
-                            <tbody id={ fmt.Sprintf("minigame%d", scene.MinigameID) }>
-                                <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                            </tbody>
-                        </table>
-                    } else {
-                        <table class="table table-zebra text-xl">
-                            <thead>
-                                <tr>
-                                    <th class="text-xl">Question</th>
-                                    <th class="text-xl text-center">Number of Correct Attempts</th>
-                                    <th class="text-xl text-center">Number of Wrong Attempts</th>
-                                    <th class="text-xl text-center">% Correct</th>
-                                </tr>
-                            </thead>
-                            <form hx-get={ string(templ.URL(fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), userID, scene.MinigameID, classroomID))) } hx-trigger="load" hx-swap="outerHTML" hx-target={ fmt.Sprintf("#minigame%d", scene.MinigameID) }>
-                            </form>
-                            <tbody id={ fmt.Sprintf("minigame%d", scene.MinigameID) }>
-                                <tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-                            </tbody>
-                        </table>
-                    }
-                </div>
-            }
-        }
-    </div>
-    }
-}
+// StudentScores was replaced by statistics.StudentPage (T5.7, student.templ) - a
+// single dynamic scene-detail panel instead of all 12 scenes' tables rendered (and
+// hx-get-loaded) at once.

@@ -1,0 +1,207 @@
+package statistics
+
+import (
+	"fmt"
+
+	"soln-teachermodule/types"
+	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
+)
+
+// flagLabel mirrors handler.FlagLabel's copy - view/statistics can't import handler,
+// which already imports this package (the same problem view/classroom's own flagLabel
+// solves, T4.10).
+func flagLabel(kind types.FlagKind) string {
+	switch kind {
+	case types.FlagQuizBelow60:
+		return "Quiz below 60%"
+	case types.FlagLowAccuracy:
+		return "Low accuracy"
+	default:
+		return ""
+	}
+}
+
+// worldLabelFor is "World N" on a journey tile, but only for the first scene of each
+// world (01 §1h) - every other tile in that world gets "".
+func worldLabelFor(minigameID int) string {
+	for _, w := range types.Worlds {
+		if len(w.Scenes) > 0 && w.Scenes[0].MinigameID == minigameID {
+			return fmt.Sprintf("World %d", w.Number)
+		}
+	}
+	return ""
+}
+
+// tileBadge is a journey tile's 20px status badge (01 §1h's table): background tint
+// and icon per state.
+func tileBadgeClass(state string) string {
+	switch state {
+	case "done-pass":
+		return "bg-success"
+	case "done-fail":
+		return "bg-error"
+	case "current":
+		return "bg-accent"
+	default:
+		return "bg-base-300"
+	}
+}
+
+func tileBadgeIcon(state string) string {
+	switch state {
+	case "done-pass":
+		return "fa-solid fa-check"
+	case "done-fail":
+		return "fa-solid fa-exclamation"
+	case "current":
+		return "fa-solid fa-play"
+	default:
+		return "fa-solid fa-lock"
+	}
+}
+
+// StudentPage is the student scores page (01 §1h): header (avatar, name, current
+// scene, flags, Previous/Next), three stats (DEC-24 drops the spec's fourth
+// "Longest wrong streak" card), the 12-tile journey, and a scene-detail panel that
+// loads a scene's existing (unrestyled - T5.8 redesigns it) fragment on tile click.
+// finished is handler.finishedCount(ins.Current, ins.Completed); prevID/nextID come
+// from handler.neighbours in the current sort order (DEC-19, carried via sortKey on
+// the nav buttons and, eventually, "View scores" links back on the Students page).
+templ StudentPage(p layout.Page, classroomID string, room types.Classroom, ins types.StudentInsight, journey []types.JourneyTile, finished int, prevID, nextID, sortKey string) {
+	@layout.Base(p) {
+		<div class="w-full min-h-full bg-base-300 flex flex-col gap-4 p-4">
+			<div class="flex flex-col gap-2.5">
+				@ui.Crumbs([]ui.Crumb{
+					{Label: room.ClassroomName, Href: fmt.Sprintf("/classroom?classroom_id=%s", classroomID)},
+					{Label: "Students", Href: fmt.Sprintf("/classroom/students?classroom_id=%s", classroomID)},
+					{Label: fmt.Sprintf("%s %s", ins.Firstname, ins.Lastname)},
+				})
+				<div class="flex items-center gap-3.5">
+					<span class="w-[52px] h-[52px] shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-lg font-bold">
+						{ ui.Initials(ins.Firstname, ins.Lastname) }
+					</span>
+					<div class="flex-1 min-w-0 flex flex-col gap-1">
+						<h1 class="text-[22px] font-bold">{ ins.Firstname } { ins.Lastname }</h1>
+						<div class="flex items-center gap-2 flex-wrap text-[13px] opacity-70">
+							<span>
+								if ins.Completed {
+									Completed
+								} else if scene, ok := types.SceneByID(ins.Current); ok {
+									Currently in World { fmt.Sprint(ins.World) } · { scene.Name }
+								}
+							</span>
+							for _, f := range ins.Flags {
+								<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-box bg-error/15 text-[11.5px] font-semibold text-base-content">
+									<span class="w-[6px] h-[6px] rounded-full bg-error"></span>
+									{ flagLabel(f.Kind) }
+								</span>
+							}
+						</div>
+					</div>
+					<div class="flex gap-1.5">
+						@studentNavButton("Previous", "fa-chevron-left", true, prevID, classroomID, sortKey)
+						@studentNavButton("Next", "fa-chevron-right", false, nextID, classroomID, sortKey)
+					</div>
+				</div>
+			</div>
+			<div class="grid grid-cols-3 gap-3.5">
+				<div class={ "bg-base-100 rounded-box border p-4 flex flex-col gap-0.5",
+					templ.KV("border-error/45", ins.QuizAvgPct >= 0 && ins.QuizAvgPct < types.PassPct),
+					templ.KV("border-base-content/10", ins.QuizAvgPct < 0 || ins.QuizAvgPct >= types.PassPct) }>
+					<span class="text-[12.5px] opacity-60">Quiz average</span>
+					<span class="text-2xl font-bold">{ ui.Pct(ins.QuizAvgPct) }</span>
+				</div>
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60">Minigame accuracy</span>
+					<span class="text-2xl font-bold">{ ui.Pct(ins.AccuracyPct) }</span>
+				</div>
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<span class="text-[12.5px] opacity-60">Scenes finished</span>
+					<span class="text-2xl font-bold">
+						{ fmt.Sprint(finished) }
+						<span class="text-sm font-semibold opacity-60"> / 12</span>
+					</span>
+				</div>
+			</div>
+			<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-3">
+				<span class="text-[15px] font-bold">Journey</span>
+				<div class="grid grid-cols-12 gap-2">
+					for _, tile := range journey {
+						@journeyTile(tile, ins.UserID, classroomID)
+					}
+				</div>
+			</div>
+			<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-2 overflow-x-auto">
+				if scene, ok := types.SceneByID(ins.Current); ok {
+					<form hx-get={ fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), ins.UserID, scene.MinigameID, classroomID) } hx-trigger="load" hx-target="#scene-detail">
+					</form>
+				}
+				<!-- Interim (T5.7 step 1): the existing per-scene fragment handlers
+				     (HandleGetStudent{Fraction,Worded,Quiz}Score) return bare <tr>s, built
+				     for a fraction/worded scene's 4 columns - a quiz scene's click still
+				     lands here with mismatched header labels until T5.8 gives each kind its
+				     own restyled panel. #scene-detail is the <tbody> itself (innerHTML swap,
+				     not outerHTML - an outerHTML swap on a <tbody> that gets replaced by
+				     bare <tr>s, with no new <tbody id=...> in the response, would drop the
+				     id and break every click after the first - see T2.2's matching finding
+				     for a <tbody> outerHTML target). -->
+				<table class="table table-zebra text-sm">
+					<thead>
+						<tr>
+							<th>Question</th>
+							<th class="text-center">Right</th>
+							<th class="text-center">Wrong</th>
+							<th class="text-center">% correct</th>
+						</tr>
+					</thead>
+					<tbody id="scene-detail">
+						<tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}
+
+templ studentNavButton(label, icon string, iconFirst bool, targetID, classroomID, sortKey string) {
+	if targetID == "" {
+		<span class="h-[34px] flex items-center gap-1.5 px-3 rounded text-[13px] font-semibold bg-base-200 opacity-40">
+			if iconFirst {
+				<i class={ fmt.Sprintf("%s text-xs", icon) } aria-hidden="true"></i>
+			}
+			{ label }
+			if !iconFirst {
+				<i class={ fmt.Sprintf("%s text-xs", icon) } aria-hidden="true"></i>
+			}
+		</span>
+	} else {
+		<a href={ templ.URL(fmt.Sprintf("/student/score?userID=%s&classroomID=%s&sort=%s", targetID, classroomID, sortKey)) } class="h-[34px] flex items-center gap-1.5 px-3 rounded text-[13px] font-semibold bg-base-200">
+			if iconFirst {
+				<i class={ fmt.Sprintf("%s text-xs", icon) } aria-hidden="true"></i>
+			}
+			{ label }
+			if !iconFirst {
+				<i class={ fmt.Sprintf("%s text-xs", icon) } aria-hidden="true"></i>
+			}
+		</a>
+	}
+}
+
+templ journeyTile(tile types.JourneyTile, studentID, classroomID string) {
+	<div class={ "flex flex-col items-center gap-1.5 min-w-0", templ.KV("opacity-40", tile.State == "locked") }>
+		<span class="text-[10.5px] font-bold opacity-60 h-[13px]">{ worldLabelFor(tile.Scene.MinigameID) }</span>
+		<button type="button"
+			hx-get={ fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", tile.Scene.StudentStatsPath(), studentID, tile.Scene.MinigameID, classroomID) }
+			hx-target="#scene-detail"
+			aria-label={ tile.Scene.Name }
+			class={ "relative w-14 h-[68px] rounded shrink-0", templ.KV("ring-[3px] ring-primary", tile.State == "current") }>
+			<img src={ tile.Scene.Image } alt="" class="w-full h-full object-cover object-[center_35%] [image-rendering:pixelated] rounded block"/>
+			<span class={ "absolute -right-1 -bottom-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-base-content border-2 border-base-100", tileBadgeClass(tile.State) }>
+				<i class={ tileBadgeIcon(tile.State) } aria-hidden="true"></i>
+			</span>
+		</button>
+		<span class="text-[11px] leading-tight text-center h-[26px] overflow-hidden line-clamp-2">{ tile.Scene.Name }</span>
+		<span class={ "text-xs font-bold", templ.KV("text-error", tile.State == "done-fail") }>{ tile.ScoreText }</span>
+	</div>
+}
