@@ -34,7 +34,7 @@ func kindLabel(k types.MinigameKind) string {
 	}
 }
 
-templ Minigames(p layout.Page, room types.Classroom) {
+templ Minigames(p layout.Page, room types.Classroom, scenes map[int]types.SceneSummary) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
 			@ui.PageHeader(ui.Header{
@@ -71,9 +71,10 @@ templ Minigames(p layout.Page, room types.Classroom) {
 									</div>
 									<div class="p-2.5 flex flex-col gap-2 flex-1">
 										<span class="text-[13px] font-bold leading-tight min-h-8 line-clamp-2">{ scene.Name }</span>
-										<!-- Question count and class accuracy fill in with T4.8 - this task is
-										     the layout only (see 02 §C4, "New data" in the design handoff). -->
-										<div class="flex flex-col gap-0.5 text-[11.5px] opacity-70 min-h-[28px]"></div>
+										<div class="flex flex-col gap-0.5 text-[11.5px] opacity-70 min-h-[28px]">
+											<span>{ fmt.Sprint(scenes[scene.MinigameID].QuestionCount) } questions</span>
+											@sceneMetaLine(scene, scenes[scene.MinigameID])
+										</div>
 										<div class="flex gap-1.5 mt-auto">
 											<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%d&classroomID=%s", scene.MinigameID, room.ClassroomID)) } class="btn btn-primary btn-sm flex-1">Edit</a>
 											<a href={ templ.URL(fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%d", room.ClassroomID, scene.MinigameID)) } aria-label="View statistics" class="btn btn-sm w-[34px] px-0">
@@ -88,6 +89,26 @@ templ Minigames(p layout.Page, room types.Classroom) {
 				}
 			</div>
 		</div>
+	}
+}
+
+// sceneMetaLine is the scene card's second meta line (01 §1c): class accuracy for a
+// fraction/worded scene, or the quiz average for a quiz scene - whichever applies to
+// this scene's kind. "No attempts yet" when there's no data to average (-1, T4.4's
+// convention throughout the insight types).
+templ sceneMetaLine(scene types.Scene, sum types.SceneSummary) {
+	if scene.Kind == types.KindQuiz {
+		if sum.QuizAvgPct < 0 {
+			<span>No attempts yet</span>
+		} else {
+			<span>{ fmt.Sprint(sum.QuizAvgPct) }% avg</span>
+		}
+	} else {
+		if sum.AccuracyPct < 0 {
+			<span>No attempts yet</span>
+		} else {
+			<span>{ fmt.Sprint(sum.AccuracyPct) }% correct</span>
+		}
 	}
 }
 

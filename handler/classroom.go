@@ -131,12 +131,34 @@ func HandleClassroomMinigames(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	students, err := database.GetEnrolledStudents(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	finished, err := database.GetFinishedScenes(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	quiz, err := database.GetLatestQuizScores(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	counts, err := database.GetQuestionCounts(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	acc, err := database.GetSceneAccuracy(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	scenes := buildSceneSummaries(len(students), finished, quiz, counts, acc)
+
 	page, err := pageFor(r, fullClassroom.ClassroomName+" · Sol'n Teacher Portal", "minigames", classroomIDStr)
 	if err != nil {
 		return err
 	}
 
-	return render(w, r, classroom.Minigames(page, fullClassroom))
+	return render(w, r, classroom.Minigames(page, fullClassroom, scenes))
 }
 
 func HandleClassroomStudents(w http.ResponseWriter, r *http.Request) error {
