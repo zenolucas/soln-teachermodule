@@ -3,16 +3,16 @@ package minigame
 import "fmt"
 
 // FractionRow is one row in the fraction/worded editor's list (T3.4/T3.5) - the
-// question (as numerator/denominator pairs; worded rows add QuestionText in T3.5), its
+// question (as numerator/denominator pairs, plus QuestionText for a worded row), its
 // computed answer, and its class accuracy (02 §B3). MinigameID/ClassroomID are
 // duplicated onto every row (rather than a separate FractionRows parameter) so the
-// row's own hx-get link has everything it needs, keeping FractionRows(rows, sel) to
-// exactly the two parameters the task calls for.
+// row's own hx-get link has everything it needs.
 type FractionRow struct {
 	MinigameID    int
 	ClassroomID   int
 	QuestionID    int
 	Number        int // 1-based position in the list, for the "#" column and the drawer's "Edit question {n}"
+	QuestionText  string
 	Num1, Den1    int
 	Num2, Den2    int
 	Op            string
@@ -44,8 +44,9 @@ css barWidthPct(pct int) {
 // FractionRows is the editor list's body, loaded via hx-get so the page shell renders
 // immediately (see students.templ's StudentRows for the same pattern, T2.2). sel is
 // the question_id to show already selected (DEC-3) - 0 when none should be, e.g. right
-// after a delete.
-templ FractionRows(rows []FractionRow, sel int) {
+// after a delete. worded is page-level, not per-row: one list is always either all
+// fraction or all worded questions, since it's scoped to a single minigame.
+templ FractionRows(rows []FractionRow, sel int, worded bool) {
 	if len(rows) == 0 {
 		<p class="text-center text-neutral py-8">No questions yet. Add one with Add question.</p>
 	} else {
@@ -70,11 +71,15 @@ templ FractionRows(rows []FractionRow, sel int) {
 				}
 			>
 				<span class="text-[13px] font-bold opacity-60">{ fmt.Sprint(row.Number) }</span>
-				<div class="flex items-center gap-2.5">
-					@stackedFraction(row.Num1, row.Den1)
-					<span class="opacity-60">{ row.Op }</span>
-					@stackedFraction(row.Num2, row.Den2)
-				</div>
+				if worded {
+					<span class="truncate pr-4">{ row.QuestionText }</span>
+				} else {
+					<div class="flex items-center gap-2.5">
+						@stackedFraction(row.Num1, row.Den1)
+						<span class="opacity-60">{ row.Op }</span>
+						@stackedFraction(row.Num2, row.Den2)
+					</div>
+				}
 				<span class="text-neutral font-semibold">{ row.Answer }</span>
 				if row.AccuracyTotal > 0 {
 					<div class="flex items-center gap-2">
@@ -119,6 +124,8 @@ type FractionDrawerData struct {
 	SceneName     string
 	Operation     string // "Addition" or "Subtraction"
 	Op            string // "+" or the U+2212 minus sign, for the operator chip
+	Worded        bool
+	QuestionText  string
 	Num1, Den1    int
 	Num2, Den2    int
 	Answer        string
@@ -129,14 +136,22 @@ type FractionDrawerData struct {
 	Errors        map[string]string
 }
 
-// fractionFormAction is /update/fractions (snake_case ids) when editing, or
-// /add/fractionquestions (camelCase ids) when new (X4) - the one attribute value that
-// differs between the two forms the Problem builder can submit as.
-func fractionFormAction(editing bool) string {
-	if editing {
+// fractionFormAction picks which of the four add/update endpoints the Problem builder
+// submits to (X4): fraction vs. worded is a different route pair entirely
+// (/fractionquestions vs. /worded, not just a shared endpoint with different fields),
+// and editing vs. new further changes fraction's own hidden-field casing (see the
+// hidden fields below) but not worded's, which is camelCase throughout.
+func fractionFormAction(editing, worded bool) string {
+	switch {
+	case editing && worded:
+		return "/update/worded"
+	case editing:
 		return "/update/fractions"
+	case worded:
+		return "/add/wordedquestions"
+	default:
+		return "/add/fractionquestions"
 	}
-	return "/add/fractionquestions"
 }
 
 templ FractionDrawer(d FractionDrawerData) {
@@ -159,14 +174,31 @@ templ FractionDrawer(d FractionDrawerData) {
 		<div class="flex-1 p-5 flex flex-col gap-4 overflow-y-auto">
 			<div class="flex flex-col gap-2.5">
 				<span class="text-[13px] font-bold">Problem</span>
+				if d.Worded {
+					<textarea
+						name="question_text"
+						form="fraction-question-form"
+						maxlength="500"
+						required
+						placeholder="What is 1/4 + 1/4?"
+						class={ "textarea textarea-bordered w-full text-sm", templ.KV("textarea-error", d.Errors["question_text"] != "") }
+					>{ d.QuestionText }</textarea>
+					if d.Errors["question_text"] != "" {
+						<span class="text-[11px] text-error">{ d.Errors["question_text"] }</span>
+					}
+				}
 				<form
 					id="fraction-question-form"
-					hx-post={ fractionFormAction(d.Editing) }
+					hx-post={ fractionFormAction(d.Editing, d.Worded) }
 					hx-target="#question-rows"
 					hx-swap="innerHTML"
 					class="flex items-center gap-3"
 				>
-					if d.Editing {
+					if d.Editing && d.Worded {
+						<input type="hidden" name="questionID" value={ fmt.Sprint(d.QuestionID) } />
+						<input type="hidden" name="minigameID" value={ fmt.Sprint(d.MinigameID) } />
+						<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+					} else if d.Editing {
 						<input type="hidden" name="question_id" value={ fmt.Sprint(d.QuestionID) } />
 						<input type="hidden" name="minigame_id" value={ fmt.Sprint(d.MinigameID) } />
 						<input type="hidden" name="classroom_id" value={ fmt.Sprint(d.ClassroomID) } />
@@ -192,7 +224,16 @@ templ FractionDrawer(d FractionDrawerData) {
 			}
 		</div>
 		<div class="h-16 shrink-0 flex items-center gap-2 px-5 border-t border-base-300">
-			if d.Editing {
+			if d.Editing && d.Worded {
+				<form hx-post="/delete/worded" hx-target="#question-rows" hx-swap="innerHTML" hx-confirm="Delete this question? Students' recorded answers to it will also be deleted.">
+					<input type="hidden" name="questionID" value={ fmt.Sprint(d.QuestionID) } />
+					<input type="hidden" name="minigameID" value={ fmt.Sprint(d.MinigameID) } />
+					<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+					<button type="submit" class="btn btn-ghost text-error btn-sm">
+						<i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
+					</button>
+				</form>
+			} else if d.Editing {
 				<form hx-post="/delete/fractions" hx-target="#question-rows" hx-swap="innerHTML" hx-confirm="Delete this question? Students' recorded answers to it will also be deleted.">
 					<input type="hidden" name="question_id" value={ fmt.Sprint(d.QuestionID) } />
 					<input type="hidden" name="minigame_id" value={ fmt.Sprint(d.MinigameID) } />

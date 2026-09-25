@@ -89,6 +89,7 @@ func main() {
 		auth.Get("/question/new", handler.Make(handler.HandleQuestionNew))
 		auth.Get("/question/edit", handler.Make(handler.HandleQuestionEdit))
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
+		auth.Get("/getwordedquestions", handler.Make(handler.HandleGetWorded)) // DEC-7: same GET alias as /getfractions
 		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
 		auth.Post("/add/fractionquestions", handler.Make(handler.HandleAddFractions))
 		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
