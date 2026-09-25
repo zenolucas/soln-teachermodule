@@ -322,46 +322,43 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// validateCreateClassroom is pure so it's cheap to table-test (T2.3): client-side
+// `required`/`maxlength` on the form already block most of this, but those are
+// trivially bypassed with a hand-crafted request - without a server-side check here, a
+// blank classname sailed straight into InsertClassroom, and an over-length one hit
+// classrooms.classroom_name VARCHAR(100) as an opaque MySQL truncation error the
+// teacher never saw either way (see FE-02). Each field is checked independently, so
+// e.g. a blank name and an over-length section both show their own error at once,
+// rather than only ever reporting the first problem found.
+func validateCreateClassroom(p ui.CreateParams) ui.CreateErrors {
+	var errs ui.CreateErrors
+	switch {
+	case p.Classname == "":
+		errs.Classname = "Class name is required."
+	case len(p.Classname) > 100:
+		errs.Classname = "Class name must be 100 characters or fewer."
+	}
+	switch {
+	case p.Section == "":
+		errs.Section = "Section is required."
+	case len(p.Section) > 100:
+		errs.Section = "Section must be 100 characters or fewer."
+	}
+	if len(p.Description) > 200 {
+		errs.Description = "Description must be 200 characters or fewer."
+	}
+	return errs
+}
+
 func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
-	classname := strings.TrimSpace(r.FormValue("classname"))
-	section := strings.TrimSpace(r.FormValue("section"))
-	description := strings.TrimSpace(r.FormValue("description"))
-
 	createParams := ui.CreateParams{
-		Classname:   classname,
-		Section:     section,
-		Description: description,
+		Classname:   strings.TrimSpace(r.FormValue("classname")),
+		Section:     strings.TrimSpace(r.FormValue("section")),
+		Description: strings.TrimSpace(r.FormValue("description")),
 	}
 
-	// Client-side `required`/`maxlength` on the form already block most of this, but
-	// those are trivially bypassed with a hand-crafted request - without a server-side
-	// check here, a blank classname sailed straight into InsertClassroom, and an
-	// over-length one hit classrooms.classroom_name VARCHAR(100) as an opaque MySQL
-	// truncation error the teacher never saw either way (see FE-02).
-	if classname == "" {
-		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Class name is required.",
-		}))
-	}
-	if len(classname) > 100 {
-		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Class name must be 100 characters or fewer.",
-		}))
-	}
-	if section == "" {
-		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Section is required.",
-		}))
-	}
-	if len(section) > 100 {
-		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Section must be 100 characters or fewer.",
-		}))
-	}
-	if len(description) > 200 {
-		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Description must be 200 characters or fewer.",
-		}))
+	if errs := validateCreateClassroom(createParams); errs != (ui.CreateErrors{}) {
+		return render(w, r, ui.CreateClassForm(createParams, errs))
 	}
 
 	teacherID, err := getTeacherID(r)
@@ -370,19 +367,18 @@ func HandleClassroomCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	classroom := types.Classroom{
-		ClassroomName: classname,
-		Section:       section,
-		Description:   description,
+		ClassroomName: createParams.Classname,
+		Section:       createParams.Section,
+		Description:   createParams.Description,
 	}
 
-	err = database.InsertClassroom(r.Context(), classroom, teacherID)
-	if err != nil {
+	if err := database.InsertClassroom(r.Context(), classroom, teacherID); err != nil {
 		// The raw DB error (e.g. a driver-level message naming columns/constraints)
 		// isn't something a teacher can act on - log it for us and show a generic
 		// message instead of leaking it into the form (see FE-02).
 		slog.Error("failed to create classroom", "err", err, "teacher_id", teacherID)
 		return render(w, r, ui.CreateClassForm(createParams, ui.CreateErrors{
-			ErrorMessage: "Couldn't create the classroom. Please try again.",
+			General: "Couldn't create the classroom. Please try again.",
 		}))
 	}
 	hxRedirect(w, r, "/home")
