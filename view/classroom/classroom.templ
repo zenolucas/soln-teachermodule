@@ -1,19 +1,19 @@
 package classroom
 
 import "soln-teachermodule/view/layout"
+import "soln-teachermodule/view/ui"
 import "soln-teachermodule/types"
 import "fmt"
 
-// classroomHeader is shared by Overview/Minigames/Students - each is now its own route
-// (T1.1) instead of a tab panel in one page, but they still show the same classroom
-// name/section/description header (see FE-12).
-templ classroomHeader(room types.Classroom) {
-	<div class="px-4 pt-4">
-		<h2 class="text-2xl font-bold">{ room.ClassroomName } &mdash; Section { room.Section }</h2>
-		if len(room.Description) > 0 {
-			<p class="text-sm opacity-70">{ room.Description }</p>
-		}
-	</div>
+// classroomCrumbs is shared by Overview/Minigames/Students - each is now its own route
+// (T1.1) instead of a tab panel in one page, but they still show the same two-segment
+// breadcrumb: the classroom name (links to Overview) and its section (plain, last),
+// per DEC-14.
+func classroomCrumbs(room types.Classroom) []ui.Crumb {
+	return []ui.Crumb{
+		{Label: room.ClassroomName, Href: fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)},
+		{Label: room.Section},
+	}
 }
 
 templ Overview(p layout.Page, room types.Classroom) {
@@ -23,7 +23,7 @@ templ Overview(p layout.Page, room types.Classroom) {
 		     T1.1's temporary link row is gone), this page just fills the remaining width
 		     (see FE-11, D4). -->
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@classroomHeader(room)
+			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: room.ClassroomName, Subtitle: room.Description})
 			<!-- Interim Overview: just links to the other three sections. T4.7 replaces this
 			     grid with the real summary (C3: student count, quiz average, students per
 			     world, flagged count, Needs attention). -->
@@ -57,7 +57,7 @@ templ Overview(p layout.Page, room types.Classroom) {
 templ Minigames(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@classroomHeader(room)
+			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: "Minigames"})
 			<!-- One Go slice (types.Worlds/types.Scene) replaces what used to be these
 			     12 copy-pasted hero blocks, one per scene (see FE-13). -->
 			for _, world := range types.Worlds {
@@ -85,7 +85,7 @@ templ Minigames(p layout.Page, room types.Classroom) {
 templ Students(p layout.Page, room types.Classroom) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@classroomHeader(room)
+			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: "Students"})
 			<div class="overflow-x-auto">
 				<!-- get unenrolled students for add students -->
 				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"

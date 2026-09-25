@@ -1,0 +1,67 @@
+package ui
+
+// Crumb is one breadcrumb segment. A blank Href renders as plain text - used for the
+// last segment (the current page), which per the design spec never links anywhere.
+type Crumb struct {
+	Label string
+	Href  string
+}
+
+// Header is what every classroom-scoped page hands to PageHeader (see DEC-14). Sprite
+// and Badges are optional; a zero Header renders just the title.
+type Header struct {
+	Crumbs   []Crumb
+	Title    string
+	Subtitle string
+	Sprite   string
+	Badges   []string
+}
+
+// Crumbs is PageHeader's breadcrumb row, also exported on its own so a page that needs
+// just the trail (no title row) can use it directly.
+templ Crumbs(crumbs []Crumb) {
+	<div class="breadcrumbs text-xs text-neutral">
+		<ul>
+			for _, c := range crumbs {
+				<li>
+					if c.Href != "" {
+						<a href={ templ.URL(c.Href) } class="text-primary">{ c.Label }</a>
+					} else {
+						{ c.Label }
+					}
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+// PageHeader is the shared header for every classroom-scoped page (see DEC-14 and 01
+// §Shell "Page header pattern"): a breadcrumb trail, an optional scene sprite, the
+// title with its badges, and a children... slot on the right for page actions (e.g.
+// "Add students", "+ Add question").
+templ PageHeader(h Header) {
+	<div class="px-4 pt-4">
+		if len(h.Crumbs) > 0 {
+			@Crumbs(h.Crumbs)
+		}
+		<div class="flex items-center gap-3 mt-1">
+			if h.Sprite != "" {
+				<img src={ h.Sprite } alt="" class="w-10 h-[49px] object-cover object-[center_35%] [image-rendering:pixelated] rounded-box" />
+			}
+			<div class="flex-1 min-w-0">
+				<div class="flex items-center gap-2">
+					<h1 class="text-2xl font-bold">{ h.Title }</h1>
+					for _, b := range h.Badges {
+						<span class="bg-base-300 text-xs font-semibold px-2 rounded-box">{ b }</span>
+					}
+				</div>
+				if h.Subtitle != "" {
+					<p class="text-sm opacity-70">{ h.Subtitle }</p>
+				}
+			</div>
+			<div class="flex items-center gap-2 shrink-0">
+				{ children... }
+			</div>
+		</div>
+	</div>
+}
