@@ -19,6 +19,10 @@ type Student struct {
 	Firstname string
 	Lastname  string
 	UserID    string
+	// OtherClass is the display name of another classroom this student is already
+	// enrolled in, or "" if none. Only meaningful on GetUnenrolledStudents' results
+	// (see 02 §C6, DEC-25's one-classroom-per-student rule).
+	OtherClass string
 }
 
 type SaveData struct {

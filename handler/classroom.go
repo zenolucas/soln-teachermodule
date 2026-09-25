@@ -249,7 +249,12 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	students, err := database.GetUnenrolledStudents(r.Context(), ClassroomID)
+	q := strings.TrimSpace(r.FormValue("q"))
+	if len(q) > 50 {
+		q = q[:50]
+	}
+
+	students, err := database.GetUnenrolledStudents(r.Context(), ClassroomID, q)
 	if err != nil {
 		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
@@ -262,8 +267,19 @@ func HandleGetUnenrolledStudents(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	// output student array here
+	// A student already enrolled in another classroom (DEC-25: at most one) shows up
+	// here disabled, with a label naming it, rather than letting the teacher select
+	// them only to have AddStudents silently skip them with no explanation.
 	for _, student := range students {
+		if student.OtherClass != "" {
+			fmt.Fprintf(w, `
+				<tr>
+					<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item" disabled/></td>
+					<td>%s %s <span class="opacity-60">(in %s)</span></td>
+				</tr>
+			`, esc(student.UserID), esc(student.Firstname), esc(student.Lastname), esc(student.OtherClass))
+			continue
+		}
 		fmt.Fprintf(w, `
 			<tr>
 				<td> <input type="checkbox" name="userID" value="%s" class="checkbox-item"/></td>
