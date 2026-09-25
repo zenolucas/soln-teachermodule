@@ -123,3 +123,25 @@ func worldOf(minigameID int) int {
 	}
 	return 0
 }
+
+// collapseActivity merges consecutive "played" rows for the same student and scene
+// into a single event: a fraction/worded scene writes one row per question, so
+// without this, playing a 3-question scene would show up as 3 near-identical rows.
+// "scored" rows (quiz attempts) are never collapsed - database.GetRecentActivity
+// already returns one per attempt. rows is expected newest-first; order and every
+// non-collapsed row are otherwise preserved. DEC-24: the merged event is always
+// "played {scene}", never "finished" or "started".
+func collapseActivity(rows []types.Activity) []types.Activity {
+	var out []types.Activity
+	for _, r := range rows {
+		if r.Kind == "played" && len(out) > 0 {
+			last := out[len(out)-1]
+			if last.Kind == "played" && last.UserID == r.UserID &&
+				last.ClassroomID == r.ClassroomID && last.MinigameID == r.MinigameID {
+				continue
+			}
+		}
+		out = append(out, r)
+	}
+	return out
+}

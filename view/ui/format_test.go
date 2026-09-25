@@ -81,3 +81,39 @@ func TestLongDate(t *testing.T) {
 		t.Errorf("LongDate(...) = %q, want %q", got, want)
 	}
 }
+
+func TestRelTime(t *testing.T) {
+	now := time.Date(2026, time.September, 25, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name string
+		ago  time.Duration
+		want string
+	}{
+		{"just happened", 0, "just now"},
+		{"59 seconds", 59 * time.Second, "just now"},
+		{"1 minute", time.Minute, "1 min ago"},
+		{"1 minute 59 seconds truncates down", time.Minute + 59*time.Second, "1 min ago"},
+		{"8 minutes", 8 * time.Minute, "8 min ago"},
+		{"59 minutes", 59 * time.Minute, "59 min ago"},
+		{"1 hour", time.Hour, "1 hr ago"},
+		{"3 hours", 3 * time.Hour, "3 hr ago"},
+		{"23 hours", 23 * time.Hour, "23 hr ago"},
+		{"1 day", 24 * time.Hour, "1d ago"},
+		{"6 days", 6 * 24 * time.Hour, "6d ago"},
+		{"future timestamp (clock skew) reads as just now", -time.Minute, "just now"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := RelTime(now, now.Add(-tt.ago)); got != tt.want {
+				t.Errorf("RelTime(now, now-%v) = %q, want %q", tt.ago, got, tt.want)
+			}
+		})
+	}
+
+	got := RelTime(now, now.Add(-8*24*time.Hour))
+	want := "17 Sep"
+	if got != want {
+		t.Errorf("RelTime(now, now-8d) = %q, want %q", got, want)
+	}
+}

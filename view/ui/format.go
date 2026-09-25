@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"time"
 	"unicode"
@@ -52,6 +53,26 @@ func Greeting(hour int) string {
 // LongDate formats t as "Monday, 25 September" (DEC-16) - weekday and day, no year.
 func LongDate(t time.Time) string {
 	return t.Format("Monday, 2 January")
+}
+
+// RelTime renders how long ago t was, relative to now, for the Recent activity card
+// (01 §1a): "just now", "{n} min ago", "{n} hr ago", "{n}d ago", and a bare date once
+// it's a week or more old. now before t (clock skew, or a just-inserted row) reads as
+// "just now" rather than a negative duration.
+func RelTime(now, t time.Time) string {
+	d := now.Sub(t)
+	switch {
+	case d < time.Minute:
+		return "just now"
+	case d < time.Hour:
+		return fmt.Sprintf("%d min ago", int(d/time.Minute))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%d hr ago", int(d/time.Hour))
+	case d < 7*24*time.Hour:
+		return fmt.Sprintf("%dd ago", int(d/(24*time.Hour)))
+	default:
+		return t.Format("2 Jan")
+	}
 }
 
 func firstRuneUpper(s string) string {
