@@ -514,6 +514,17 @@ func HandleAddMCQuestions(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	// "Add & next" (T3.8): the submitting button's own name=value ("next=1") comes
+	// through on r.FormValue like any other field, since it was the activating
+	// submitter. HX-Trigger-After-Settle is a separate header from the HX-Trigger the
+	// toast uses below - htmx fires it once the swap has settled, so index.js's
+	// questionReopenNew listener re-requests a blank drawer only after this response's
+	// own #question-rows swap has already landed.
+	if r.FormValue("next") == "1" {
+		reopenURL := fmt.Sprintf("/question/new?minigameID=%d&classroomID=%d", minigameID, classroomID)
+		w.Header().Set("HX-Trigger-After-Settle", fmt.Sprintf(`{"questionReopenNew":{"url":%s}}`, escJS(reopenURL)))
+	}
+
 	return respondQuizRowsSaved(w, r, minigameID, classroomID, "questionSaved", "Saved ✓")
 }
 

@@ -253,6 +253,7 @@ func buildQuizDrawerData(ctx context.Context, minigameID, classroomID, questionI
 		ClassroomID:  classroomID,
 		QuestionID:   questionID,
 		SceneName:    scene.Name,
+		Sprite:       scene.Image,
 		QuestionText: q.QuestionText,
 		Errors:       errs,
 	}
