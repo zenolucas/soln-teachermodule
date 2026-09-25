@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -320,6 +321,52 @@ func buildSceneSummaries(enrolled int, finished map[int]map[int]bool, quizRows [
 		}
 	}
 	return summaries
+}
+
+// summarizeQuiz rolls a quiz's raw scores into its QuizSummary (02 §C8, 01 §1g's four
+// stat cards): AvgScore/AvgPct come from the same mean score (never two independently
+// rounded numbers that could disagree), Median from the sorted raw scores (even count
+// averages the two middle scores), Below from a cross-multiplied threshold check (no
+// floats, matching EvaluateFlags' quiz_below_60 rule), and Histogram indexed by raw
+// score 0..total (len(Histogram) == total+1).
+func summarizeQuiz(scores []types.StudentScore, total, enrolled int) types.QuizSummary {
+	sum := types.QuizSummary{
+		Took:      len(scores),
+		Enrolled:  enrolled,
+		Histogram: make([]int, total+1),
+	}
+	if len(scores) == 0 {
+		return sum
+	}
+
+	sumScore := 0
+	for _, s := range scores {
+		sumScore += s.Score
+		if s.Score >= 0 && s.Score <= total {
+			sum.Histogram[s.Score]++
+		}
+		if total > 0 && s.Score*100 < types.PassPct*total {
+			sum.Below++
+		}
+	}
+	sum.AvgScore = float64(sumScore) / float64(len(scores))
+	if total > 0 {
+		sum.AvgPct = int(sum.AvgScore / float64(total) * 100)
+	}
+
+	sorted := make([]int, len(scores))
+	for i, s := range scores {
+		sorted[i] = s.Score
+	}
+	sort.Ints(sorted)
+	mid := len(sorted) / 2
+	if len(sorted)%2 == 0 {
+		sum.Median = float64(sorted[mid-1]+sorted[mid]) / 2
+	} else {
+		sum.Median = float64(sorted[mid])
+	}
+
+	return sum
 }
 
 // collapseActivity merges consecutive "played" rows for the same student and scene
