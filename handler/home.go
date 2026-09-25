@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"time"
+
 	"soln-teachermodule/view/about"
 	"soln-teachermodule/view/home"
 	"soln-teachermodule/view/landing"
@@ -16,7 +18,7 @@ func HandleHomeIndex(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return render(w, r, home.Index(page))
+	return render(w, r, home.Index(page, time.Now()))
 }
 
 func HandleAboutIndex(w http.ResponseWriter, r *http.Request) error {
