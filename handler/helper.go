@@ -53,9 +53,8 @@ func Make(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
 }
 
 // wantsErrorPage reports whether r looks like a real browser navigation that a full
-// styled error page would help, as opposed to an htmx fragment request, a JSON API
-// call (the statistics/chart endpoints fetched with plain fetch()), or the Godot
-// client's /game/* requests, none of which should get an HTML document back (see
+// styled error page would help, as opposed to an htmx fragment request or the Godot
+// client's /game/* requests, neither of which should get an HTML document back (see
 // FE-05 and the longer note on Make above).
 func wantsErrorPage(r *http.Request) bool {
 	if r.Header.Get("HX-Request") == "true" {

@@ -99,7 +99,6 @@ func renderStatisticsPage(w http.ResponseWriter, r *http.Request, classroomID in
 	if err != nil {
 		return err
 	}
-	page.Charts = true
 
 	switch minigameKinds[minigameID] {
 	case kindFractions:
@@ -115,9 +114,8 @@ func renderStatisticsPage(w http.ResponseWriter, r *http.Request, classroomID in
 }
 
 // renderQuizStatisticsPage builds and renders the merged quiz statistics page (T5.2,
-// 01 §1g). The By-question section still loads today's Chart.js fragment
-// (LegacyByQuestionFragment) until T5.3 replaces it, which is also why page.Charts
-// stays true here.
+// 01 §1g). The By-question section renders as CSS bars (T5.3, DEC-11) - no Chart.js
+// anywhere on this page.
 func renderQuizStatisticsPage(w http.ResponseWriter, r *http.Request, page layout.Page, classroom types.Classroom, classroomID int, classroomIDStr, minigameID string, minigameIDInt int, scene types.Scene) error {
 	questionCount, err := database.CountQuizQuestions(r.Context(), minigameIDInt, classroomID)
 	if err != nil {
@@ -165,10 +163,6 @@ func renderQuizStatisticsPage(w http.ResponseWriter, r *http.Request, page layou
 		return err
 	}
 	byQuestion := buildQuestionStats(questions, dist)
-
-	// T5.3: the By-question section no longer loads the legacy Chart.js fragment, so
-	// this page needs neither chart.min.js nor its trailing <script> (see layout/app.templ).
-	page.Charts = false
 
 	return render(w, r, statistics.QuizPage(page, h, classroomIDStr, minigameID, sum, scores, questionCount, byQuestion))
 }
@@ -292,10 +286,6 @@ func renderFractionStatisticsPage(w http.ResponseWriter, r *http.Request, page l
 		Sprite:   scene.Image,
 	}
 
-	// T5.4: no <canvas> on this page either - the Chart.js per-question charts are
-	// replaced by the sortable table.
-	page.Charts = false
-
 	sum := statistics.FractionSummary{
 		AccuracyPct:   classAccuracy,
 		TotalAttempts: totalRight + totalWrong,
@@ -396,13 +386,6 @@ func buildStudentAccuracyRows(rows []types.StudentAccuracy) []statistics.Student
 	return view
 }
 
-// renderNoQuestionStatistics is shared by the fraction/worded/quiz question-chart
-// fragments above - a minigame with no questions yet was rendering a blank statistics
-// page with no charts and no explanation why (see FE-20).
-func renderNoQuestionStatistics(w http.ResponseWriter) {
-	fmt.Fprint(w, `<p class="text-white text-opacity-60 mt-4">This minigame doesn't have any questions yet.</p>`)
-}
-
 // sortWeakestFirst orders a class-wide question summary by accuracy ascending (see
 // FE-30, D6: the audit's chosen replacement for a one-chart-per-question stack was a
 // single sortable table, weakest question first, so a teacher sees the questions worth
@@ -422,129 +405,6 @@ func sortWeakestFirst(summaries []types.StudentFractionStatistics) {
 	})
 }
 
-// renderQuestionSummaryTable renders the sortable class-wide question table shared by
-// HandleFractionQuestionCharts and HandleWordedQuestionCharts below - the same
-// question/correct/wrong/%-correct shape either way, just with a fraction expression or
-// question text in the first column (see FE-30, D6). Sortable via a small client-side
-// helper (public/js/index.js, solnMakeSortable) triggered by the data-sortable
-// attribute - clicking a header re-sorts by that column without a server round trip.
-func renderQuestionSummaryTable(w http.ResponseWriter, summaries []types.StudentFractionStatistics, questionLabel func(types.StudentFractionStatistics) string) {
-	fmt.Fprint(w, `
-		<div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-			<table class="table table-zebra text-lg" data-sortable>
-				<thead>
-					<tr>
-						<th data-sort="text">Question</th>
-						<th data-sort="number" class="text-center">Correct</th>
-						<th data-sort="number" class="text-center">Wrong</th>
-						<th data-sort="number" class="text-center">% Correct</th>
-					</tr>
-				</thead>
-				<tbody>
-	`)
-	for _, summary := range summaries {
-		fmt.Fprintf(w, `
-					<tr>
-						<td>%s</td>
-						<td class="text-center">%d</td>
-						<td class="text-center">%d</td>
-						<td class="text-center">%s</td>
-					</tr>
-		`, esc(questionLabel(summary)), summary.RightAttemptsCount, summary.WrongAttemptsCount, pctCorrect(summary.RightAttemptsCount, summary.WrongAttemptsCount))
-	}
-	fmt.Fprint(w, `
-				</tbody>
-			</table>
-		</div>
-	`)
-}
-
-func HandleFractionQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	// get minigameID
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	// get classroomID
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	summaries, err := database.GetFractionQuestionSummaries(r.Context(), classroomID, minigameID)
-	if err != nil {
-		return err
-	}
-
-	if len(summaries) == 0 {
-		renderNoQuestionStatistics(w)
-		return nil
-	}
-
-	sortWeakestFirst(summaries)
-	renderQuestionSummaryTable(w, summaries, func(s types.StudentFractionStatistics) string {
-		return fmt.Sprintf("%d/%d + %d/%d ?", s.Fraction1_Numerator, s.Fraction1_Denominator, s.Fraction2_Numerator, s.Fraction2_Denominator)
-	})
-	return nil
-}
-
-func HandleWordedQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-
-	// get minigameID
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	summaries, err := database.GetWordedQuestionSummaries(r.Context(), classroomID, minigameID)
-	if err != nil {
-		return err
-	}
-
-	if len(summaries) == 0 {
-		renderNoQuestionStatistics(w)
-		return nil
-	}
-
-	sortWeakestFirst(summaries)
-	renderQuestionSummaryTable(w, summaries, func(s types.StudentFractionStatistics) string {
-		return s.QuestionText
-	})
-	return nil
-}
-
-func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	minigameIDStr := r.URL.Query().Get("minigameID")
-
-	fmt.Printf("we got classroomid: %s, and minigameID %s", classroomIDStr, minigameIDStr)
-
-	// convert string to int
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	// Fetch the statistics from the database
-	statistics, err := database.GetQuizClassStatistics(r.Context(), classroomID, minigameID)
-	if err != nil {
-		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
-		return err
-	}
-
-	// Set headers and send the response
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(statistics)
-	return nil
-}
-
 // HandleQuizQuestionStatisticsIndex is the old /statistics/quiz/question route
 // (02 §A1). It redirects to the merged page's #by-question section - both QuizPage
 // (T5.3) and FractionPage (T5.4) render that id, so this works regardless of the
@@ -559,96 +419,6 @@ func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) e
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%s#by-question", classroomIDStr, minigameIDStr), http.StatusFound)
-	return nil
-}
-
-func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
-	// get minigameID
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-
-	// get classroomID
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	// questionIDs to put into the url parameters on async functions
-	var questions []types.MultipleChoiceQuestion
-	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
-	if err != nil {
-		return err
-	}
-
-	if len(questions) == 0 {
-		renderNoQuestionStatistics(w)
-		return nil
-	}
-
-	// See the matching comment in HandleFractionQuestionCharts above (FE-34) - this
-	// loop used to be nearly identical inline-<script> boilerplate to that one, plus
-	// the per-choice colors from setColors embedded as literal JS text.
-	for i, question := range questions {
-		dataURL := fmt.Sprintf("/statistics/quiz/question/data?questionID=%d&classroomID=%d&minigameID=%d", question.QuestionID, classroomID, minigameID)
-		colorsJSON, err := json.Marshal(setColors(question))
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(w, `
-			<div class="w-full max-w-3xl bg-base-100 py-10 px-8 rounded-xl mt-4 mb-4">
-				<div class="text-2xl mt-2 mb-2">Question %d: %s</div>
-				<canvas data-chart-type="choices" data-chart-url="%s" data-colors='%s' width="300" height="200"></canvas>
-			</div>
-		`, i+1, esc(question.QuestionText), esc(dataURL), colorsJSON)
-	}
-	return nil
-}
-
-// setColors returns one Chart.js background color per choice, in the same order as
-// question.Choices, with the correct choice highlighted teal and the rest red - same
-// four-way if/else this replaced, just generalized to any choice count and returned
-// as data instead of a literal JS snippet, since the chart itself moved out of a
-// per-question inline <script> into a shared renderer (see FE-34). Serialized to JSON
-// and passed via a data-colors attribute.
-func setColors(question types.MultipleChoiceQuestion) []string {
-	colors := make([]string, len(question.Choices))
-	for i := range colors {
-		colors[i] = "rgba(255, 99, 132, 0.5)"
-	}
-	for i, choice := range question.Choices {
-		if choice.IsCorrect {
-			colors[i] = "rgba(75, 192, 192, 0.5)"
-			break
-		}
-	}
-	return colors
-}
-
-func HandleQuizResponseStatistics(w http.ResponseWriter, r *http.Request) error {
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	questionIDStr := r.URL.Query().Get("questionID")
-
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	questionID, _ := strconv.Atoi(questionIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	statistics, err := database.GetQuizResponseStatistics(r.Context(), classroomID, minigameID, questionID)
-	if err != nil {
-		http.Error(w, "Error retrieving class statistics", http.StatusInternalServerError)
-		return err
-	}
-
-	// Set headers and send the response
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(statistics)
 	return nil
 }
 
@@ -814,53 +584,6 @@ func HandleAddStatisticsFraction(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
-	var studentScores []types.StudentQuizScore
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-
-	// get classroomID
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
-		return err
-	}
-
-	studentScores, err := database.GetStudentScores(r.Context(), classroomID, minigameID)
-	if err != nil {
-		return err
-	}
-
-	// questionCount lets each row show "score / N" instead of a bare number a teacher
-	// has to already know the quiz length to make sense of (see FE-33).
-	questionCount, err := database.CountQuizQuestions(r.Context(), minigameID, classroomID)
-	if err != nil {
-		return err
-	}
-
-	// This is a JOIN against multiple_choice_scores, not the enrolled-students list -
-	// an enrolled student who simply hasn't played this quiz yet doesn't get a row at
-	// all, so an empty result here means "no one has played yet," not "no one's
-	// enrolled" (see FE-20).
-	if len(studentScores) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="3" class="text-center text-white text-opacity-60">No scores recorded yet.</td></tr>`)
-		return nil
-	}
-
-	for i, students := range studentScores {
-		fmt.Fprintf(w, `
-			<tr>
-				<th>%d</th>
-				<td>%s %s</td>
-				<td class="text-right">%d / %d</td>
-			</tr>
-		`, i+1, esc(students.FirstName), esc(students.LastName), students.Score, questionCount)
-	}
-
-	return nil
-}
-
 // assertEnrolled is assertOwnsClassroom's companion for the student statistics
 // handlers (X6, T5.6): assertOwnsClassroom only checks the teacher owns
 // classroomID, never that studentID is actually enrolled there, so a teacher could
@@ -880,9 +603,9 @@ func assertEnrolled(w http.ResponseWriter, r *http.Request, studentID, classroom
 }
 
 // HandleStudentScoreIndex renders the student page (T5.7, 01 §1h): the header, three
-// stats, and the 12-tile journey. The scene-detail panel starts on the student's
-// current scene and swaps on tile click - see student.templ's StudentPage for why
-// that panel still uses the old per-kind fragment handlers unrestyled (T5.8's job).
+// stats, the 12-tile journey, and the Minigame attempts card. The scene-detail panel
+// starts on the student's current scene and swaps on tile click, rendering
+// QuizDetail/FractionDetail (T5.8) via the /statistics/student/* handlers below.
 func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
