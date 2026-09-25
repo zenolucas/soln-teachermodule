@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+	/* The question list row (or drawer-opener) currently open in the drawer (DEC-3,
+	   T3.3) - toggled by [data-drawer-opener] clicks in index.js. */
+	.is-selected {
+		@apply bg-primary/15 ring-1 ring-inset ring-primary;
+	}
+}

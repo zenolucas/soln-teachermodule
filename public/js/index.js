@@ -1,25 +1,41 @@
-// htmx 1.x doesn't swap a non-2xx response into its target by default, so a failed
-// fragment load (e.g. the students list, a chart, a question card) previously just
-// stayed blank with nothing telling the teacher anything went wrong (see FE-05). This
-// shows a small toast instead, for both a response the server answered with an error
-// status and a request that never got a response at all (network drop, server down).
-function solnShowErrorToast(message) {
-	var existing = document.getElementById("soln-error-toast");
+// A small toast, bottom-right. kind is "error" (the default) or "success" - used for
+// both the htmx-failure case below (originally the only caller, see FE-05: htmx 1.x
+// doesn't swap a non-2xx response into its target by default, so a failed fragment
+// load previously just stayed blank with nothing telling the teacher anything went
+// wrong) and the question drawer's Saved/Deleted confirmations (DEC-4, T3.3). A
+// success toast is shorter-lived (~3s) than an error one (6s), since it's confirming
+// something that already worked rather than something the teacher needs time to read
+// and act on.
+function solnShowToast(message, kind) {
+	kind = kind === "success" ? "success" : "error";
+
+	var existing = document.getElementById("soln-toast");
 	if (existing) {
 		existing.remove();
 	}
 
 	var toast = document.createElement("div");
-	toast.id = "soln-error-toast";
+	toast.id = "soln-toast";
 	toast.className = "toast toast-end toast-bottom z-[1000]";
 	toast.innerHTML =
-		'<div role="alert" class="alert alert-error shadow-lg"><span></span></div>';
+		'<div role="alert" class="alert ' +
+		(kind === "success" ? "alert-success" : "alert-error") +
+		' shadow-lg"><span></span></div>';
 	toast.querySelector("span").textContent = message;
 	document.body.appendChild(toast);
 
-	setTimeout(function () {
-		toast.remove();
-	}, 6000);
+	setTimeout(
+		function () {
+			toast.remove();
+		},
+		kind === "success" ? 3000 : 6000
+	);
+}
+
+// Kept as a thin wrapper so the existing htmx:responseError/htmx:sendError call sites
+// below don't need to change.
+function solnShowErrorToast(message) {
+	solnShowToast(message, "error");
 }
 
 document.body.addEventListener("htmx:responseError", function (evt) {
@@ -426,5 +442,82 @@ document.body.addEventListener("input", function (evt) {
 	var counter = label && label.querySelector("[data-count]");
 	if (counter) {
 		counter.textContent = field.value.length;
+	}
+});
+
+// The question editor drawer (DEC-3). Inert until T3.4/T3.7 render the markup it
+// targets - #question-drawer, [data-drawer-opener] rows/buttons, [data-drawer-close].
+// It's a plain <aside>, not a daisyUI drawer (a second drawer-toggle checkbox inside
+// the shell complicates focus handling): closed means `hidden` and empty, opened by an
+// hx-get response swapping into it (hx-swap="innerHTML" targeting the drawer itself).
+document.body.addEventListener("htmx:afterSwap", function (evt) {
+	if (evt.detail.target && evt.detail.target.id === "question-drawer") {
+		var drawer = evt.detail.target;
+		drawer.hidden = false;
+		var firstField = drawer.querySelector("input, textarea, select");
+		if (firstField) {
+			firstField.focus();
+		}
+	}
+});
+
+function solnCloseQuestionDrawer() {
+	var drawer = document.getElementById("question-drawer");
+	if (!drawer || drawer.hidden) {
+		return;
+	}
+	drawer.hidden = true;
+	drawer.innerHTML = "";
+	var opener = document.querySelector("[data-drawer-opener].is-selected");
+	if (opener) {
+		opener.classList.remove("is-selected");
+		opener.focus();
+	}
+}
+
+document.body.addEventListener("click", function (evt) {
+	if (evt.target.closest("[data-drawer-close]")) {
+		solnCloseQuestionDrawer();
+		return;
+	}
+	var opener = evt.target.closest("[data-drawer-opener]");
+	if (opener) {
+		document.querySelectorAll("[data-drawer-opener].is-selected").forEach(function (el) {
+			el.classList.remove("is-selected");
+		});
+		opener.classList.add("is-selected");
+	}
+});
+
+document.addEventListener("keydown", function (evt) {
+	if (evt.key === "Escape") {
+		solnCloseQuestionDrawer();
+	}
+});
+
+// DEC-4: every question add/update/delete responds with the whole #question-rows body
+// plus an HX-Trigger header naming which happened - questionSaved (add/update) or
+// questionDeleted (delete), each carrying {message}. The toast + drawer-close reaction
+// is the same regardless of which form or question kind triggered it.
+document.body.addEventListener("questionSaved", function (evt) {
+	solnShowToast((evt.detail && evt.detail.message) || "Saved", "success");
+	solnCloseQuestionDrawer();
+});
+
+document.body.addEventListener("questionDeleted", function (evt) {
+	solnShowToast((evt.detail && evt.detail.message) || "Deleted", "success");
+	solnCloseQuestionDrawer();
+});
+
+// DEC-4: a 422 (validation failure) re-renders the drawer in place - via
+// HX-Retarget/HX-Reswap on the response, which htmx itself honors - instead of being
+// treated as a failed request. Without this, htmx 1.x only swaps a 2xx response by
+// default, so the inline field errors would never reach the DOM, and the
+// htmx:responseError listener above would also fire its own generic error toast on
+// top of them.
+document.body.addEventListener("htmx:beforeSwap", function (evt) {
+	if (evt.detail.xhr.status === 422) {
+		evt.detail.shouldSwap = true;
+		evt.detail.isError = false;
 	}
 });
