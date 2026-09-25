@@ -63,6 +63,14 @@ Demo data
 
     cd ~/.local/share/soln-devtools/setupdb && go run . --reset --demo
 
+Migrations
+
+    `soln_db.sql` is the current schema; a fresh load already includes every migration.
+    `migrations/` holds incremental ALTERs for databases that were already set up from
+    an older `soln_db.sql`. Apply one against an existing database with:
+
+    mariadb -u$DB_USER -p$DB_PASSWORD $DB_NAME < migrations/001_created_at.sql
+
 Contributing
 
 Contributions are welcome! Please fork the repository and make a pull request with a clear description of changes.
