@@ -171,6 +171,93 @@ func TestWorldOf(t *testing.T) {
 	}
 }
 
+// insightsFixture is a 4-student fixture shared by TestBuildStudentInsights and
+// TestSummarize: student 1 completed the game with high scores, student 2 is
+// mid-game with a low_accuracy flag, student 3 is early with a quiz_below_60 flag,
+// and student 4 has no rows at all.
+func insightsFixture() ([]types.Student, map[int]map[int]bool, []types.QuizScoreRow, []types.FractionAggRow) {
+	students := []types.Student{
+		{Firstname: "Ann", Lastname: "A", UserID: "1"},
+		{Firstname: "Bob", Lastname: "B", UserID: "2"},
+		{Firstname: "Cy", Lastname: "C", UserID: "3"},
+		{Firstname: "Dee", Lastname: "D", UserID: "4"},
+	}
+
+	finished := map[int]map[int]bool{
+		1: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true, 11: true, 12: true},
+		2: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true},
+		3: {1: true},
+		4: {},
+	}
+
+	quiz := []types.QuizScoreRow{
+		{StudentID: 1, MinigameID: 5, Score: 9, Total: 10},
+		{StudentID: 1, MinigameID: 11, Score: 8, Total: 10},
+		{StudentID: 1, MinigameID: 12, Score: 10, Total: 10},
+		{StudentID: 3, MinigameID: 5, Score: 3, Total: 10},
+	}
+
+	frac := []types.FractionAggRow{
+		{StudentID: 1, MinigameID: 1, Right: 10, Wrong: 0},
+		{StudentID: 1, MinigameID: 2, Right: 10, Wrong: 0},
+		{StudentID: 2, MinigameID: 6, Right: 2, Wrong: 8},
+	}
+
+	return students, finished, quiz, frac
+}
+
+func TestBuildStudentInsights(t *testing.T) {
+	students, finished, quiz, frac := insightsFixture()
+	got := buildStudentInsights(students, finished, quiz, frac)
+
+	want := []types.StudentInsight{
+		{Student: students[0], Current: 12, Completed: true, World: 3, QuizAvgPct: 90, AccuracyPct: 100},
+		{Student: students[1], Current: 6, Completed: false, World: 2, QuizAvgPct: -1, AccuracyPct: 20,
+			Flags: []types.Flag{{Kind: types.FlagLowAccuracy, MinigameID: 6, Detail: "Waterlogged Room 1 · 20% correct"}}},
+		{Student: students[2], Current: 1, Completed: false, World: 1, QuizAvgPct: 30, AccuracyPct: -1,
+			Flags: []types.Flag{{Kind: types.FlagQuizBelow60, MinigameID: 5, Detail: "Snekkers Quiz · 3/10"}}},
+		{Student: students[3], Current: 1, Completed: false, World: 1, QuizAvgPct: -1, AccuracyPct: -1},
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("buildStudentInsights(...) =\n%+v\nwant\n%+v", got, want)
+	}
+}
+
+func TestSummarize(t *testing.T) {
+	students, finished, quiz, frac := insightsFixture()
+	insights := buildStudentInsights(students, finished, quiz, frac)
+	room := types.Classroom{ClassroomID: "1", ClassroomName: "Test Class", Section: "A"}
+
+	got := summarize(room, insights)
+	want := types.ClassroomSummary{
+		Classroom:    room,
+		StudentCount: 4,
+		QuizAvgPct:   60, // mean of student 1's 90 and student 3's 30
+		FlaggedCount: 2,  // students 2 and 3
+		ReachedW3:    1,  // student 1
+		PerWorld:     [4]int{0, 2, 1, 1},
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("summarize(...) = %+v, want %+v", got, want)
+	}
+}
+
+func TestSummarizeNoQuizzesTaken(t *testing.T) {
+	room := types.Classroom{ClassroomID: "2", ClassroomName: "Empty", Section: "B"}
+	insights := []types.StudentInsight{
+		{Student: types.Student{UserID: "1"}, Current: 1, World: 1, QuizAvgPct: -1, AccuracyPct: -1},
+	}
+	got := summarize(room, insights)
+	if got.QuizAvgPct != -1 {
+		t.Errorf("summarize(...).QuizAvgPct = %d, want -1 (no student has taken a quiz)", got.QuizAvgPct)
+	}
+	if got.FlaggedCount != 0 || got.ReachedW3 != 0 {
+		t.Errorf("summarize(...) = %+v, want FlaggedCount 0 and ReachedW3 0", got)
+	}
+}
+
 func TestCollapseActivity(t *testing.T) {
 	played := func(user, classroom, minigame int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}
