@@ -263,6 +263,65 @@ func loadTeacherSummaries(ctx context.Context, teacherID int) ([]types.Classroom
 	return summaries, nil
 }
 
+// buildSceneSummaries composes every scene's SceneSummary (02 §C4) from the raw
+// per-classroom query results. finished is the same "has any row" map
+// database.GetFinishedScenes returns (keyed student then minigame); every scene in
+// types.Worlds is always present in the result, even one with no data at all.
+func buildSceneSummaries(enrolled int, finished map[int]map[int]bool, quizRows []types.QuizScoreRow, counts map[int]int, acc map[int][2]int) map[int]types.SceneSummary {
+	took := map[int]int{}
+	for _, scenes := range finished {
+		for minigameID, done := range scenes {
+			if done {
+				took[minigameID]++
+			}
+		}
+	}
+
+	quizByMinigame := map[int][]types.QuizScoreRow{}
+	for _, q := range quizRows {
+		quizByMinigame[q.MinigameID] = append(quizByMinigame[q.MinigameID], q)
+	}
+
+	summaries := map[int]types.SceneSummary{}
+	for _, world := range types.Worlds {
+		for _, scene := range world.Scenes {
+			s := types.SceneSummary{
+				MinigameID:    scene.MinigameID,
+				QuestionCount: counts[scene.MinigameID],
+				AccuracyPct:   -1,
+				QuizAvgPct:    -1,
+				CompletionPct: -1,
+				TookCount:     took[scene.MinigameID],
+			}
+			if enrolled > 0 {
+				s.CompletionPct = s.TookCount * 100 / enrolled
+			}
+
+			if scene.Kind == types.KindQuiz {
+				sum, count := 0, 0
+				for _, q := range quizByMinigame[scene.MinigameID] {
+					if q.Total <= 0 {
+						continue
+					}
+					sum += q.Score * 100 / q.Total
+					count++
+				}
+				if count > 0 {
+					s.QuizAvgPct = sum / count
+				}
+			} else if rw, ok := acc[scene.MinigameID]; ok {
+				right, wrong := rw[0], rw[1]
+				if right+wrong > 0 {
+					s.AccuracyPct = right * 100 / (right + wrong)
+				}
+			}
+
+			summaries[scene.MinigameID] = s
+		}
+	}
+	return summaries
+}
+
 // collapseActivity merges consecutive "played" rows for the same student and scene
 // into a single event: a fraction/worded scene writes one row per question, so
 // without this, playing a 3-question scene would show up as 3 near-identical rows.

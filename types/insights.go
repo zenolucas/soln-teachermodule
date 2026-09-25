@@ -74,6 +74,19 @@ type StudentInsight struct {
 	Flags       []Flag
 }
 
+// SceneSummary is one minigame's rollup within a classroom (02 §C4), for the
+// Minigames page cards and the Overview's per-world progress. AccuracyPct applies to
+// fraction/worded scenes and QuizAvgPct to quiz scenes - the other is always -1 on a
+// given scene, same as any field with no data to compute from.
+type SceneSummary struct {
+	MinigameID    int
+	QuestionCount int
+	AccuracyPct   int
+	QuizAvgPct    int
+	CompletionPct int
+	TookCount     int
+}
+
 // ClassroomSummary is a classroom's rollup for the Home cards and Overview stats
 // (02 §C3). QuizAvgPct is -1 when no student has taken a quiz yet. PerWorld is
 // indexed 1..3 (World.Number); index 0 is unused, kept so World.Number can index it

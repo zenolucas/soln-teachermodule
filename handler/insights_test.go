@@ -258,6 +258,54 @@ func TestSummarizeNoQuizzesTaken(t *testing.T) {
 	}
 }
 
+func TestBuildSceneSummaries(t *testing.T) {
+	// 4 enrolled students. Scene 1 (fraction): 3 of them have a row. Scene 5 (quiz):
+	// 2 of them have a row (i.e. scored it, per database.GetFinishedScenes' contract).
+	// Scene 2 has no data at all.
+	finished := map[int]map[int]bool{
+		1: {1: true, 5: true},
+		2: {1: true},
+		3: {1: true, 5: true},
+		4: {},
+	}
+	quizRows := []types.QuizScoreRow{
+		{StudentID: 1, MinigameID: 5, Score: 8, Total: 10},
+		{StudentID: 3, MinigameID: 5, Score: 6, Total: 10},
+	}
+	counts := map[int]int{1: 5, 5: 10}
+	acc := map[int][2]int{1: {30, 10}}
+
+	got := buildSceneSummaries(4, finished, quizRows, counts, acc)
+
+	if len(got) != 12 {
+		t.Fatalf("buildSceneSummaries(...) has %d scenes, want 12 (every scene in types.Worlds)", len(got))
+	}
+
+	scene1 := types.SceneSummary{MinigameID: 1, QuestionCount: 5, AccuracyPct: 75, QuizAvgPct: -1, CompletionPct: 75, TookCount: 3}
+	if got[1] != scene1 {
+		t.Errorf("buildSceneSummaries(...)[1] = %+v, want %+v", got[1], scene1)
+	}
+
+	scene5 := types.SceneSummary{MinigameID: 5, QuestionCount: 10, AccuracyPct: -1, QuizAvgPct: 70, CompletionPct: 50, TookCount: 2}
+	if got[5] != scene5 {
+		t.Errorf("buildSceneSummaries(...)[5] = %+v, want %+v", got[5], scene5)
+	}
+
+	// No data at all: 0 questions counted, no accuracy or quiz average to compute,
+	// but completion is a real 0% (enrolled > 0), not n/a.
+	scene2 := types.SceneSummary{MinigameID: 2, QuestionCount: 0, AccuracyPct: -1, QuizAvgPct: -1, CompletionPct: 0, TookCount: 0}
+	if got[2] != scene2 {
+		t.Errorf("buildSceneSummaries(...)[2] = %+v, want %+v", got[2], scene2)
+	}
+}
+
+func TestBuildSceneSummariesNoEnrolledStudents(t *testing.T) {
+	got := buildSceneSummaries(0, map[int]map[int]bool{}, nil, map[int]int{}, map[int][2]int{})
+	if got[1].CompletionPct != -1 {
+		t.Errorf("buildSceneSummaries(0, ...)[1].CompletionPct = %d, want -1 (no enrolled students to divide by)", got[1].CompletionPct)
+	}
+}
+
 func TestCollapseActivity(t *testing.T) {
 	played := func(user, classroom, minigame int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}
