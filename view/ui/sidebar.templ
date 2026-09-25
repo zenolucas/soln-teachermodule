@@ -36,7 +36,12 @@ templ Sidebar(active string, classroomID string, teacherName string) {
 				<i class="fa-solid fa-angles-right" aria-hidden="true"></i>
 			</button>
 		</div>
-		<nav class="flex-1 flex flex-col gap-0.5 px-2.5 py-3.5 overflow-y-auto group-data-[sidebar=collapsed]/shell:items-center group-data-[sidebar=collapsed]/shell:px-0">
+		<!-- Collapsed: overflow-visible, not overflow-y-auto. A scroll container on one axis
+		     forces overflow-x to auto too, and the rail's tooltip-right bubbles (::before)
+		     then both clip (invisible on hover) and add phantom horizontal overflow, which
+		     shows up as scrollbars. Tradeoff: the rail itself no longer scrolls, so a
+		     teacher with ~10+ classrooms reaches the bottom ones by expanding. -->
+		<nav class="flex-1 flex flex-col gap-0.5 px-2.5 py-3.5 overflow-y-auto group-data-[sidebar=collapsed]/shell:overflow-visible group-data-[sidebar=collapsed]/shell:items-center group-data-[sidebar=collapsed]/shell:px-0">
 			<a href="/home" aria-label="Home" data-tip="Home"
 				class={
 					"h-[38px] group-data-[sidebar=collapsed]/shell:w-10 group-data-[sidebar=collapsed]/shell:h-10 group-data-[sidebar=collapsed]/shell:justify-center group-data-[sidebar=collapsed]/shell:tooltip group-data-[sidebar=collapsed]/shell:tooltip-right flex items-center gap-3 px-3 group-data-[sidebar=collapsed]/shell:px-0 rounded text-sm",
