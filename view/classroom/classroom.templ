@@ -114,7 +114,8 @@ templ sceneMetaLine(scene types.Scene, sum types.SceneSummary) {
 
 // Students' actual markup is StudentsPage, in students.templ (T2.2) - it grew past a
 // one-liner (the restyled table, its row-loading fragment, and the add-students
-// modal, moved to addstudents.templ in T2.4b).
-templ Students(p layout.Page, room types.Classroom) {
-	@StudentsPage(p, room)
+// modal, moved to addstudents.templ in T2.4b). filter/sortKey/search seed the
+// toolbar's initial state (T4.10) - see StudentsPage.
+templ Students(p layout.Page, room types.Classroom, filter, sortKey, search string) {
+	@StudentsPage(p, room, filter, sortKey, search)
 }

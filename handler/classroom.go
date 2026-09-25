@@ -183,7 +183,11 @@ func HandleClassroomStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, classroom.Students(page, fullClassroom))
+	// Seeds the toolbar's initial state (T4.10) - e.g. the T4.7 "View all"/"Struggling
+	// students" links land here with ?filter=attention.
+	q := parseStudentQuery(r.URL.Query())
+
+	return render(w, r, classroom.Students(page, fullClassroom, q.Filter, q.Sort, q.Q))
 }
 
 // HandleGetClassrooms renders the Home page's class cards, plus (out of band, in the
@@ -309,6 +313,10 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, ui.ClassroomMenu(classrooms, openID, active, flagged))
 }
 
+// HandleGetStudents is the students list fragment (02 §C5): loads every enrolled
+// student's insight, then filters/sorts/pages it (handler.applyStudentQuery) into
+// the requested view. It's the target of the students-query form's hx-get (T4.10),
+// GET or POST (DEC-7) - r.Form covers both a query string and a POST body.
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return err
@@ -324,12 +332,27 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	students, err := database.GetStudents(r.Context(), classroomID)
+	insights, err := loadClassroomInsights(r.Context(), classroomID)
 	if err != nil {
 		return err
 	}
 
-	return render(w, r, classroom.StudentRows(classroomIDStr, students))
+	q := parseStudentQuery(r.Form)
+	page, total, counts := applyStudentQuery(insights, q)
+
+	pageCount := (total + types.StudentsPageSize - 1) / types.StudentsPageSize
+	if pageCount < 1 {
+		pageCount = 1
+	}
+	currentPage := q.Page
+	if currentPage < 1 {
+		currentPage = 1
+	}
+	if currentPage > pageCount {
+		currentPage = pageCount
+	}
+
+	return render(w, r, classroom.StudentRows(classroomIDStr, q.Q, q.Filter, q.Sort, page, total, currentPage, pageCount, len(insights), counts))
 }
 
 func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
