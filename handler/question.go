@@ -107,6 +107,7 @@ func buildFractionDrawerData(ctx context.Context, minigameID, classroomID, quest
 		ClassroomID:  classroomID,
 		QuestionID:   questionID,
 		SceneName:    scene.Name,
+		Sprite:       scene.Image,
 		Op:           scene.Op,
 		Operation:    operationLabel(scene.Op),
 		Worded:       scene.Kind == types.KindWorded,
