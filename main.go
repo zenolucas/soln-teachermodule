@@ -77,6 +77,7 @@ func main() {
 		auth.Get("/students", handler.Make(handler.HandleGetStudents))
 		auth.Get("/student/score", handler.Make(handler.HandleStudentScoreIndex))
 		auth.Post("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
+		auth.Get("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
 		auth.Post("/addstudents", handler.Make(handler.HandleAddStudents))
 		auth.Post("/delete/student", handler.Make(handler.HandleUnenrollStudent))
 		auth.Post("/logout", handler.Make(handler.HandleLogoutCreate))

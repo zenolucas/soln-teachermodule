@@ -300,21 +300,49 @@ func GetStudents(ctx context.Context, classroomID int) ([]types.Student, error) 
 	return students, nil
 }
 
-func GetUnenrolledStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
-	var students []types.Student
+// likeEscaper escapes % and _ - the two characters that are wildcards inside a LIKE
+// pattern - so a search term containing either matches literally instead of quietly
+// widening the search.
+var likeEscaper = strings.NewReplacer("%", `\%`, "_", `\_`)
 
-	// get students given classroomID
-	rows, err := db.QueryContext(ctx, "SELECT user_id, firstname, lastname FROM users WHERE usertype = ? AND user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)", "student", classroomID)
+// GetUnenrolledStudents lists students not already enrolled in classroomID (02 §C6),
+// optionally narrowed by q (matched against first or last name). OtherClass is
+// populated via a LEFT JOIN through enrollments to classrooms, picking one class name
+// (MIN, so the result is deterministic) if the student is already enrolled elsewhere -
+// under DEC-25's one-classroom-per-student rule that's at most one, but MIN also keeps
+// this safe if that's ever violated in existing data (see X14: the DB doesn't enforce
+// it yet).
+func GetUnenrolledStudents(ctx context.Context, classroomID int, q string) ([]types.Student, error) {
+	query := `
+		SELECT u.user_id, u.firstname, u.lastname, MIN(c2.classroom_name)
+		FROM users u
+		LEFT JOIN enrollments e2 ON e2.student_id = u.user_id
+		LEFT JOIN classrooms c2 ON c2.classroom_id = e2.classroom_id
+		WHERE u.usertype = 'student'
+		  AND u.user_id NOT IN (SELECT student_id FROM enrollments WHERE classroom_id = ?)`
+	args := []any{classroomID}
+
+	if q != "" {
+		like := "%" + likeEscaper.Replace(q) + "%"
+		query += ` AND (u.firstname LIKE ? OR u.lastname LIKE ?)`
+		args = append(args, like, like)
+	}
+	query += ` GROUP BY u.user_id, u.firstname, u.lastname`
+
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var students []types.Student
 	for rows.Next() {
 		var student types.Student
-		if err := rows.Scan(&student.UserID, &student.Firstname, &student.Lastname); err != nil {
+		var otherClass sql.NullString
+		if err := rows.Scan(&student.UserID, &student.Firstname, &student.Lastname, &otherClass); err != nil {
 			return nil, fmt.Errorf("GetUnenrolledStudents: %v", err)
 		}
+		student.OtherClass = otherClass.String
 		students = append(students, student)
 	}
 
@@ -325,16 +353,21 @@ func GetUnenrolledStudents(ctx context.Context, classroomID int) ([]types.Studen
 	return students, nil
 }
 
+// AddStudents enrolls each student, silently skipping one already enrolled anywhere -
+// under DEC-25's one-classroom-per-student rule (V4), the UI already disables an
+// already-enrolled student's checkbox (see HandleGetUnenrolledStudents), so reaching
+// this is only possible via a hand-crafted request. The check and insert happen in one
+// statement (WHERE NOT EXISTS) rather than a separate SELECT then INSERT, so a second
+// request racing the same student in between can't both pass the check and enroll them
+// twice.
 func AddStudents(ctx context.Context, studentIDs []string, classroomID int) error {
 	for _, studentID := range studentIDs {
-
-		fmt.Println("adding student", studentID)
-
-		_, err := db.ExecContext(ctx, "INSERT INTO enrollments (classroom_id, student_id) VALUES (?, ?)", classroomID, studentID)
+		_, err := db.ExecContext(ctx,
+			"INSERT INTO enrollments (classroom_id, student_id) SELECT ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM enrollments WHERE student_id = ?)",
+			classroomID, studentID, studentID)
 		if err != nil {
 			return err
 		}
-		fmt.Println("add success!")
 	}
 
 	return nil
