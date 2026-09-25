@@ -17,6 +17,11 @@ type StudentQuizScore struct {
 }
 
 type StudentFractionStatistics struct {
+	// QuestionID lets a caller match this summary row back to the question it's for
+	// (see 02 §B3, T3.2) - GetFractionQuestionSummaries/GetWordedQuestionSummaries
+	// didn't select it before, so the editor list had no way to link a row to its
+	// question beyond position.
+	QuestionID            int    `json:"question_id"`
 	QuestionText          string `json:"question_text"`
 	Fraction1_Numerator   int    `json:"fraction1_numerator"`
 	Fraction1_Denominator int    `json:"fraction1_denominator"`
@@ -24,6 +29,14 @@ type StudentFractionStatistics struct {
 	Fraction2_Denominator int    `json:"fraction2_denominator"`
 	RightAttemptsCount    int    `json:"num_right_attempts"`
 	WrongAttemptsCount    int    `json:"num_wrong_attempts"`
+}
+
+// QuestionAccuracy is a quiz question's per-question right/total breakdown for the
+// editor list (02 §B3), from GetQuizQuestionAccuracy.
+type QuestionAccuracy struct {
+	QuestionID int
+	Right      int
+	Total      int
 }
 
 type StudentQuizStatistics struct {
