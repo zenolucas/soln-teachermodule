@@ -18,7 +18,9 @@ import (
 // here needs client-side tab logic.
 //
 // classroomID/minigameID are extra beyond TASKS.md's original sketch
-// (p, h, sum, lowest, total, byQuestion): PageHeader's action slot (the scene picker
+// (p, h, sum, lowest, total, byQuestion - byQuestion is now []QuestionStat, not a
+// templ.Component, now that T5.3 builds the real section instead of loading the
+// legacy Chart.js fragment): PageHeader's action slot (the scene picker
 // and "Edit questions" button) is built inline here, the same way every other
 // PageHeader caller in this codebase does it (e.g. classroom/overview.templ's "Add
 // students"), and that needs both ids to build its links.
@@ -26,7 +28,7 @@ import (
 // lowest is every enrolled student's score, sorted ascending (DEC-9's latest
 // attempt) - the Summary card only shows the first 8, but By student iterates all of
 // them, so there's one slice to keep in sync rather than two.
-templ QuizPage(p layout.Page, h ui.Header, classroomID, minigameID string, sum types.QuizSummary, lowest []types.StudentScore, total int, byQuestion templ.Component) {
+templ QuizPage(p layout.Page, h ui.Header, classroomID, minigameID string, sum types.QuizSummary, lowest []types.StudentScore, total int, byQuestion []QuestionStat) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 flex flex-col gap-4 p-4">
 			@ui.PageHeader(h) {
@@ -115,8 +117,8 @@ templ QuizPage(p layout.Page, h ui.Header, classroomID, minigameID string, sum t
 					</div>
 				</div>
 			</div>
-			<div id="by-question" class="scroll-mt-4">
-				@byQuestion
+			<div id="by-question" class="mx-4 scroll-mt-4">
+				@ByQuestion(byQuestion)
 			</div>
 			<div id="by-student" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5 mx-4 mb-4 scroll-mt-4">
 				<span class="text-[15px] font-bold mb-1">By student</span>
@@ -148,24 +150,92 @@ templ studentScoreRow(s types.StudentScore) {
 	</div>
 }
 
-// LegacyByQuestionFragment is the placeholder By-question pane content (T5.2 step 6):
-// it keeps loading today's Chart.js-based per-question fragment until T5.3 replaces
-// it with the real hint-enabled design, so the caller (renderStatisticsPage) also
-// keeps Page.Charts true for now. The trigger (a bare <form>) and the swap target
-// (#question-chart-container) are deliberately two separate elements, matching every
-// existing caller of this same fragment endpoint (FractionStatistics,
-// WordedStatistics, QuestionStatistics in statistics.templ) exactly, rather than the
-// simpler single-element hx-target="this" this task started with.
-templ LegacyByQuestionFragment(classroomID, minigameID string) {
-	<form hx-get={ fmt.Sprintf("/statistics/quiz/question/chart?minigameID=%s&classroomID=%s", minigameID, classroomID) } hx-swap="outerHTML" hx-target="#question-chart-container" hx-trigger="load">
-	</form>
-	<div id="question-chart-container">
-		<div class="flex justify-center p-8"><span class="loading loading-spinner" aria-label="Loading"></span></div>
+// QuestionStat is one quiz question's classroom-wide rollup, server-composed
+// (handler.buildQuestionStats: GetQuizQuestions + T5.1's GetQuizChoiceDistribution +
+// T4.11's ClassHint) since view/statistics can't import handler (which already
+// imports this package). Number is the question's position in the quiz (Q1, Q2, ...)
+// - assigned before the hardest-first sort, so it stays stable regardless of display
+// order. AccuracyPct is -1 when the question has no responses yet.
+type QuestionStat struct {
+	Number      int
+	Text        string
+	AccuracyPct int
+	Hint        string
+	Choices     []ChoiceStat
+}
+
+// ChoiceStat is one answer choice's tally for the By-question section. Pct is the
+// choice's bar width, relative to the question's most-picked choice (not a share of
+// all responses) - the same "scaled to the tallest bar" convention as the Summary
+// tab's histogram.
+type ChoiceStat struct {
+	Letter    string
+	Text      string
+	IsCorrect bool
+	Count     int
+	Pct       int
+}
+
+// ByQuestion is the By-question section (01 §1g, 02 §B6): every question, hardest
+// (lowest accuracy) first, with its accuracy bar, misconception hint (T4.11), and a
+// bar per answer choice. No <canvas> anywhere - Chart.js is gone from this page as of
+// T5.3 (Page.Charts is false for quiz pages now).
+templ ByQuestion(rows []QuestionStat) {
+	<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1">
+		<div class="flex items-baseline justify-between mb-1.5">
+			<span class="text-[15px] font-bold">By question</span>
+			<span class="text-xs opacity-60">Hardest first</span>
+		</div>
+		if len(rows) == 0 {
+			<p class="text-sm opacity-60 py-4">This quiz doesn't have any questions yet.</p>
+		} else {
+			for _, q := range rows {
+				@questionStatRow(q)
+			}
+		}
 	</div>
 }
 
-// histBarPct/scoreBarPct are templ css functions, not Tailwind classes, for the same
-// reason as every other runtime-percentage bar in this revamp (see
+templ questionStatRow(q QuestionStat) {
+	<div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-7 py-3.5 border-t border-base-300 first:border-t-0 first:pt-0">
+		<div class="flex flex-col gap-2 min-w-0">
+			<div class="flex items-center gap-2.5">
+				<span class="px-1.5 py-0.5 rounded-box bg-base-300 text-xs font-bold shrink-0">Q{ fmt.Sprint(q.Number) }</span>
+				<span class="text-sm font-semibold">{ q.Text }</span>
+			</div>
+			<div class="flex items-center gap-2.5">
+				<div class="w-[140px] h-2 rounded bg-base-300 overflow-hidden shrink-0">
+					<div class={ "h-full", widthPct(max(q.AccuracyPct, 0)),
+						templ.KV("bg-error", q.AccuracyPct >= 0 && q.AccuracyPct < types.PassPct),
+						templ.KV("bg-primary", q.AccuracyPct >= types.PassPct) }>
+					</div>
+				</div>
+				<span class="text-sm font-bold">{ ui.Pct(q.AccuracyPct) } correct</span>
+			</div>
+			if q.Hint != "" {
+				<span class="text-xs leading-relaxed text-base-content/80">
+					<i class="fa-solid fa-lightbulb text-[11px] opacity-60 mr-1" aria-hidden="true"></i>
+					{ q.Hint }
+				</span>
+			}
+		</div>
+		<div class="flex flex-col gap-1.5 justify-center">
+			for _, c := range q.Choices {
+				<div class="grid grid-cols-[20px_52px_1fr_22px] items-center gap-2 text-[13px]">
+					<span class="font-bold opacity-60">{ c.Letter }</span>
+					<span class="font-semibold truncate">{ c.Text }</span>
+					<div class="h-[14px] rounded-sm bg-base-200 overflow-hidden">
+						<div class={ "h-full", widthPct(c.Pct), templ.KV("bg-success", c.IsCorrect), templ.KV("bg-secondary", !c.IsCorrect) }></div>
+					</div>
+					<span class="text-right font-semibold">{ fmt.Sprint(c.Count) }</span>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// histBarPct/scoreBarPct/widthPct are templ css functions, not Tailwind classes, for
+// the same reason as every other runtime-percentage bar in this revamp (see
 // view/minigame/fraction.templ's barWidthPct): the JIT compiler can't generate CSS
 // for a class string built at runtime.
 css histBarPct(pct int) {
@@ -174,6 +244,10 @@ css histBarPct(pct int) {
 
 css scoreBarPct(score, total int) {
 	width: { fmt.Sprintf("%d%%", pctOf(score, total)) };
+}
+
+css widthPct(pct int) {
+	width: { fmt.Sprintf("%d%%", pct) };
 }
 
 func pctOf(n, total int) int {
