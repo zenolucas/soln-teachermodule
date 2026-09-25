@@ -73,8 +73,7 @@ func main() {
 		auth.Post("/createclassroom", handler.Make(handler.HandleClassroomCreate))
 		auth.Get("/getclassrooms", handler.Make(handler.HandleGetClassrooms))
 		auth.Get("/getclassrooms_menu", handler.Make(handler.HandleGetClassroomsMenu))
-		auth.Post("/students", handler.Make(handler.HandleGetStudents))
-		auth.Get("/students", handler.Make(handler.HandleGetStudents))
+		auth.Get("/students", handler.Make(handler.HandleGetStudents)) // T5.9: the list's own hx-get is the only caller now (was also POST, DEC-7)
 		auth.Get("/student/score", handler.Make(handler.HandleStudentScoreIndex))
 		auth.Post("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
 		auth.Get("/unenrolledstudents", handler.Make(handler.HandleGetUnenrolledStudents))
@@ -84,14 +83,11 @@ func main() {
 
 		// minigame endpoints
 		auth.Get("/minigame", handler.Make(handler.HandleMinigameIndex))
-		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
-		auth.Get("/getfractions", handler.Make(handler.HandleGetFractions)) // DEC-7: the list's own hx-get uses GET, alongside the legacy POST
+		auth.Get("/getfractions", handler.Make(handler.HandleGetFractions)) // T5.9: the list's own hx-get is the only caller now (was also POST, DEC-7)
 		auth.Get("/question/new", handler.Make(handler.HandleQuestionNew))
 		auth.Get("/question/edit", handler.Make(handler.HandleQuestionEdit))
-		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
-		auth.Get("/getwordedquestions", handler.Make(handler.HandleGetWorded)) // DEC-7: same GET alias as /getfractions
-		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
-		auth.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions)) // DEC-7: same GET alias as /getfractions
+		auth.Get("/getwordedquestions", handler.Make(handler.HandleGetWorded))  // T5.9: same GET-only cleanup as /getfractions
+		auth.Get("/getmcquestions", handler.Make(handler.HandleGetMCQuestions)) // T5.9: same GET-only cleanup as /getfractions
 		auth.Post("/add/fractionquestions", handler.Make(handler.HandleAddFractions))
 		auth.Post("/add/wordedquestions", handler.Make(handler.HandleAddWorded))
 		auth.Post("/add/mcquestions", handler.Make(handler.HandleAddMCQuestions))
@@ -102,19 +98,16 @@ func main() {
 		auth.Post("/delete/worded", handler.Make(handler.HandleDeleteWorded))
 		auth.Post("/delete/mcquestions", handler.Make(handler.HandleDeleteMCQuestions))
 
-		// statistics endpoints
+		// statistics endpoints. T5.9 (DEC-11) removed the Chart.js-era fragment/JSON
+		// routes - /statistics/fraction, /statistics/quiz and /statistics/quiz/question
+		// still redirect to the merged pages (T5.2-5.4), which render everything as CSS
+		// bars now instead of loading one of these separately.
 		auth.Get("/statistics/fraction", handler.Make(handler.HandleStatisticsIndex))
 		auth.Get("/statistics/quiz", handler.Make(handler.HandleStatisticsIndex))
-		auth.Get("/statistics/quiz/score", handler.Make(handler.HandleGetQuizScores))
 		auth.Get("/statistics/student/fraction", handler.Make(handler.HandleGetStudentFractionScore))
 		auth.Get("/statistics/student/worded", handler.Make(handler.HandleGetStudentWordedScore))
 		auth.Get("/statistics/student/quiz", handler.Make(handler.HandleGetStudentQuizScore))
-		auth.Get("/statistics/fraction/question/chart", handler.Make(handler.HandleFractionQuestionCharts))
-		auth.Get("/statistics/worded/question/chart", handler.Make(handler.HandleWordedQuestionCharts))
-		auth.Get("/statistics/quiz/class", handler.Make(handler.HandleQuizClassStatistics))
 		auth.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
-		auth.Get("/statistics/quiz/question/chart", handler.Make(handler.HandleQuizQuestionCharts))
-		auth.Get("/statistics/quiz/question/data", handler.Make(handler.HandleQuizResponseStatistics))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")

@@ -178,8 +178,8 @@ type ChoiceStat struct {
 
 // ByQuestion is the By-question section (01 §1g, 02 §B6): every question, hardest
 // (lowest accuracy) first, with its accuracy bar, misconception hint (T4.11), and a
-// bar per answer choice. No <canvas> anywhere - Chart.js is gone from this page as of
-// T5.3 (Page.Charts is false for quiz pages now).
+// bar per answer choice. No <canvas> anywhere - Chart.js is gone from the app
+// entirely as of T5.9 (DEC-11).
 templ ByQuestion(rows []QuestionStat) {
 	<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1">
 		<div class="flex items-baseline justify-between mb-1.5">

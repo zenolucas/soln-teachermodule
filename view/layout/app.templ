@@ -14,7 +14,6 @@ type TeacherNav struct {
 // have somewhere to add fields without changing every call site's signature again.
 type Page struct {
 	Title       string
-	Charts      bool
 	Shell       bool   // false for landing/login/register
 	Active      string // "home"|"overview"|"minigames"|"students"|"stats"|"about"|""
 	ClassroomID string // "" when not classroom-scoped
@@ -23,12 +22,9 @@ type Page struct {
 
 // Base renders the page shell. title is the full <title> text (see FE-17 - every page
 // previously shared the one hardcoded "Sol'n Teacher Portal" title, which makes browser
-// tabs and history indistinguishable when several are open). Charts loads Chart.js -
-// only the statistics pages that actually render a canvas[data-chart-url] need it (see
-// FE-50); every other page was paying for an unused ~200KB download, including the
-// login page. Shell also now controls the shared sidebar (see FE-11, D4) - every page
-// that shows the navbar gets the same drawer/sidebar shell, so there's no separate flag
-// for it.
+// tabs and history indistinguishable when several are open). Shell also now controls
+// the shared sidebar (see FE-11, D4) - every page that shows the navbar gets the same
+// drawer/sidebar shell, so there's no separate flag for it.
 templ Base(p Page) {
 <!DOCTYPE html>
 <!-- data-theme intentionally omitted: tailwind.config.js only ever compiles the nord
@@ -43,17 +39,14 @@ templ Base(p Page) {
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<link rel="stylesheet" href="/public/styles.css" />
-	<!-- htmx, Chart.js and Font Awesome are vendored under public/vendor/ (go:embed'd
-	     with everything else in public/) instead of loaded from a CDN - a school LAN
-	     with flaky or filtered internet access previously meant every page load could
-	     silently lose htmx entirely, and Chart.js was loaded unversioned, so a new
-	     upstream major release could break every stats page with no code change on our
-	     side at all (see D3). jQuery was dropped outright: unused anywhere in the app. -->
+	<!-- htmx and Font Awesome are vendored under public/vendor/ (go:embed'd with
+	     everything else in public/) instead of loaded from a CDN - a school LAN with
+	     flaky or filtered internet access previously meant every page load could
+	     silently lose htmx entirely (see D3). jQuery and Chart.js were dropped
+	     outright: jQuery was unused anywhere in the app, and every chart is CSS bars
+	     now (DEC-11, T5.9). -->
 	<script src="/public/vendor/htmx.min.js" defer></script>
 	<script src="/public/vendor/fontawesome.min.js" defer></script>
-	if p.Charts {
-	<script src="/public/vendor/chart.min.js" defer></script>
-	}
 	<script src="/public/js/index.js" defer></script>
 
 </head>
