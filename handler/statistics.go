@@ -22,9 +22,11 @@ import (
 	// "github.com/gorilla/sessions"
 )
 
+// HandleStatisticsIndex is the old /statistics/fraction and /statistics/quiz route
+// (02 §A1). It now just redirects to the merged page instead of rendering anything
+// itself, translating classroomID → classroom_id (DEC-6: the old route keeps its own
+// param name; the new one uses the new one).
 func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	// get classroomID
 	classroomIDStr := r.URL.Query().Get("classroomID")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
@@ -32,12 +34,9 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// get minigameID
 	minigameID := r.URL.Query().Get("minigameID")
-
-	fmt.Print("loading up statistics, we got minigameID: ", minigameID)
-
-	return renderStatisticsPage(w, r, classroomID, minigameID)
+	http.Redirect(w, r, fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%s", classroomIDStr, minigameID), http.StatusFound)
+	return nil
 }
 
 // HandleClassroomStatistics is the T1.1-style /classroom/* route for the same page
@@ -56,7 +55,14 @@ func HandleClassroomStatistics(w http.ResponseWriter, r *http.Request) error {
 
 	minigameID := r.URL.Query().Get("minigameID")
 	if minigameID == "" {
-		minigameID = "1"
+		// T5.5: the first scene with any data, not always scene 1 - so a bare
+		// /classroom/statistics?classroom_id= link opens something the teacher's
+		// class has actually played, when they have.
+		firstScene, err := database.FirstSceneWithData(r.Context(), classroomID)
+		if err != nil {
+			return err
+		}
+		minigameID = strconv.Itoa(firstScene)
 	}
 
 	return renderStatisticsPage(w, r, classroomID, minigameID)
@@ -516,6 +522,10 @@ func HandleQuizClassStatistics(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// HandleQuizQuestionStatisticsIndex is the old /statistics/quiz/question route
+// (02 §A1). It redirects to the merged page's #by-question section - both QuizPage
+// (T5.3) and FractionPage (T5.4) render that id, so this works regardless of the
+// scene's kind.
 func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	classroomIDStr := r.URL.Query().Get("classroomID")
@@ -525,20 +535,8 @@ func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
-	classroom, err := database.GetClassroom(r.Context(), classroomID)
-	if err != nil {
-		return err
-	}
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	scene, _ := types.SceneByID(minigameID)
-
-	page, err := pageFor(r, "Question Statistics · Sol'n Teacher Portal", "stats", classroomIDStr)
-	if err != nil {
-		return err
-	}
-	page.Charts = true
-
-	return render(w, r, statistics.QuestionStatistics(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+	http.Redirect(w, r, fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%s#by-question", classroomIDStr, minigameIDStr), http.StatusFound)
+	return nil
 }
 
 func HandleQuizQuestionCharts(w http.ResponseWriter, r *http.Request) error {
