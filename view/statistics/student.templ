@@ -63,12 +63,12 @@ func tileBadgeIcon(state string) string {
 
 // StudentPage is the student scores page (01 §1h): header (avatar, name, current
 // scene, flags, Previous/Next), three stats (DEC-24 drops the spec's fourth
-// "Longest wrong streak" card), the 12-tile journey, and a scene-detail panel that
-// loads a scene's existing (unrestyled - T5.8 redesigns it) fragment on tile click.
-// finished is handler.finishedCount(ins.Current, ins.Completed); prevID/nextID come
-// from handler.neighbours in the current sort order (DEC-19, carried via sortKey on
-// the nav buttons and, eventually, "View scores" links back on the Students page).
-templ StudentPage(p layout.Page, classroomID string, room types.Classroom, ins types.StudentInsight, journey []types.JourneyTile, finished int, prevID, nextID, sortKey string) {
+// "Longest wrong streak" card), the 12-tile journey, a scene-detail panel that loads
+// QuizDetail/FractionDetail (T5.8) on tile click, and the static Minigame attempts
+// card. finished is handler.finishedCount(ins.Current, ins.Completed); prevID/nextID
+// come from handler.neighbours in the current sort order (DEC-19, carried via sortKey
+// on the nav buttons and, eventually, "View scores" links back on the Students page).
+templ StudentPage(p layout.Page, classroomID string, room types.Classroom, ins types.StudentInsight, journey []types.JourneyTile, finished int, prevID, nextID, sortKey string, attempts []MinigameAttemptRow) {
 	@layout.Base(p) {
 		<div class="w-full min-h-full bg-base-300 flex flex-col gap-4 p-4">
 			<div class="flex flex-col gap-2.5">
@@ -132,33 +132,19 @@ templ StudentPage(p layout.Page, classroomID string, room types.Classroom, ins t
 					}
 				</div>
 			</div>
-			<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-2 overflow-x-auto">
-				if scene, ok := types.SceneByID(ins.Current); ok {
-					<form hx-get={ fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), ins.UserID, scene.MinigameID, classroomID) } hx-trigger="load" hx-target="#scene-detail">
-					</form>
-				}
-				<!-- Interim (T5.7 step 1): the existing per-scene fragment handlers
-				     (HandleGetStudent{Fraction,Worded,Quiz}Score) return bare <tr>s, built
-				     for a fraction/worded scene's 4 columns - a quiz scene's click still
-				     lands here with mismatched header labels until T5.8 gives each kind its
-				     own restyled panel. #scene-detail is the <tbody> itself (innerHTML swap,
-				     not outerHTML - an outerHTML swap on a <tbody> that gets replaced by
-				     bare <tr>s, with no new <tbody id=...> in the response, would drop the
-				     id and break every click after the first - see T2.2's matching finding
-				     for a <tbody> outerHTML target). -->
-				<table class="table table-zebra text-sm">
-					<thead>
-						<tr>
-							<th>Question</th>
-							<th class="text-center">Right</th>
-							<th class="text-center">Wrong</th>
-							<th class="text-center">% correct</th>
-						</tr>
-					</thead>
-					<tbody id="scene-detail">
-						<tr><td colspan="4" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-					</tbody>
-				</table>
+			<div class="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-4">
+				<!-- #scene-detail is a plain <div>, swapped with the default innerHTML (not
+				     outerHTML) so its id survives every journey-tile click - the same
+				     <tbody>-id-loss failure mode T2.2 found still applies to any repeatedly
+				     swapped target, table or not. -->
+				<div id="scene-detail" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-2.5 overflow-x-auto">
+					if scene, ok := types.SceneByID(ins.Current); ok {
+						<form hx-get={ fmt.Sprintf("%s?userID=%s&minigameID=%d&classroomID=%s", scene.StudentStatsPath(), ins.UserID, scene.MinigameID, classroomID) } hx-trigger="load" hx-target="#scene-detail">
+						</form>
+					}
+					<div class="flex justify-center w-full p-8"><span class="loading loading-spinner" aria-label="Loading"></span></div>
+				</div>
+				@MinigameAttempts(attempts)
 			</div>
 		</div>
 	}
@@ -203,5 +189,147 @@ templ journeyTile(tile types.JourneyTile, studentID, classroomID string) {
 		</button>
 		<span class="text-[11px] leading-tight text-center h-[26px] overflow-hidden line-clamp-2">{ tile.Scene.Name }</span>
 		<span class={ "text-xs font-bold", templ.KV("text-error", tile.State == "done-fail") }>{ tile.ScoreText }</span>
+	</div>
+}
+
+// QuizDetailRow is one quiz question in a student's scene-detail panel (01 §1h):
+// Question · Correct · Their answer · ✓/✗. Answer/Correct come straight from
+// database.GetStudentQuizStatistics - templ escapes them on render, so a question or
+// answer containing "<b>" shows literally rather than getting interpreted as markup.
+type QuizDetailRow struct {
+	Question string
+	Correct  string
+	Answer   string
+	Right    bool
+}
+
+// QuizDetail is the scene-detail panel's content for a quiz scene tile: title + score
+// badge, a misconception callout (handler.StudentHint, only when it fires - 02 §B6),
+// and the question table, capped to 7 rows with "Show all n questions". The cap is a
+// peer-checkbox toggle (same client-only, no-JS technique as
+// view/classroom/students.templ's filter pills) rather than an index.js handler,
+// since T5.8's file list doesn't touch public/js/index.js.
+templ QuizDetail(scene types.Scene, score, total int, hint string, rows []QuizDetailRow) {
+	<div class="flex items-center gap-2.5">
+		<img src={ scene.Image } alt="" class="w-7 h-[34px] rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+		<span class="flex-1 text-[15px] font-bold">{ scene.Name }</span>
+		<span class={ "px-2 py-0.5 rounded-box text-[13px] font-bold",
+			templ.KV("bg-error/15", total > 0 && score*100 < types.PassPct*total),
+			templ.KV("bg-success/15", total == 0 || score*100 >= types.PassPct*total) }>
+			{ fmt.Sprint(score) } / { fmt.Sprint(total) }
+		</span>
+	</div>
+	if hint != "" {
+		<div class="px-3 py-2.5 rounded bg-base-200 text-[12.5px] leading-relaxed">
+			<i class="fa-solid fa-lightbulb text-[11px] opacity-60 mr-1.5" aria-hidden="true"></i>
+			{ hint }
+		</div>
+	}
+	if len(rows) == 0 {
+		<p class="text-sm opacity-60 py-4">This minigame doesn't have any questions yet.</p>
+	} else {
+		<div class="grid grid-cols-[1fr_70px_70px_26px] px-1 text-xs font-bold opacity-60">
+			<span>Question</span>
+			<span class="text-center">Correct</span>
+			<span class="text-center">Their answer</span>
+			<span></span>
+		</div>
+		<input type="checkbox" id="quiz-detail-show-all" class="hidden peer"/>
+		for i, r := range rows {
+			<div class={ "grid grid-cols-[1fr_70px_70px_26px] items-center gap-2 py-2 px-1 border-t border-base-300 text-[13.5px]",
+				templ.KV("hidden peer-checked:grid", i >= 7) }>
+				<span class="truncate">{ r.Question }</span>
+				<span class="text-center font-semibold">{ r.Correct }</span>
+				<span class="text-center font-semibold">{ r.Answer }</span>
+				if r.Right {
+					<i class="fa-solid fa-check text-success text-center" aria-hidden="true"></i>
+				} else {
+					<i class="fa-solid fa-xmark text-error text-center" aria-hidden="true"></i>
+				}
+			</div>
+		}
+		if len(rows) > 7 {
+			<label for="quiz-detail-show-all" class="text-[13px] link link-primary cursor-pointer peer-checked:hidden">Show all { fmt.Sprint(len(rows)) } questions</label>
+		}
+	}
+}
+
+// FractionDetail is the scene-detail panel's content for a fraction/worded scene tile:
+// title, then fractionQuestionRow's existing Question/Answer/Right/Wrong/%-bar row
+// (fraction.templ, T5.4's By-question table) reused as-is for this one student's
+// counts instead of the whole class's - same shape either way, and Op already fixes
+// X9's hard-coded "+" for the subtraction scenes.
+templ FractionDetail(scene types.Scene, rows []FractionQuestionStat) {
+	<div class="flex items-center gap-2.5 mb-1">
+		<img src={ scene.Image } alt="" class="w-7 h-[34px] rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+		<span class="flex-1 text-[15px] font-bold">{ scene.Name }</span>
+	</div>
+	if len(rows) == 0 {
+		<p class="text-sm opacity-60 py-4">This minigame doesn't have any questions yet.</p>
+	} else {
+		<table class="w-full text-[14.5px]">
+			<thead>
+				<tr class="text-xs font-bold opacity-60 text-left">
+					<th class="py-2"></th>
+					<th>Question</th>
+					<th>Answer</th>
+					<th class="text-center">Right</th>
+					<th class="text-center">Wrong</th>
+					<th>% correct</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, q := range rows {
+					@fractionQuestionRow(q)
+				}
+			</tbody>
+		</table>
+	}
+}
+
+// MinigameAttemptRow is one fraction/worded scene's right/wrong tally for the
+// Minigame attempts card (01 §1h). Quiz scenes don't appear here - they're scored, not
+// attempted, and already summarized by the Quiz average stat card above.
+type MinigameAttemptRow struct {
+	Scene        types.Scene
+	Right, Wrong int
+	AccuracyPct  int
+}
+
+// MinigameAttempts is the student page's right-hand card (01 §1h): static per page
+// load, unlike the left scene-detail panel, since it always shows every fraction/
+// worded scene at once rather than following the journey-tile selection.
+templ MinigameAttempts(rows []MinigameAttemptRow) {
+	<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1.5">
+		<span class="text-[15px] font-bold mb-1">Minigame attempts</span>
+		<div class="grid grid-cols-[1fr_56px_56px_96px] px-1 text-xs font-bold opacity-60">
+			<span>Scene</span>
+			<span class="text-center">Right</span>
+			<span class="text-center">Wrong</span>
+			<span>% correct</span>
+		</div>
+		for _, r := range rows {
+			@minigameAttemptRow(r)
+		}
+	</div>
+}
+
+templ minigameAttemptRow(r MinigameAttemptRow) {
+	<div class="grid grid-cols-[1fr_56px_56px_96px] items-center gap-2 py-1.5 px-1 border-t border-base-300 text-[13.5px]">
+		<div class="flex items-center gap-2 min-w-0">
+			<img src={ r.Scene.Image } alt="" class="w-5 h-[25px] rounded-sm shrink-0 object-cover object-[center_35%] [image-rendering:pixelated]"/>
+			<span class="truncate">{ r.Scene.Name }</span>
+		</div>
+		<span class="text-center">{ fmt.Sprint(r.Right) }</span>
+		<span class="text-center">{ fmt.Sprint(r.Wrong) }</span>
+		<div class="flex items-center gap-1.5">
+			<div class="w-11 h-1.5 rounded bg-base-300 overflow-hidden shrink-0">
+				<div class={ "h-full", widthPct(max(r.AccuracyPct, 0)),
+					templ.KV("bg-error", r.AccuracyPct >= 0 && r.AccuracyPct < types.PassPct),
+					templ.KV("bg-success", r.AccuracyPct >= types.PassPct) }>
+				</div>
+			</div>
+			<span class="text-[12.5px] font-bold">{ ui.Pct(r.AccuracyPct) }</span>
+		</div>
 	</div>
 }
