@@ -181,15 +181,11 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
-	err := r.ParseForm()
-	if err != nil {
-		fmt.Println("Error parsing form:", err)
+	if err := r.ParseForm(); err != nil {
 		return err
 	}
 	classroomIDStr := r.FormValue("classroomID")
-	fmt.Println("Parsed classroomIDStr:", classroomIDStr)
 
-	// convert to int
 	classroomID, err := strconv.Atoi(classroomIDStr)
 	if err != nil {
 		return err
@@ -199,42 +195,12 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// fetch users from database
 	students, err := database.GetStudents(r.Context(), classroomID)
 	if err != nil {
-		http.Error(w, "Unable to get students", http.StatusInternalServerError)
 		return err
 	}
 
-	if len(students) == 0 {
-		fmt.Fprint(w, `<tr><td colspan="3" class="text-center text-white text-opacity-60">No students enrolled yet.</td></tr>`)
-		return nil
-	}
-
-	for i, student := range students {
-		fmt.Fprintf(w, `
-			<tr id="student-%s">
-				<th>%d</th>
-				<td>%s %s</td>
-				<td class="flex justify-end">
-					<a href="/student/score?userID=%s&classroomID=%s" class="btn btn-primary text-white mr-2">
-						view scores
-					</a>
-					<form
-						hx-post="/delete/student"
-						hx-target="#student-%s"
-						hx-swap="outerHTML swap:1s"
-						hx-confirm="Are you sure you want to remove this student?"
-					>
-						<input type="hidden" name="studentID" value="%s" />
-						<input type="hidden" name="classroomID" value="%s" />
-						<button type="submit" class="btn" aria-label="Remove student"><i class="fa-solid fa-trash" style="color: #f66151;"></i></button>
-					</form>
-				</td>
-			</tr>
-		`, esc(student.UserID), i+1, esc(student.Firstname), esc(student.Lastname), esc(student.UserID), esc(classroomIDStr), esc(student.UserID), esc(student.UserID), esc(classroomIDStr))
-	}
-	return nil
+	return render(w, r, classroom.StudentRows(classroomIDStr, students))
 }
 
 func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {

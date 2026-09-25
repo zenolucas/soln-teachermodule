@@ -125,40 +125,11 @@ templ Minigames(p layout.Page, room types.Classroom) {
 	}
 }
 
+// Students' actual markup is StudentsPage, in students.templ (T2.2) - it grew past a
+// one-liner (the restyled table, its row-loading fragment, and the add-students
+// modal).
 templ Students(p layout.Page, room types.Classroom) {
-	@layout.Base(p) {
-		<div class="w-full min-h-full bg-base-300 justify-center gap-4 overflow-x-auto">
-			@ui.PageHeader(ui.Header{Crumbs: classroomCrumbs(room), Title: "Students"})
-			<div class="overflow-x-auto">
-				<!-- get unenrolled students for add students -->
-				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-swap="outerHTML"
-					hx-target="#getunenrolledstudents">
-					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
-				</form>
-
-				<div class="flex justify-center">
-					<button type="button" class="btn btn-primary text-white" data-modal-open="modal_add_students">Add Students</button>
-				</div>
-				<table class="table table-zebra text-xl">
-					<thead>
-						<tr>
-							<th></th>
-							<th class="text-xl">Name</th>
-							<th></th>
-						</tr>
-					</thead>
-				<!-- get enrolled students -->
-					<form hx-post="/students" hx-trigger="load" hx-swap="outerHTML" hx-target="#getstudents">
-						<input type="hidden" name="classroomID" value={ room.ClassroomID } />
-					</form>
-						<tbody id="getstudents">
-							<tr><td colspan="3" class="text-center"><span class="loading loading-spinner" aria-label="Loading"></span></td></tr>
-						</tbody>
-				</table>
-			</div>
-			@AddStudentsForm(room.ClassroomID)
-		</div>
-	}
+	@StudentsPage(p, room)
 }
 
 templ AddStudentsForm(classroomID string) {
