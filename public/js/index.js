@@ -465,6 +465,7 @@ document.body.addEventListener("htmx:afterSwap", function (evt) {
 		if (firstField) {
 			firstField.focus();
 		}
+		solnSetQuizDrafting(solnQuizNewDrawerActive(drawer));
 	}
 });
 
@@ -475,6 +476,7 @@ function solnCloseQuestionDrawer() {
 	}
 	drawer.hidden = true;
 	drawer.innerHTML = "";
+	solnSetQuizDrafting(false);
 	var opener = document.querySelector("[data-drawer-opener].is-selected");
 	if (opener) {
 		opener.classList.remove("is-selected");
@@ -598,6 +600,17 @@ function solnUpdateFractionPreview(form) {
 }
 
 document.body.addEventListener("input", function (evt) {
+	// Checked first and unconditionally: the quiz drawer's own question textarea is
+	// also named question_text in new mode (matching AddMCQuestions), which would
+	// otherwise also match the fraction/worded "textarea outside its form" selector
+	// below and get routed to the wrong preview updater (found via T3.8 verification -
+	// the quiz preview's speech text never updated because of this).
+	var quizForm = evt.target.closest("#quiz-question-form");
+	if (quizForm) {
+		solnUpdateQuizPreview(quizForm);
+		return;
+	}
+
 	var form = evt.target.closest("#fraction-question-form");
 	var textarea = evt.target.closest("#question-drawer textarea[name=question_text]");
 	if (form) {
@@ -609,3 +622,81 @@ document.body.addEventListener("input", function (evt) {
 		}
 	}
 });
+
+// Quiz drawer preview + radio tint (T3.8) - mirrors solnUpdateFractionPreview above,
+// but keyed by data-quiz-option/data-preview-choice index pairs instead of a fixed
+// field order, since a quiz question has 4 independent choices rather than 2 fraction
+// pairs.
+function solnUpdateQuizPreview(form) {
+	var drawer = document.getElementById("question-drawer");
+	if (!drawer) {
+		return;
+	}
+
+	for (var i = 0; i < 4; i++) {
+		var row = form.querySelector('[data-quiz-option="' + i + '"]');
+		if (!row) {
+			continue;
+		}
+		var radio = row.querySelector("input[type=radio]");
+		var textInput = row.querySelector("input[type=text]");
+		var checked = !!(radio && radio.checked);
+		if (textInput) {
+			textInput.classList.toggle("bg-success/20", checked);
+		}
+		var previewChoice = drawer.querySelector('[data-preview-choice="' + i + '"]');
+		if (previewChoice) {
+			previewChoice.classList.toggle("border-info", checked);
+			previewChoice.classList.toggle("border-base-100", !checked);
+			previewChoice.textContent =
+				String.fromCharCode(65 + i) + ". " + (textInput ? textInput.value : "");
+		}
+	}
+
+	var questionField = form.querySelector('textarea[name="question_text"], textarea[name="question"]');
+	var previewText = drawer.querySelector("[data-preview-text]");
+	if (questionField && previewText) {
+		previewText.textContent = questionField.value;
+	}
+}
+
+// "Add & next" (T3.8): the response's HX-Trigger-After-Settle names this event once
+// the swap has settled - by then questionSaved (above) has already closed the drawer,
+// so this reopens a fresh one via the URL the server sent.
+document.body.addEventListener("questionReopenNew", function (evt) {
+	var url = evt.detail && evt.detail.url;
+	if (url && window.htmx) {
+		htmx.ajax("GET", url, "#question-drawer");
+	}
+});
+
+// While a new quiz question's drawer is open, the list gets an extra "drafting" row
+// and the header's "+ Add question" button dims (01 §1f) - both purely visual, so
+// plain DOM manipulation rather than a server round-trip.
+function solnQuizNewDrawerActive(drawer) {
+	return !!(
+		drawer.querySelector("#quiz-question-form") &&
+		drawer.querySelector('#quiz-question-form input[name="minigameID"]')
+	);
+}
+
+function solnSetQuizDrafting(active) {
+	var addBtn = document.querySelector('[hx-get*="/question/new"]');
+	if (addBtn) {
+		addBtn.classList.toggle("opacity-[.55]", active);
+	}
+	var existing = document.getElementById("quiz-drafting-row");
+	if (active && !existing) {
+		var container = document.getElementById("question-rows");
+		if (container) {
+			var row = document.createElement("div");
+			row.id = "quiz-drafting-row";
+			row.className =
+				"grid grid-cols-[40px_1fr_90px_130px] items-center px-4 h-[52px] text-sm font-semibold bg-info/10 ring-1 ring-inset ring-info text-info";
+			row.innerHTML = "<span></span><span>New question — drafting…</span>";
+			container.appendChild(row);
+		}
+	} else if (!active && existing) {
+		existing.remove();
+	}
+}
