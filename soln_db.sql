@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS fraction_responses (
     student_id INT NOT NULL,
     num_right_attempts INT DEFAULT 0,
     num_wrong_attempts INT DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
     FOREIGN KEY (question_id) REFERENCES fraction_questions(question_id),
     FOREIGN KEY (student_id) REFERENCES users(user_id)
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS multiple_choice_responses (
     question_id INT,
     student_id INT,
     choice_id INT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
     FOREIGN KEY (question_id) REFERENCES multiple_choice_questions(question_id),
     FOREIGN KEY (student_id) REFERENCES users(user_id),
@@ -138,6 +140,7 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
   minigame_id INT NOT NULL,
   student_id INT NOT NULL,
   score INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id),
   FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
@@ -149,10 +152,12 @@ CREATE TABLE IF NOT EXISTS multiple_choice_scores (
 CREATE INDEX IF NOT EXISTS idx_fq_minigame_classroom  ON fraction_questions (minigame_id, classroom_id);
 CREATE INDEX IF NOT EXISTS idx_fr_lookup              ON fraction_responses (classroom_id, minigame_id, question_id);
 CREATE INDEX IF NOT EXISTS idx_fr_student             ON fraction_responses (student_id, minigame_id);
+CREATE INDEX IF NOT EXISTS idx_fr_created             ON fraction_responses (classroom_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_mcq_minigame_classroom ON multiple_choice_questions (minigame_id, classroom_id);
 CREATE INDEX IF NOT EXISTS idx_mcr_lookup             ON multiple_choice_responses (classroom_id, minigame_id, question_id);
 CREATE INDEX IF NOT EXISTS idx_mcr_student            ON multiple_choice_responses (student_id, minigame_id);
 CREATE INDEX IF NOT EXISTS idx_mcs_lookup             ON multiple_choice_scores (classroom_id, minigame_id);
+CREATE INDEX IF NOT EXISTS idx_mcs_created            ON multiple_choice_scores (classroom_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_users_type             ON users (usertype);
 CREATE INDEX IF NOT EXISTS idx_save_states_student    ON save_states (student_id);
 
