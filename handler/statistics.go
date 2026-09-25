@@ -856,6 +856,10 @@ func assertEnrolled(w http.ResponseWriter, r *http.Request, studentID, classroom
 	return nil
 }
 
+// HandleStudentScoreIndex renders the student page (T5.7, 01 §1h): the header, three
+// stats, and the 12-tile journey. The scene-detail panel starts on the student's
+// current scene and swaps on tile click - see student.templ's StudentPage for why
+// that panel still uses the old per-kind fragment handlers unrestyled (T5.8's job).
 func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
@@ -869,23 +873,82 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// get student
-	student, err := database.GetStudent(r.Context(), studentID)
-	if err != nil {
-		return err
-	}
 	classroom, err := database.GetClassroom(r.Context(), classroomID)
 	if err != nil {
 		return err
 	}
 
-	title := fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", student.Firstname, student.Lastname)
+	insights, err := loadClassroomInsights(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	var ins types.StudentInsight
+	found := false
+	for _, in := range insights {
+		if in.UserID == studentIDStr {
+			ins = in
+			found = true
+			break
+		}
+	}
+	if !found {
+		// assertEnrolled already confirmed the enrollment row exists, so this would
+		// mean loadClassroomInsights and the enrollments table disagree - a real bug,
+		// not a routine 404, but still safer to surface as "not found" than a panic
+		// on a zero-value StudentInsight.
+		http.Error(w, "not found", http.StatusNotFound)
+		return fmt.Errorf("student %d enrolled but missing from classroom %d's insights", studentID, classroomID)
+	}
+
+	quiz, err := database.GetLatestQuizScores(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	frac, err := database.GetFractionAggregates(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+	journey := buildJourney(ins, quiz, frac)
+	finished := finishedCount(ins.Current, ins.Completed)
+
+	q := parseStudentQuery(r.URL.Query())
+	prevID, nextID := neighbours(sortedStudentIDs(insights, q.Sort), studentIDStr)
+
+	title := fmt.Sprintf("%s %s Statistics · Sol'n Teacher Portal", ins.Firstname, ins.Lastname)
 	page, err := pageFor(r, title, "students", classroomIDStr)
 	if err != nil {
 		return err
 	}
 
-	return render(w, r, statistics.StudentScores(page, student.Firstname, student.Lastname, studentIDStr, classroomIDStr, classroom.ClassroomName))
+	return render(w, r, statistics.StudentPage(page, classroomIDStr, classroom, ins, journey, finished, prevID, nextID, q.Sort))
+}
+
+// sortedStudentIDs orders every insight's UserID the same way applyStudentQuery
+// (T4.9) sorts for the Students page, but without paging - neighbours (DEC-19) needs
+// the whole class's order, not one 10-row page of it.
+func sortedStudentIDs(insights []types.StudentInsight, sortKey string) []string {
+	sorted := append([]types.StudentInsight(nil), insights...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		a, b := sorted[i], sorted[j]
+		switch sortKey {
+		case "name":
+			return studentSortName(a) < studentSortName(b)
+		case "quiz":
+			return pctAscNoDataLast(a.QuizAvgPct, b.QuizAvgPct)
+		case "accuracy":
+			return pctAscNoDataLast(a.AccuracyPct, b.AccuracyPct)
+		default: // "attention"
+			if len(a.Flags) != len(b.Flags) {
+				return len(a.Flags) > len(b.Flags)
+			}
+			return studentSortName(a) < studentSortName(b)
+		}
+	})
+	ids := make([]string, len(sorted))
+	for i, s := range sorted {
+		ids[i] = s.UserID
+	}
+	return ids
 }
 
 // different score formats
