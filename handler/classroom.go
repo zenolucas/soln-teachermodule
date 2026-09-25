@@ -141,10 +141,19 @@ func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	summaries, err := loadTeacherSummaries(r.Context(), teacherID)
+	if err != nil {
+		return err
+	}
+	flagged := make(map[string]int, len(summaries))
+	for _, s := range summaries {
+		flagged[s.ClassroomID] = s.FlaggedCount
+	}
+
 	openID := r.URL.Query().Get("classroom_id")
 	active := r.URL.Query().Get("active")
 
-	return render(w, r, ui.ClassroomMenu(classrooms, openID, active))
+	return render(w, r, ui.ClassroomMenu(classrooms, openID, active, flagged))
 }
 
 func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {

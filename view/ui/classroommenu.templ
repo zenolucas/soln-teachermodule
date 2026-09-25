@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"soln-teachermodule/types"
+	"strconv"
 	"strings"
 )
 
@@ -18,7 +19,10 @@ import (
 // at a time, driven by the body-level attribute the pre-paint script in
 // layout/app.templ sets, so a single sidebar tree (not two duplicated asides needing
 // two separate fetches) can switch between them with pure CSS.
-templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
+//
+// flagged is each classroom's flagged-student count (T4.3's ClassroomSummary,
+// keyed by ClassroomID), rendered as a count pill when > 0 (02 §A3/§C2).
+templ ClassroomMenu(rooms []types.Classroom, openID string, active string, flagged map[string]int) {
 	if len(rooms) == 0 {
 		<p class="opacity-60 px-3 mt-2 text-sm group-data-[sidebar=collapsed]/shell:hidden">No classrooms yet.</p>
 	} else {
@@ -29,6 +33,11 @@ templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
 					class="h-[38px] flex items-center gap-3 px-3 rounded text-sm">
 					<i class="fa-solid fa-users w-[18px] text-center text-accent text-[13px]" aria-hidden="true"></i>
 					<span class="flex-1 truncate">{ room.ClassroomName } – { room.Section }</span>
+					if n := flagged[room.ClassroomID]; n > 0 {
+						<span class="min-w-[18px] h-[18px] px-1.5 rounded-full bg-error text-white text-[11px] font-bold flex items-center justify-center">
+							{ strconv.Itoa(n) }
+						</span>
+					}
 				</a>
 				if room.ClassroomID == openID {
 					<!-- #434C5E: the mockup's own left-border color for this indent (Sidebar.dc.html) -
@@ -45,8 +54,13 @@ templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
 			<div class="hidden group-data-[sidebar=collapsed]/shell:flex flex-col items-center gap-1">
 				<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) }
 					aria-label={ room.ClassroomName } data-tip={ room.ClassroomName }
-					class="tooltip tooltip-right w-10 h-10 rounded flex items-center justify-center text-[12.5px] font-bold bg-polar1 text-base-100">
+					class="tooltip tooltip-right relative w-10 h-10 rounded flex items-center justify-center text-[12.5px] font-bold bg-polar1 text-base-100">
 					{ tileInitials(room.ClassroomName) }
+					if n := flagged[room.ClassroomID]; n > 0 {
+						<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-error text-white text-[10px] flex items-center justify-center border-2 border-base-content">
+							{ strconv.Itoa(n) }
+						</span>
+					}
 				</a>
 				if room.ClassroomID == openID {
 					<div class="flex flex-col items-center gap-1 pb-2">
