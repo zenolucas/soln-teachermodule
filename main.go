@@ -85,6 +85,9 @@ func main() {
 		// minigame endpoints
 		auth.Get("/minigame", handler.Make(handler.HandleMinigameIndex))
 		auth.Post("/getfractions", handler.Make(handler.HandleGetFractions))
+		auth.Get("/getfractions", handler.Make(handler.HandleGetFractions)) // DEC-7: the list's own hx-get uses GET, alongside the legacy POST
+		auth.Get("/question/new", handler.Make(handler.HandleQuestionNew))
+		auth.Get("/question/edit", handler.Make(handler.HandleQuestionEdit))
 		auth.Post("/getwordedquestions", handler.Make(handler.HandleGetWorded))
 		auth.Post("/getmcquestions", handler.Make(handler.HandleGetMCQuestions))
 		auth.Post("/add/fractionquestions", handler.Make(handler.HandleAddFractions))

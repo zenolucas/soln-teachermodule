@@ -1,0 +1,228 @@
+package minigame
+
+import "fmt"
+
+// FractionRow is one row in the fraction/worded editor's list (T3.4/T3.5) - the
+// question (as numerator/denominator pairs; worded rows add QuestionText in T3.5), its
+// computed answer, and its class accuracy (02 §B3). MinigameID/ClassroomID are
+// duplicated onto every row (rather than a separate FractionRows parameter) so the
+// row's own hx-get link has everything it needs, keeping FractionRows(rows, sel) to
+// exactly the two parameters the task calls for.
+type FractionRow struct {
+	MinigameID    int
+	ClassroomID   int
+	QuestionID    int
+	Number        int // 1-based position in the list, for the "#" column and the drawer's "Edit question {n}"
+	Num1, Den1    int
+	Num2, Den2    int
+	Op            string
+	Answer        string
+	AccuracyTotal int
+	AccuracyPct   int
+}
+
+// accuracyPct is right/total as a whole-number percentage, 0 when total is 0 (no
+// attempts yet - callers check AccuracyTotal separately to distinguish that from a
+// genuine 0%).
+func accuracyPct(right, total int) int {
+	if total == 0 {
+		return 0
+	}
+	return right * 100 / total
+}
+
+// barWidthPct is the accuracy bar's fill width. A Tailwind utility class can't express
+// an arbitrary runtime percentage - the JIT compiler only generates CSS for class
+// strings it finds literally in source - and templ's style attribute can't take a
+// dynamic expression at all (only a static string), so this uses templ's own css
+// function: it generates a scoped, sanitized class for the computed declaration
+// instead of either.
+css barWidthPct(pct int) {
+	width: { fmt.Sprintf("%d%%", pct) };
+}
+
+// FractionRows is the editor list's body, loaded via hx-get so the page shell renders
+// immediately (see students.templ's StudentRows for the same pattern, T2.2). sel is
+// the question_id to show already selected (DEC-3) - 0 when none should be, e.g. right
+// after a delete.
+templ FractionRows(rows []FractionRow, sel int) {
+	if len(rows) == 0 {
+		<p class="text-center text-neutral py-8">No questions yet. Add one with Add question.</p>
+	} else {
+		<div class="grid grid-cols-[40px_1fr_80px_150px_24px] items-center px-4 h-10 text-xs font-bold opacity-60 border-b border-base-300">
+			<span>#</span>
+			<span>Question</span>
+			<span>Answer</span>
+			<span>Class accuracy</span>
+			<span></span>
+		</div>
+		for _, row := range rows {
+			<div
+				data-drawer-opener
+				tabindex="0"
+				role="button"
+				hx-get={ fmt.Sprintf("/question/edit?minigameID=%d&classroomID=%d&questionID=%d", row.MinigameID, row.ClassroomID, row.QuestionID) }
+				hx-target="#question-drawer"
+				hx-swap="innerHTML"
+				class={
+					"grid grid-cols-[40px_1fr_80px_150px_24px] items-center px-4 h-[66px] cursor-pointer hover:bg-base-200 border-b border-base-300 last:border-b-0",
+					templ.KV("is-selected", row.QuestionID == sel),
+				}
+			>
+				<span class="text-[13px] font-bold opacity-60">{ fmt.Sprint(row.Number) }</span>
+				<div class="flex items-center gap-2.5">
+					@stackedFraction(row.Num1, row.Den1)
+					<span class="opacity-60">{ row.Op }</span>
+					@stackedFraction(row.Num2, row.Den2)
+				</div>
+				<span class="text-neutral font-semibold">{ row.Answer }</span>
+				if row.AccuracyTotal > 0 {
+					<div class="flex items-center gap-2">
+						<div class="w-[72px] h-1.5 rounded bg-base-300 overflow-hidden">
+							<div
+								class={ "h-full", barWidthPct(row.AccuracyPct), templ.KV("bg-success", row.AccuracyPct >= 60), templ.KV("bg-error", row.AccuracyPct < 60) }
+							></div>
+						</div>
+						<span class="text-[13px]">{ fmt.Sprint(row.AccuracyPct) }%</span>
+					</div>
+				} else {
+					<span class="text-neutral">—</span>
+				}
+				<i class="fa-solid fa-chevron-right text-[11px] opacity-60" aria-hidden="true"></i>
+			</div>
+		}
+	}
+}
+
+// stackedFraction is the numerator / 1.5px rule / denominator layout used for both
+// sides of a question in the list (01 §1e). The rule uses bg-current so it always
+// matches whatever text color the caller set, instead of a second hard-coded color
+// that could drift out of sync with it.
+templ stackedFraction(num, den int) {
+	<span class="inline-flex flex-col items-center leading-none font-semibold min-w-4">
+		<span>{ fmt.Sprint(num) }</span>
+		<span class="self-stretch h-[1.5px] bg-current my-[3px]"></span>
+		<span>{ fmt.Sprint(den) }</span>
+	</span>
+}
+
+// FractionDrawerData is everything FractionDrawer needs, for both an existing question
+// (Editing true) and a fresh "New question" (Editing false, QuestionID 0). Num1-Den2
+// are the values to show in the Problem builder - either a freshly fetched question,
+// zero for a new one, or the teacher's just-submitted values when Errors is non-empty
+// and the drawer is redisplaying a validation failure (DEC-4).
+type FractionDrawerData struct {
+	MinigameID    int
+	ClassroomID   int
+	QuestionID    int
+	RowNumber     int // this question's position in the list - only meaningful when Editing
+	SceneName     string
+	Operation     string // "Addition" or "Subtraction"
+	Op            string // "+" or the U+2212 minus sign, for the operator chip
+	Num1, Den1    int
+	Num2, Den2    int
+	Answer        string
+	Editing       bool
+	ShowAccuracy  bool
+	AccuracyRight int
+	AccuracyTotal int
+	Errors        map[string]string
+}
+
+// fractionFormAction is /update/fractions (snake_case ids) when editing, or
+// /add/fractionquestions (camelCase ids) when new (X4) - the one attribute value that
+// differs between the two forms the Problem builder can submit as.
+func fractionFormAction(editing bool) string {
+	if editing {
+		return "/update/fractions"
+	}
+	return "/add/fractionquestions"
+}
+
+templ FractionDrawer(d FractionDrawerData) {
+	<div class="flex flex-col h-full">
+		<div class="h-[60px] shrink-0 flex items-center gap-2.5 px-5 border-b border-base-300">
+			<div class="flex-1 min-w-0 flex flex-col leading-tight">
+				<span class="text-base font-bold">
+					if d.Editing {
+						{ fmt.Sprintf("Edit question %d", d.RowNumber) }
+					} else {
+						New question
+					}
+				</span>
+				<span class="text-xs opacity-60">{ d.SceneName } · { d.Operation }</span>
+			</div>
+			<button type="button" data-drawer-close aria-label="Close" class="opacity-60 hover:opacity-100">
+				<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			</button>
+		</div>
+		<div class="flex-1 p-5 flex flex-col gap-4 overflow-y-auto">
+			<div class="flex flex-col gap-2.5">
+				<span class="text-[13px] font-bold">Problem</span>
+				<form
+					id="fraction-question-form"
+					hx-post={ fractionFormAction(d.Editing) }
+					hx-target="#question-rows"
+					hx-swap="innerHTML"
+					class="flex items-center gap-3"
+				>
+					if d.Editing {
+						<input type="hidden" name="question_id" value={ fmt.Sprint(d.QuestionID) } />
+						<input type="hidden" name="minigame_id" value={ fmt.Sprint(d.MinigameID) } />
+						<input type="hidden" name="classroom_id" value={ fmt.Sprint(d.ClassroomID) } />
+					} else {
+						<input type="hidden" name="minigameID" value={ fmt.Sprint(d.MinigameID) } />
+						<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+					}
+					@fractionInputPair("fraction1_numerator", "fraction1_denominator", d.Num1, d.Den1, d.Errors)
+					<span class="w-[30px] h-[30px] shrink-0 rounded-full bg-base-300 flex items-center justify-center text-lg font-bold">{ d.Op }</span>
+					@fractionInputPair("fraction2_numerator", "fraction2_denominator", d.Num2, d.Den2, d.Errors)
+					<span class="text-xl font-bold opacity-60 shrink-0">=</span>
+					<div class="flex flex-col items-center gap-1 px-3.5 py-2 rounded-box bg-success/25 shrink-0" data-answer>
+						<span class="text-xl font-bold leading-none">{ d.Answer }</span>
+					</div>
+				</form>
+				<span class="text-xs opacity-60">The answer is calculated for you. Denominators must be 1 or more.</span>
+			</div>
+			if d.ShowAccuracy {
+				<div class="flex items-center gap-2.5 p-3 rounded-box bg-base-200 text-[12.5px]">
+					<span class={ "w-[7px] h-[7px] rounded-full shrink-0", templ.KV("bg-error", accuracyPct(d.AccuracyRight, d.AccuracyTotal) < 60), templ.KV("bg-success", accuracyPct(d.AccuracyRight, d.AccuracyTotal) >= 60) }></span>
+					<span class="flex-1">{ fmt.Sprintf("%d%% of the class got this right (%d of %d attempts).", accuracyPct(d.AccuracyRight, d.AccuracyTotal), d.AccuracyRight, d.AccuracyTotal) }</span>
+				</div>
+			}
+		</div>
+		<div class="h-16 shrink-0 flex items-center gap-2 px-5 border-t border-base-300">
+			if d.Editing {
+				<form hx-post="/delete/fractions" hx-target="#question-rows" hx-swap="innerHTML" hx-confirm="Delete this question? Students' recorded answers to it will also be deleted.">
+					<input type="hidden" name="question_id" value={ fmt.Sprint(d.QuestionID) } />
+					<input type="hidden" name="minigame_id" value={ fmt.Sprint(d.MinigameID) } />
+					<input type="hidden" name="classroom_id" value={ fmt.Sprint(d.ClassroomID) } />
+					<button type="submit" class="btn btn-ghost text-error btn-sm">
+						<i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
+					</button>
+				</form>
+			}
+			<button type="button" data-drawer-close class="btn btn-sm ml-auto">Cancel</button>
+			<button type="submit" form="fraction-question-form" class="btn btn-primary btn-sm">Save changes</button>
+		</div>
+	</div>
+}
+
+// fractionInputPair is one side of the Problem builder: a numerator input over a
+// denominator input, each with its own inline error (DEC-4) when the field name is a
+// key in errs.
+templ fractionInputPair(numName, denName string, num, den int, errs map[string]string) {
+	<div class="flex flex-col items-center gap-1.5">
+		<input type="number" inputmode="numeric" name={ numName } value={ fmt.Sprint(num) } min="0" required
+			class={ "w-[60px] h-[42px] text-center text-xl font-semibold input input-bordered p-0", templ.KV("input-error", errs[numName] != "") } />
+		<span class="w-[60px] h-0.5 bg-base-content"></span>
+		<input type="number" inputmode="numeric" name={ denName } value={ fmt.Sprint(den) } min="1" required
+			class={ "w-[60px] h-[42px] text-center text-xl font-semibold input input-bordered p-0", templ.KV("input-error", errs[denName] != "") } />
+		if errs[numName] != "" {
+			<span class="text-[11px] text-error text-center">{ errs[numName] }</span>
+		}
+		if errs[denName] != "" {
+			<span class="text-[11px] text-error text-center">{ errs[denName] }</span>
+		}
+	</div>
+}

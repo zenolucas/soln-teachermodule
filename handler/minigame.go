@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
+	"soln-teachermodule/util"
 	"soln-teachermodule/view/minigame"
 	"strconv"
 )
@@ -53,7 +55,7 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 
 	switch minigameKinds[minigameIDStr] {
 	case kindFractions:
-		return render(w, r, minigame.Fractions(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
+		return render(w, r, minigame.Fractions(page, classroomIDStr, classroom.ClassroomName, scene, worldForScene(minigameID)))
 	case kindWorded:
 		return render(w, r, minigame.Worded(page, minigameIDStr, classroomIDStr, classroom.ClassroomName, scene.Name))
 	case kindQuiz:
@@ -64,35 +66,118 @@ func HandleMinigameIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
-func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
-	minigameIDStr := r.FormValue("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
+// worldForScene finds the World containing minigameID, for the editor header's
+// "World N · Topic" badge (T3.4) - types.Scene alone doesn't know which World it
+// belongs to, and adding that back-reference isn't worth it for one caller.
+func worldForScene(minigameID int) types.World {
+	for _, world := range types.Worlds {
+		for _, scene := range world.Scenes {
+			if scene.MinigameID == minigameID {
+				return world
+			}
+		}
+	}
+	return types.World{}
+}
 
-	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+func HandleGetFractions(w http.ResponseWriter, r *http.Request) error {
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
 
-	fmt.Print("minigameID = ", minigameID)
-	fmt.Print("classroomID= ", classroomID)
-
-	fractions, err := database.GetFractionQuestions(r.Context(), minigameID, classroomID)
+	rows, err := fractionRows(r.Context(), minigameID, classroomID)
 	if err != nil {
 		return err
 	}
+	return render(w, r, minigame.FractionRows(rows, 0))
+}
 
-	if len(fractions) == 0 {
-		renderNoQuestions(w)
-		return nil
+// fractionRows builds the editor list's rows (T3.4): each question's stacked-fraction
+// display, its computed answer, and its class accuracy. GetFractionQuestions and
+// GetFractionQuestionSummaries are two separate queries (02 §B3), joined here by
+// question_id.
+func fractionRows(ctx context.Context, minigameID, classroomID int) ([]minigame.FractionRow, error) {
+	scene, ok := types.SceneByID(minigameID)
+	if !ok {
+		return nil, fmt.Errorf("no such minigame: %d", minigameID)
 	}
 
-	for _, fraction := range fractions {
-		renderFractionCard(w, fraction, minigameID, classroomID, false)
+	questions, err := database.GetFractionQuestions(ctx, minigameID, classroomID)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	summaries, err := database.GetFractionQuestionSummaries(ctx, classroomID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	accuracy := make(map[int]types.StudentFractionStatistics, len(summaries))
+	for _, s := range summaries {
+		accuracy[s.QuestionID] = s
+	}
+
+	rows := make([]minigame.FractionRow, 0, len(questions))
+	for i, q := range questions {
+		row := minigame.FractionRow{
+			MinigameID:  minigameID,
+			ClassroomID: classroomID,
+			QuestionID:  q.QuestionID,
+			Number:      i + 1,
+			Num1:        q.Fraction1_Numerator,
+			Den1:        q.Fraction1_Denominator,
+			Num2:        q.Fraction2_Numerator,
+			Den2:        q.Fraction2_Denominator,
+			Op:          scene.Op,
+		}
+		if answer, ok := util.Combine(util.Frac{Num: q.Fraction1_Numerator, Den: q.Fraction1_Denominator}, util.Frac{Num: q.Fraction2_Numerator, Den: q.Fraction2_Denominator}, scene.Op); ok {
+			row.Answer = answer.String()
+		}
+		if s, ok := accuracy[q.QuestionID]; ok {
+			row.AccuracyTotal = s.RightAttemptsCount + s.WrongAttemptsCount
+			if row.AccuracyTotal > 0 {
+				row.AccuracyPct = s.RightAttemptsCount * 100 / row.AccuracyTotal
+			}
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
+}
+
+// respondFractionRowsSaved re-renders the whole #question-rows list after a
+// successful add/update/delete and sets the HX-Trigger toast event (DEC-4) - sel
+// highlights a specific row (the one just edited), or 0 for none (a fresh add or a
+// delete has nothing in particular to highlight).
+func respondFractionRowsSaved(w http.ResponseWriter, r *http.Request, minigameID, classroomID, sel int, event, message string) error {
+	rows, err := fractionRows(r.Context(), minigameID, classroomID)
+	if err != nil {
+		return err
+	}
+	triggerEvent(w, event, message)
+	return render(w, r, minigame.FractionRows(rows, sel))
+}
+
+// respondFractionDrawerErrors re-renders the drawer in place with inline field errors
+// (DEC-4), as a 422 with HX-Retarget/HX-Reswap so htmx's default (which only swaps 2xx
+// responses) doesn't drop it - see the matching htmx:beforeSwap listener in
+// public/js/index.js.
+func respondFractionDrawerErrors(w http.ResponseWriter, r *http.Request, minigameID, classroomID, questionID int, q types.FractionQuestion, errs map[string]string) error {
+	data, err := buildFractionDrawerData(r.Context(), minigameID, classroomID, questionID, q, errs)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("HX-Retarget", "#question-drawer")
+	w.Header().Set("HX-Reswap", "innerHTML")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	return render(w, r, minigame.FractionDrawer(data))
 }
 
 // renderNoQuestions is shared by all three question-list fragments (fractions, worded,
@@ -103,164 +188,91 @@ func renderNoQuestions(w http.ResponseWriter) {
 	fmt.Fprint(w, `<p class="text-white text-opacity-60 mt-4">No questions yet. Add one below to get started.</p>`)
 }
 
-// renderFractionCard emits one fraction question's card: a delete form and an update
-// form. The update form is now hx-post targeting the card's own id (was a plain POST
-// that redirected back to the whole /minigame page - see FE-22), so saving a change no
-// longer reloads the page or loses scroll position; the server just sends back this
-// same card with saved=true to show a brief confirmation. Numeric fields are now
-// type="number" required, matching the same fix already applied to the Add Question
-// form (see FE-23) - these edit fields had been missed.
-func renderFractionCard(w http.ResponseWriter, fraction types.FractionQuestion, minigameID int, classroomID int, saved bool) {
-	savedText := ""
-	if saved {
-		savedText = `<span class="text-success mr-2">Saved <i class="fa-solid fa-check"></i></span>`
-	}
-	// The update form targets and swaps itself (hx-target/hx-swap both default to
-	// that when omitted) rather than a wrapping ancestor div - a form whose own
-	// hx-target is an ancestor that contains it hit a reproducible tab crash in
-	// headless Chromium during verification of this ticket; every other htmx form in
-	// this app already uses the safer self-targeting pattern, so this matches that
-	// instead of introducing the one exception.
-	fmt.Fprintf(w, `
-		<div class="w-full max-w-3xl bg-neutral py-10 px-8 rounded-xl mt-4">
-		<div class="flex justify-end">
-			<form action="/delete/fractions" method="POST" onsubmit="return confirm('Delete this question? Students\' recorded answers to it will also be deleted.')">
-				<input type="hidden" name="question_id" value="%d" />
-				<input type="hidden" name="minigame_id" value= "%d" />
-				<input type="hidden" name="classroom_id" value= "%d" />
-				<button type="submit" class="btn btn-error" aria-label="Delete question"><i class="fa-solid fa-trash"></i></button>
-			</form>
-		</div>
-		<form hx-post="/update/fractions" hx-swap="outerHTML">
-			<input type="hidden" name="question_id" value= "%d" />
-			<input type="hidden" name="minigame_id" value= "%d" />
-			<input type="hidden" name="classroom_id" value= "%d" />
-			<div class="flex flex-wrap gap-4 mt-4">
-				<label class="form-control w-xs mr-4">
-					<div class="label">
-						<span class="label-text text-white">Fraction 1 Numerator:</span>
-					</div>
-					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction1_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				</label>
-				<label class="form-control w-xs mr-4">
-					<div class="label">
-						<span class="label-text text-white">Fraction 2 Numerator</span>
-					</div>
-					<input type="number" inputmode="numeric" required min="0" value="%d" name="fraction2_numerator" class="input input-bordered input-primary w-xs text-xl" />
-				</label>
-			</div>
-			<div class="flex flex-wrap gap-4 mt-4">
-				<label class="form-control w-xs">
-					<div class="label">
-						<span class="label-text text-white">Fraction 1 Denominator:</span>
-					</div>
-					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction1_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				</label>
-				<label class="form-control w-xs">
-					<div class="label">
-						<span class="label-text text-white">Fraction 2 Denominator</span>
-					</div>
-					<input type="number" inputmode="numeric" required min="1" value="%d" name="fraction2_denominator" class="input input-bordered input-primary w-xs text-xl" />
-				</label>
-			</div>
-
-			<div class="flex justify-end items-center">
-				%s
-				<button type="submit" class="btn btn-primary text-white">Save changes</button>
-			</div>
-		</form>
-		</div>
-	`, fraction.QuestionID, minigameID, classroomID, fraction.QuestionID, minigameID, classroomID,
-		fraction.Fraction1_Numerator, fraction.Fraction2_Numerator, fraction.Fraction1_Denominator, fraction.Fraction2_Denominator, savedText)
-}
-
 func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
-	// get minigameID
-	minigameID := r.FormValue("minigameID")
-	// get classroomID
-	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-
-	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+	if err := r.ParseForm(); err != nil {
 		return err
 	}
-
-	err := database.AddFractionQuestions(w, r, classroomID)
+	minigameID, err := formInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroomID")
 	if err != nil {
 		return err
 	}
 
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
-	return nil
+	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+
+	q, errs := validateFractionForm(r.Form)
+	if len(errs) > 0 {
+		return respondFractionDrawerErrors(w, r, minigameID, classroomID, 0, q, errs)
+	}
+
+	if err := database.AddFractionQuestions(w, r, classroomID); err != nil {
+		return err
+	}
+
+	return respondFractionRowsSaved(w, r, minigameID, classroomID, 0, "questionSaved", "Saved ✓")
 }
 
 func HandleUpdateFractions(w http.ResponseWriter, r *http.Request) error {
-	// get classroomID
-	classroomIDStr := r.FormValue("classroom_id")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
-	// get minigameID
-	minigameIDStr := r.FormValue("minigame_id")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+	classroomID, err := formInt(r, "classroom_id")
+	if err != nil {
+		return err
+	}
+	minigameID, err := formInt(r, "minigame_id")
+	if err != nil {
+		return err
+	}
+	questionID, err := formInt(r, "question_id")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
+	}
+
+	q, errs := validateFractionForm(r.Form)
+	if len(errs) > 0 {
+		return respondFractionDrawerErrors(w, r, minigameID, classroomID, questionID, q, errs)
 	}
 
 	if err := database.UpdateFractions(w, r); err != nil {
 		return err
 	}
 
-	// Re-render just this card instead of redirecting back to the whole /minigame
-	// page (see FE-22) - the values below are read from the same form fields
-	// database.UpdateFractions just validated and saved, not a fresh DB query.
+	return respondFractionRowsSaved(w, r, minigameID, classroomID, questionID, "questionSaved", "Saved ✓")
+}
+
+func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
+	minigameID, err := formInt(r, "minigame_id")
+	if err != nil {
+		return err
+	}
 	questionID, err := formInt(r, "question_id")
 	if err != nil {
 		return err
 	}
-	fraction1Numerator, err := formInt(r, "fraction1_numerator")
+	classroomID, err := formInt(r, "classroom_id")
 	if err != nil {
 		return err
 	}
-	fraction1Denominator, err := formInt(r, "fraction1_denominator")
-	if err != nil {
-		return err
-	}
-	fraction2Numerator, err := formInt(r, "fraction2_numerator")
-	if err != nil {
-		return err
-	}
-	fraction2Denominator, err := formInt(r, "fraction2_denominator")
-	if err != nil {
-		return err
-	}
-
-	renderFractionCard(w, types.FractionQuestion{
-		QuestionID:            questionID,
-		Fraction1_Numerator:   fraction1Numerator,
-		Fraction1_Denominator: fraction1Denominator,
-		Fraction2_Numerator:   fraction2Numerator,
-		Fraction2_Denominator: fraction2Denominator,
-	}, minigameID, classroomID, true)
-	return nil
-}
-
-func HandleDeleteFractions(w http.ResponseWriter, r *http.Request) error {
-	minigameID := r.FormValue("minigame_id")
-	questionID := r.FormValue("question_id")
-	classroomIDStr := r.FormValue("classroom_id")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
 
-	fmt.Print("we got minigameID", minigameID)
-	fmt.Print("we got questionID", questionID)
-	if err := database.DeleteFractions(r.Context(), minigameID, questionID, classroomIDStr); err != nil {
+	if err := database.DeleteFractions(r.Context(), strconv.Itoa(minigameID), strconv.Itoa(questionID), strconv.Itoa(classroomID)); err != nil {
 		return err
 	}
-	hxRedirect(w, r, "/minigame?minigameID="+minigameID+"&classroomID="+classroomIDStr)
-	return nil
+
+	return respondFractionRowsSaved(w, r, minigameID, classroomID, 0, "questionDeleted", "Question deleted")
 }
 
 func HandleGetWorded(w http.ResponseWriter, r *http.Request) error {
