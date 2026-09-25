@@ -29,6 +29,12 @@ type StudentFractionStatistics struct {
 	Fraction2_Denominator int    `json:"fraction2_denominator"`
 	RightAttemptsCount    int    `json:"num_right_attempts"`
 	WrongAttemptsCount    int    `json:"num_wrong_attempts"`
+	// MaxWrongAttemptsCount is the highest single-row num_wrong_attempts for this
+	// question (02 §C2's wrong_streak input) - only populated by
+	// GetStudentFractionStatistics/GetStudentWordedStatistics (T5.6). Not surfaced
+	// anywhere yet: DEC-24 drops the wrong_streak flag/stat pending the game-client
+	// audit, but the aggregation is cheap to include alongside SUM while fixing X7.
+	MaxWrongAttemptsCount int `json:"max_wrong_attempts"`
 }
 
 // QuestionAccuracy is a quiz question's per-question right/total breakdown for the

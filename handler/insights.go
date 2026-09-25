@@ -390,3 +390,90 @@ func collapseActivity(rows []types.Activity) []types.Activity {
 	}
 	return out
 }
+
+// buildJourney composes one student's 12-tile journey (01 §1h) from their insight
+// (Current/Completed, from currentScene - DEC-10) and the classroom-wide quiz/frac
+// rows (T4.2), filtered here to just this student. A tile before Current, or every
+// tile when Completed, is "done" - pass if its score/accuracy is ≥60%, fail
+// otherwise; a finished tile with no matching row at all (possible in sparse test
+// data, though DEC-10 assumes forced play order means this doesn't happen for real)
+// defaults to pass, since there's no data suggesting otherwise. The Current tile
+// itself, and everything after it, never shows a score (DEC-24: no "finished 60%
+// done" style partial-progress claims).
+func buildJourney(ins types.StudentInsight, quiz []types.QuizScoreRow, frac []types.FractionAggRow) []types.JourneyTile {
+	studentID, _ := strconv.Atoi(ins.UserID)
+
+	quizByScene := map[int]types.QuizScoreRow{}
+	for _, q := range quiz {
+		if q.StudentID == studentID {
+			quizByScene[q.MinigameID] = q
+		}
+	}
+	fracByScene := map[int]types.FractionAggRow{}
+	for _, f := range frac {
+		if f.StudentID == studentID {
+			fracByScene[f.MinigameID] = f
+		}
+	}
+
+	currentIdx := -1
+	for i, id := range sceneOrder {
+		if id == ins.Current {
+			currentIdx = i
+		}
+	}
+
+	tiles := make([]types.JourneyTile, 0, len(sceneOrder))
+	for i, id := range sceneOrder {
+		scene, _ := types.SceneByID(id)
+		tile := types.JourneyTile{Scene: scene}
+
+		switch {
+		case ins.Completed || (currentIdx >= 0 && i < currentIdx):
+			pass := true
+			if scene.Kind == types.KindQuiz {
+				if q, ok := quizByScene[id]; ok && q.Total > 0 {
+					tile.ScoreText = fmt.Sprintf("%d/%d", q.Score, q.Total)
+					pass = q.Score*100 >= types.PassPct*q.Total
+				}
+			} else if f, ok := fracByScene[id]; ok {
+				if total := f.Right + f.Wrong; total > 0 {
+					pct := f.Right * 100 / total
+					tile.ScoreText = fmt.Sprintf("%d%%", pct)
+					pass = pct >= types.PassPct
+				}
+			}
+			if pass {
+				tile.State = "done-pass"
+			} else {
+				tile.State = "done-fail"
+			}
+		case !ins.Completed && i == currentIdx:
+			tile.State = "current"
+		default:
+			tile.State = "locked"
+		}
+
+		tiles = append(tiles, tile)
+	}
+	return tiles
+}
+
+// neighbours finds id's previous/next entries in ids (DEC-19: the class list in the
+// current sort order) - "" at either end, for a Previous/Next button to disable
+// instead of link.
+func neighbours(ids []string, id string) (prev, next string) {
+	for i, v := range ids {
+		if v != id {
+			continue
+		}
+		if i > 0 {
+			prev = ids[i-1]
+		}
+		if i < len(ids)-1 {
+			next = ids[i+1]
+		}
+		return prev, next
+	}
+	return "", ""
+}

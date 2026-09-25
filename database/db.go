@@ -432,6 +432,20 @@ func GetClassroomTeacherID(ctx context.Context, classroomID int) (int, error) {
 	return teacherID, nil
 }
 
+// IsEnrolled reports whether a student is currently enrolled in a classroom (X6, T5.6):
+// the student statistics handlers checked that the teacher owns classroomID, but never
+// that userID is actually one of that classroom's students, so any teacher could read
+// any student's name and answers by posting a foreign userID alongside their own
+// classroomID.
+func IsEnrolled(ctx context.Context, studentID, classroomID int) (bool, error) {
+	var exists bool
+	err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM enrollments WHERE student_id = ? AND classroom_id = ?)", studentID, classroomID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 // GetClassroom returns a single classroom's name/section/description, so the
 // classroom page can show which classroom the teacher is actually looking at (see
 // FE-12 - previously the page showed nothing but tabs, with the name visible only in
@@ -1193,10 +1207,22 @@ func GetStudentScores(ctx context.Context, classroomID int, minigameID int) ([]t
 	return studentScores, nil
 }
 
+// GetStudentFractionStatistics is one student's per-question performance in a
+// fraction minigame. Aggregated (SUM right, SUM wrong, MAX wrong per question, fixing
+// X7): a plain LEFT JOIN without GROUP BY produced one row per fraction_responses
+// row, so a student who replayed a question showed up as duplicate rows here instead
+// of one combined one.
 func GetStudentFractionStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.QueryContext(ctx, "SELECT fq.fraction1_numerator AS f1num, fq.fraction1_denominator AS f1den, fq.fraction2_numerator AS f2num, fq.fraction2_denominator AS f2den, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
+	rows, err := db.QueryContext(ctx, `
+		SELECT fq.question_id, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator,
+		       COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0), COALESCE(MAX(fr.num_wrong_attempts), 0)
+		FROM fraction_questions fq
+		LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ?
+		WHERE fq.minigame_id = ? AND fq.classroom_id = ?
+		GROUP BY fq.question_id, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator
+	`, userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -1204,8 +1230,8 @@ func GetStudentFractionStatistics(ctx context.Context, userID int, minigameID in
 
 	for rows.Next() {
 		var statistic types.StudentFractionStatistics
-		if err := rows.Scan(&statistic.Fraction1_Numerator, &statistic.Fraction1_Denominator, &statistic.Fraction2_Numerator, &statistic.Fraction2_Denominator, &statistic.WrongAttemptsCount, &statistic.RightAttemptsCount); err != nil {
-			return nil, fmt.Errorf("GetStudentScores: %v", err)
+		if err := rows.Scan(&statistic.QuestionID, &statistic.Fraction1_Numerator, &statistic.Fraction1_Denominator, &statistic.Fraction2_Numerator, &statistic.Fraction2_Denominator, &statistic.RightAttemptsCount, &statistic.WrongAttemptsCount, &statistic.MaxWrongAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetStudentFractionStatistics: %v", err)
 		}
 		statistics = append(statistics, statistic)
 	}
@@ -1213,10 +1239,19 @@ func GetStudentFractionStatistics(ctx context.Context, userID int, minigameID in
 	return statistics, nil
 }
 
+// GetStudentWordedStatistics is GetStudentFractionStatistics' worded-question
+// equivalent - same fix (X7: aggregated, not one row per replay).
 func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentFractionStatistics, error) {
 	var statistics []types.StudentFractionStatistics
 
-	rows, err := db.QueryContext(ctx, "SELECT fq.question_text, IFNULL(fr.num_wrong_attempts, 0) AS num_wrong, IFNULL(fr.num_right_attempts, 0) AS num_right FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ? WHERE fq.minigame_id = ? AND fq.classroom_id = ?", userID, minigameID, minigameID, classroomID)
+	rows, err := db.QueryContext(ctx, `
+		SELECT fq.question_id, fq.question_text,
+		       COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0), COALESCE(MAX(fr.num_wrong_attempts), 0)
+		FROM fraction_questions fq
+		LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ?
+		WHERE fq.minigame_id = ? AND fq.classroom_id = ?
+		GROUP BY fq.question_id, fq.question_text
+	`, userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -1224,13 +1259,11 @@ func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int,
 
 	for rows.Next() {
 		var statistic types.StudentFractionStatistics
-		if err := rows.Scan(&statistic.QuestionText, &statistic.WrongAttemptsCount, &statistic.RightAttemptsCount); err != nil {
-			return nil, fmt.Errorf("GetStudentScores: %v", err)
+		if err := rows.Scan(&statistic.QuestionID, &statistic.QuestionText, &statistic.RightAttemptsCount, &statistic.WrongAttemptsCount, &statistic.MaxWrongAttemptsCount); err != nil {
+			return nil, fmt.Errorf("GetStudentWordedStatistics: %v", err)
 		}
 		statistics = append(statistics, statistic)
 	}
-
-	// fmt.Print(statistics)
 
 	return statistics, nil
 }

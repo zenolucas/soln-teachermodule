@@ -838,6 +838,24 @@ func HandleGetQuizScores(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// assertEnrolled is assertOwnsClassroom's companion for the student statistics
+// handlers (X6, T5.6): assertOwnsClassroom only checks the teacher owns
+// classroomID, never that studentID is actually enrolled there, so a teacher could
+// read any student's name and answers by pairing their own classroomID with a
+// foreign userID. Called after assertOwnsClassroom, same as that function 404s
+// rather than 500s or silently returning nothing.
+func assertEnrolled(w http.ResponseWriter, r *http.Request, studentID, classroomID int) error {
+	enrolled, err := database.IsEnrolled(r.Context(), studentID, classroomID)
+	if err != nil {
+		return err
+	}
+	if !enrolled {
+		http.Error(w, "not found", http.StatusNotFound)
+		return fmt.Errorf("student %d is not enrolled in classroom %d", studentID, classroomID)
+	}
+	return nil
+}
+
 func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
 	studentID, _ := strconv.Atoi(studentIDStr)
@@ -845,6 +863,9 @@ func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+	if err := assertEnrolled(w, r, studentID, classroomID); err != nil {
 		return err
 	}
 
@@ -880,6 +901,9 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+	if err := assertEnrolled(w, r, studentID, classroomID); err != nil {
 		return err
 	}
 
@@ -925,6 +949,9 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
+	if err := assertEnrolled(w, r, studentID, classroomID); err != nil {
+		return err
+	}
 
 	var statistics []types.StudentFractionStatistics
 
@@ -962,6 +989,9 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
+		return err
+	}
+	if err := assertEnrolled(w, r, studentID, classroomID); err != nil {
 		return err
 	}
 

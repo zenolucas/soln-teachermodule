@@ -351,6 +351,94 @@ func TestSummarizeQuiz(t *testing.T) {
 	})
 }
 
+func TestBuildJourney(t *testing.T) {
+	t.Run("mix of done-pass, done-fail, current and locked", func(t *testing.T) {
+		ins := types.StudentInsight{Student: types.Student{UserID: "3"}, Current: 6, Completed: false}
+		quiz := []types.QuizScoreRow{
+			{StudentID: 3, MinigameID: 5, Score: 8, Total: 10}, // done, 80% -> pass
+			{StudentID: 99, MinigameID: 5, Score: 1, Total: 10}, // a different student - must be ignored
+		}
+		frac := []types.FractionAggRow{
+			{StudentID: 3, MinigameID: 1, Right: 2, Wrong: 8}, // done, 20% -> fail
+			{StudentID: 99, MinigameID: 1, Right: 9, Wrong: 1}, // a different student - must be ignored
+		}
+
+		got := buildJourney(ins, quiz, frac)
+		if len(got) != 12 {
+			t.Fatalf("len(got) = %d, want 12", len(got))
+		}
+
+		want := map[int]struct {
+			state string
+			score string
+		}{
+			1:  {"done-fail", "20%"}, // 2/(2+8)
+			2:  {"done-pass", ""},    // no row at all - defaults to pass
+			3:  {"done-pass", ""},
+			4:  {"done-pass", ""},
+			5:  {"done-pass", "8/10"},
+			6:  {"current", ""},
+			7:  {"locked", ""},
+			8:  {"locked", ""},
+			9:  {"locked", ""},
+			10: {"locked", ""},
+			11: {"locked", ""},
+			12: {"locked", ""},
+		}
+		for _, tile := range got {
+			w, ok := want[tile.Scene.MinigameID]
+			if !ok {
+				t.Fatalf("unexpected scene %d in journey", tile.Scene.MinigameID)
+			}
+			if tile.State != w.state || tile.ScoreText != w.score {
+				t.Errorf("scene %d: got {State:%q ScoreText:%q}, want {State:%q ScoreText:%q}",
+					tile.Scene.MinigameID, tile.State, tile.ScoreText, w.state, w.score)
+			}
+		}
+	})
+
+	t.Run("completed student: every tile is done, none locked or current", func(t *testing.T) {
+		ins := types.StudentInsight{Student: types.Student{UserID: "3"}, Current: 12, Completed: true}
+		got := buildJourney(ins, nil, nil)
+		for _, tile := range got {
+			if tile.State == "current" || tile.State == "locked" {
+				t.Errorf("scene %d: State = %q, want done-pass or done-fail (completed)", tile.Scene.MinigameID, tile.State)
+			}
+		}
+	})
+}
+
+func TestNeighbours(t *testing.T) {
+	ids := []string{"3", "7", "9", "2"}
+
+	tests := []struct {
+		name     string
+		id       string
+		wantPrev string
+		wantNext string
+	}{
+		{"first element has no prev", "3", "", "7"},
+		{"middle element has both", "7", "3", "9"},
+		{"last element has no next", "2", "9", ""},
+		{"id not in the list", "99", "", ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			prev, next := neighbours(ids, tc.id)
+			if prev != tc.wantPrev || next != tc.wantNext {
+				t.Errorf("neighbours(%v, %q) = (%q, %q), want (%q, %q)", ids, tc.id, prev, next, tc.wantPrev, tc.wantNext)
+			}
+		})
+	}
+
+	t.Run("single-element list", func(t *testing.T) {
+		prev, next := neighbours([]string{"5"}, "5")
+		if prev != "" || next != "" {
+			t.Errorf("neighbours([5], 5) = (%q, %q), want (\"\", \"\")", prev, next)
+		}
+	})
+}
+
 func TestCollapseActivity(t *testing.T) {
 	played := func(user, classroom, minigame int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}
