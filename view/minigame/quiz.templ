@@ -1,0 +1,218 @@
+package minigame
+
+import (
+	"fmt"
+	"strconv"
+)
+
+// QuizRow is one row in the quiz editor's list (T3.7): the question, its correct
+// answer's text as a chip, and its class accuracy (02 §B3, from
+// GetQuizQuestionAccuracy).
+type QuizRow struct {
+	MinigameID    int
+	ClassroomID   int
+	QuestionID    int
+	Number        int
+	QuestionText  string
+	Answer        string
+	AccuracyTotal int
+	AccuracyPct   int
+}
+
+// QuizRows is the quiz editor list's body (01 §1f) - no chevron column, unlike
+// FractionRows/its 5-column layout, since 1f's mockup doesn't have one.
+templ QuizRows(rows []QuizRow) {
+	if len(rows) == 0 {
+		<p class="text-center text-neutral py-8">No questions yet. Add one with Add question.</p>
+	} else {
+		<div class="grid grid-cols-[40px_1fr_90px_130px] items-center px-4 h-10 text-xs font-bold opacity-60 border-b border-base-300">
+			<span>#</span>
+			<span>Question</span>
+			<span>Answer</span>
+			<span>Class accuracy</span>
+		</div>
+		for _, row := range rows {
+			<div
+				data-drawer-opener
+				tabindex="0"
+				role="button"
+				hx-get={ fmt.Sprintf("/question/edit?minigameID=%d&classroomID=%d&questionID=%d", row.MinigameID, row.ClassroomID, row.QuestionID) }
+				hx-target="#question-drawer"
+				hx-swap="innerHTML"
+				class="grid grid-cols-[40px_1fr_90px_130px] items-center px-4 h-[58px] cursor-pointer hover:bg-base-200 border-b border-base-300 last:border-b-0"
+			>
+				<span class="text-[13px] font-bold opacity-60">{ fmt.Sprint(row.Number) }</span>
+				<span class="truncate pr-4">{ row.QuestionText }</span>
+				<span class="justify-self-start px-2 py-0.5 rounded-box bg-success/30 text-[13px] font-bold">{ row.Answer }</span>
+				if row.AccuracyTotal > 0 {
+					<div class="flex items-center gap-2">
+						<div class="w-[60px] h-1.5 rounded bg-base-300 overflow-hidden">
+							<div class={ "h-full", barWidthPct(row.AccuracyPct), templ.KV("bg-success", row.AccuracyPct >= 60), templ.KV("bg-error", row.AccuracyPct < 60) }></div>
+						</div>
+						<span class="text-[13px]">{ fmt.Sprint(row.AccuracyPct) }%</span>
+					</div>
+				} else {
+					<span class="text-neutral">—</span>
+				}
+			</div>
+		}
+	}
+}
+
+// QuizOption is one of a question's 4 choices, for the drawer's Choices section.
+// ChoiceID is 0 in new mode (not yet assigned by the DB).
+type QuizOption struct {
+	Text     string
+	ChoiceID int
+	Correct  bool
+}
+
+// QuizDrawerData is everything QuizDrawer needs, for both an existing question
+// (Editing true) and a fresh "New question" (Editing false, QuestionID 0) - mirrors
+// FractionDrawerData (T3.4).
+type QuizDrawerData struct {
+	MinigameID   int
+	ClassroomID  int
+	QuestionID   int
+	RowNumber    int // this question's position in the list - only meaningful when Editing
+	SceneName    string
+	QuestionText string
+	Options      [4]QuizOption
+	Editing      bool
+	Errors       map[string]string
+}
+
+// quizFormAction is /update/mcquestions when editing, /add/mcquestions when new - both
+// routes already existed and are unchanged by this task.
+func quizFormAction(editing bool) string {
+	if editing {
+		return "/update/mcquestions"
+	}
+	return "/add/mcquestions"
+}
+
+// quizOptionField is the option's text input name: option1..4 in edit mode (matching
+// database.ConstructChoices), option_1..4 in new mode (matching
+// database.AddMCQuestions) - see X4.
+func quizOptionField(editing bool, index int) string {
+	if editing {
+		return fmt.Sprintf("option%d", index+1)
+	}
+	return fmt.Sprintf("option_%d", index+1)
+}
+
+// quizRadioValue is the correct_answer radio's value for option index: the option's
+// choice_id in edit mode (matching database.ConstructChoices' int comparison), or the
+// option key itself in new mode (matching database.AddMCQuestions' string comparison).
+func quizRadioValue(editing bool, index, choiceID int) string {
+	if editing {
+		return strconv.Itoa(choiceID)
+	}
+	return fmt.Sprintf("option_%d", index+1)
+}
+
+func quizLetter(index int) string {
+	return string(rune('A' + index))
+}
+
+templ QuizDrawer(d QuizDrawerData) {
+	<div class="flex flex-col h-full">
+		<div class="h-[60px] shrink-0 flex items-center gap-2.5 px-5 border-b border-base-300">
+			<div class="flex-1 min-w-0 flex flex-col leading-tight">
+				<span class="text-base font-bold">
+					if d.Editing {
+						{ fmt.Sprintf("Edit question %d", d.RowNumber) }
+					} else {
+						New question
+					}
+				</span>
+				<span class="text-xs opacity-60">{ d.SceneName } · Multiple choice</span>
+			</div>
+			<button type="button" data-drawer-close aria-label="Close" class="opacity-60 hover:opacity-100">
+				<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			</button>
+		</div>
+		<div class="flex-1 p-5 flex flex-col gap-4 overflow-y-auto">
+			<form id="quiz-question-form" class="contents" hx-post={ quizFormAction(d.Editing) } hx-target="#question-rows" hx-swap="innerHTML">
+				if d.Editing {
+					<input type="hidden" name="questionID" value={ fmt.Sprint(d.QuestionID) } />
+					<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+				} else {
+					<input type="hidden" name="minigameID" value={ fmt.Sprint(d.MinigameID) } />
+					<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+				}
+				<div class="flex flex-col gap-1.5">
+					<span class="text-[13px] font-bold">Question</span>
+					if d.Editing {
+						<textarea name="question" maxlength="500" required
+							class={ "textarea textarea-bordered w-full text-sm", templ.KV("textarea-error", d.Errors["question"] != "") }
+						>{ d.QuestionText }</textarea>
+						if d.Errors["question"] != "" {
+							<span class="text-[11px] text-error">{ d.Errors["question"] }</span>
+						}
+					} else {
+						<textarea name="question_text" maxlength="500" required
+							class={ "textarea textarea-bordered w-full text-sm", templ.KV("textarea-error", d.Errors["question_text"] != "") }
+						>{ d.QuestionText }</textarea>
+						if d.Errors["question_text"] != "" {
+							<span class="text-[11px] text-error">{ d.Errors["question_text"] }</span>
+						}
+					}
+				</div>
+				<div class="flex flex-col gap-2">
+					<div class="flex justify-between items-baseline">
+						<span class="text-[13px] font-bold">Choices</span>
+						<span class="text-[11.5px] opacity-60">Select the correct one</span>
+					</div>
+					for i, opt := range d.Options {
+						@quizOptionRow(d.Editing, i, opt, d.Errors)
+					}
+					if d.Errors["correct_answer"] != "" {
+						<span class="text-[11px] text-error">{ d.Errors["correct_answer"] }</span>
+					}
+				</div>
+			</form>
+		</div>
+		<div class="h-16 shrink-0 flex items-center gap-2 px-5 border-t border-base-300">
+			if d.Editing {
+				<form hx-post="/delete/mcquestions" hx-target="#question-rows" hx-swap="innerHTML" hx-confirm="Delete this question? Students' recorded answers to it will also be deleted.">
+					<input type="hidden" name="questionID" value={ fmt.Sprint(d.QuestionID) } />
+					<input type="hidden" name="minigameID" value={ fmt.Sprint(d.MinigameID) } />
+					<input type="hidden" name="classroomID" value={ fmt.Sprint(d.ClassroomID) } />
+					<button type="submit" class="btn btn-ghost text-error btn-sm">
+						<i class="fa-solid fa-trash" aria-hidden="true"></i> Delete
+					</button>
+				</form>
+			}
+			<button type="button" data-drawer-close class="btn btn-sm ml-auto">Cancel</button>
+			<button type="submit" form="quiz-question-form" class="btn btn-primary btn-sm">
+				if d.Editing {
+					Save changes
+				} else {
+					Add question
+				}
+			</button>
+		</div>
+	</div>
+}
+
+templ quizOptionRow(editing bool, index int, opt QuizOption, errs map[string]string) {
+	<div class="flex items-center gap-2.5">
+		<input type="radio" name="correct_answer" value={ quizRadioValue(editing, index, opt.ChoiceID) } class="radio radio-primary radio-sm shrink-0" checked?={ opt.Correct } required />
+		<span class="w-6 h-6 shrink-0 rounded-box bg-base-300 flex items-center justify-center text-xs font-bold">{ quizLetter(index) }</span>
+		<input
+			type="text"
+			name={ quizOptionField(editing, index) }
+			value={ opt.Text }
+			maxlength="255"
+			required
+			class={ "input input-bordered input-sm flex-1", templ.KV("input-error", errs[quizOptionField(editing, index)] != "") }
+		/>
+		if editing {
+			<input type="hidden" name={ fmt.Sprintf("option%d_choiceID", index+1) } value={ fmt.Sprint(opt.ChoiceID) } />
+		}
+	</div>
+	if errs[quizOptionField(editing, index)] != "" {
+		<span class="text-[11px] text-error ml-[52px]">{ errs[quizOptionField(editing, index)] }</span>
+	}
+}
