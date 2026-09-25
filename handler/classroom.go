@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sort"
 	"strings"
 
 	"soln-teachermodule/database"
@@ -116,6 +117,10 @@ func HandleClassroomStudents(w http.ResponseWriter, r *http.Request) error {
 	return render(w, r, classroom.Students(page, fullClassroom))
 }
 
+// HandleGetClassrooms renders the Home page's class cards, plus (out of band, in the
+// same response - see home.HomeExtras) the header's classroom/student counts and the
+// Needs attention list: the top 5 flagged students across every classroom the teacher
+// owns, most flags first, then by name (01 §1a).
 func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 	teacherID, err := getTeacherID(r)
 	if err != nil {
@@ -127,7 +132,57 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	return render(w, r, home.ClassCards(classrooms))
+	summaries := make([]types.ClassroomSummary, 0, len(classrooms))
+	var entries []home.AttentionEntry
+	studentCount := 0
+	for _, room := range classrooms {
+		classroomID, err := strconv.Atoi(room.ClassroomID)
+		if err != nil {
+			return err
+		}
+		insights, err := loadClassroomInsights(r.Context(), classroomID)
+		if err != nil {
+			return err
+		}
+		summaries = append(summaries, summarize(room, insights))
+		studentCount += len(insights)
+
+		for _, in := range insights {
+			if len(in.Flags) == 0 {
+				continue
+			}
+			entries = append(entries, home.AttentionEntry{
+				StudentInsight: in,
+				ClassroomID:    room.ClassroomID,
+				ClassroomName:  room.ClassroomName,
+				FlagLabel:      FlagLabel(in.Flags[0].Kind),
+				FlagDetail:     in.Flags[0].Detail,
+			})
+		}
+	}
+
+	sort.SliceStable(entries, func(i, j int) bool {
+		if len(entries[i].Flags) != len(entries[j].Flags) {
+			return len(entries[i].Flags) > len(entries[j].Flags)
+		}
+		if entries[i].Lastname != entries[j].Lastname {
+			return entries[i].Lastname < entries[j].Lastname
+		}
+		return entries[i].Firstname < entries[j].Firstname
+	})
+	if len(entries) > 5 {
+		entries = entries[:5]
+	}
+
+	seeAllHref := ""
+	if len(classrooms) > 0 {
+		seeAllHref = fmt.Sprintf("/classroom/students?classroom_id=%s", classrooms[0].ClassroomID)
+	}
+
+	if err := render(w, r, home.ClassCards(summaries)); err != nil {
+		return err
+	}
+	return render(w, r, home.HomeExtras(len(classrooms), studentCount, entries, seeAllHref))
 }
 
 func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {
