@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
+	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 )
 
@@ -122,6 +125,142 @@ func worldOf(minigameID int) int {
 		}
 	}
 	return 0
+}
+
+// buildStudentInsights composes one StudentInsight per enrolled student from the raw
+// per-classroom query results (02 §C2/§C3). finished, quiz and frac are expected to
+// cover the same classroom as students; finished is passed to currentScene as both
+// the played and quizScored argument (see database.GetFinishedScenes).
+func buildStudentInsights(students []types.Student, finished map[int]map[int]bool, quiz []types.QuizScoreRow, frac []types.FractionAggRow) []types.StudentInsight {
+	flagsByStudent := EvaluateFlags(quiz, frac)
+
+	quizByStudent := map[int][]types.QuizScoreRow{}
+	for _, q := range quiz {
+		quizByStudent[q.StudentID] = append(quizByStudent[q.StudentID], q)
+	}
+	fracByStudent := map[int][]types.FractionAggRow{}
+	for _, f := range frac {
+		fracByStudent[f.StudentID] = append(fracByStudent[f.StudentID], f)
+	}
+
+	insights := make([]types.StudentInsight, 0, len(students))
+	for _, s := range students {
+		studentID, _ := strconv.Atoi(s.UserID)
+		current, completed := currentScene(finished[studentID], finished[studentID])
+
+		quizAvg := -1
+		sum, count := 0, 0
+		for _, q := range quizByStudent[studentID] {
+			if q.Total <= 0 {
+				continue
+			}
+			sum += q.Score * 100 / q.Total
+			count++
+		}
+		if count > 0 {
+			quizAvg = sum / count
+		}
+
+		accuracy := -1
+		right, total := 0, 0
+		for _, f := range fracByStudent[studentID] {
+			right += f.Right
+			total += f.Right + f.Wrong
+		}
+		if total > 0 {
+			accuracy = right * 100 / total
+		}
+
+		insights = append(insights, types.StudentInsight{
+			Student:     s,
+			Current:     current,
+			Completed:   completed,
+			World:       worldOf(current),
+			QuizAvgPct:  quizAvg,
+			AccuracyPct: accuracy,
+			Flags:       flagsByStudent[studentID],
+		})
+	}
+	return insights
+}
+
+// summarize rolls a classroom's StudentInsights up into its ClassroomSummary
+// (02 §C3). Completed students are already World 3 by construction - currentScene
+// (DEC-10) returns minigame 12 on completion, and 12 is World 3's only scene - so no
+// special-casing is needed here beyond checking World == 3.
+func summarize(room types.Classroom, insights []types.StudentInsight) types.ClassroomSummary {
+	sum := types.ClassroomSummary{
+		Classroom:    room,
+		StudentCount: len(insights),
+		QuizAvgPct:   -1,
+	}
+
+	quizSum, quizCount := 0, 0
+	for _, in := range insights {
+		if len(in.Flags) > 0 {
+			sum.FlaggedCount++
+		}
+		if in.QuizAvgPct >= 0 {
+			quizSum += in.QuizAvgPct
+			quizCount++
+		}
+		if in.World >= 1 && in.World <= 3 {
+			sum.PerWorld[in.World]++
+		}
+		if in.World == 3 {
+			sum.ReachedW3++
+		}
+	}
+	if quizCount > 0 {
+		sum.QuizAvgPct = quizSum / quizCount
+	}
+	return sum
+}
+
+// loadClassroomInsights runs the four per-classroom insight queries and composes
+// their results (pure buildStudentInsights) into one StudentInsight per enrolled
+// student.
+func loadClassroomInsights(ctx context.Context, classroomID int) ([]types.StudentInsight, error) {
+	students, err := database.GetEnrolledStudents(ctx, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	finished, err := database.GetFinishedScenes(ctx, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	quiz, err := database.GetLatestQuizScores(ctx, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	frac, err := database.GetFractionAggregates(ctx, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	return buildStudentInsights(students, finished, quiz, frac), nil
+}
+
+// loadTeacherSummaries builds one ClassroomSummary per classroom a teacher owns, for
+// the Home cards and the sidebar's flag badges.
+func loadTeacherSummaries(ctx context.Context, teacherID int) ([]types.ClassroomSummary, error) {
+	classroomIDs, err := database.GetTeacherClassroomIDs(ctx, teacherID)
+	if err != nil {
+		return nil, err
+	}
+
+	summaries := make([]types.ClassroomSummary, 0, len(classroomIDs))
+	for _, id := range classroomIDs {
+		room, err := database.GetClassroom(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		insights, err := loadClassroomInsights(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, summarize(room, insights))
+	}
+	return summaries, nil
 }
 
 // collapseActivity merges consecutive "played" rows for the same student and scene

@@ -60,3 +60,29 @@ type Activity struct {
 	Total       int
 	At          time.Time
 }
+
+// StudentInsight is one enrolled student's progress, quiz/accuracy averages, and
+// flags within a classroom (02 §C2/§C3). QuizAvgPct and AccuracyPct are -1 when the
+// student has no rows to average - not 0, which would read as a real 0%.
+type StudentInsight struct {
+	Student
+	Current     int
+	Completed   bool
+	World       int
+	QuizAvgPct  int
+	AccuracyPct int
+	Flags       []Flag
+}
+
+// ClassroomSummary is a classroom's rollup for the Home cards and Overview stats
+// (02 §C3). QuizAvgPct is -1 when no student has taken a quiz yet. PerWorld is
+// indexed 1..3 (World.Number); index 0 is unused, kept so World.Number can index it
+// directly without an off-by-one.
+type ClassroomSummary struct {
+	Classroom
+	StudentCount int
+	QuizAvgPct   int
+	FlaggedCount int
+	ReachedW3    int
+	PerWorld     [4]int
+}
