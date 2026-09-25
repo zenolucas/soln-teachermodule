@@ -528,3 +528,84 @@ document.body.addEventListener("htmx:beforeSwap", function (evt) {
 		evt.detail.isError = false;
 	}
 });
+
+// Live answer + in-game preview (T3.6, DEC-18). Purely client-side - mirrors
+// util.Combine/Frac.String() in JS just enough for the drawer's own display, since
+// nothing here is ever posted (the server computes its own answer independently on
+// save). solnStackedFrac reuses fraction.templ's stackedFraction classes verbatim, so
+// no new Tailwind coverage is needed for this JS-generated markup.
+function solnGcd(a, b) {
+	a = Math.abs(a);
+	b = Math.abs(b);
+	while (b) {
+		var t = b;
+		b = a % b;
+		a = t;
+	}
+	return a || 1;
+}
+
+function solnStackedFrac(num, den) {
+	return (
+		'<span class="inline-flex flex-col items-center leading-none font-semibold min-w-4">' +
+		"<span>" + num + "</span>" +
+		'<span class="self-stretch h-[1.5px] bg-current my-[3px]"></span>' +
+		"<span>" + den + "</span></span>"
+	);
+}
+
+function solnUpdateFractionPreview(form) {
+	var inputs = form.querySelectorAll("input[type=number]");
+	if (inputs.length < 4) {
+		return;
+	}
+	var num1 = parseInt(inputs[0].value, 10);
+	var den1 = parseInt(inputs[1].value, 10);
+	var num2 = parseInt(inputs[2].value, 10);
+	var den2 = parseInt(inputs[3].value, 10);
+	var op = form.dataset.op;
+
+	var answerSpan = form.querySelector("[data-answer] span");
+	if (answerSpan) {
+		if (isNaN(num1) || isNaN(den1) || isNaN(num2) || isNaN(den2) || den1 < 1 || den2 < 1) {
+			answerSpan.textContent = "—";
+		} else {
+			var resultNum =
+				op === "-" || op === "−" ? num1 * den2 - num2 * den1 : num1 * den2 + num2 * den1;
+			var resultDen = den1 * den2;
+			var g = solnGcd(resultNum, resultDen);
+			resultNum = resultNum / g;
+			resultDen = resultDen / g;
+			answerSpan.textContent = resultNum === 0 ? "0" : resultDen === 1 ? String(resultNum) : resultNum + "/" + resultDen;
+		}
+	}
+
+	var drawer = document.getElementById("question-drawer");
+	if (!drawer) {
+		return;
+	}
+	var eqEl = drawer.querySelector("[data-preview-eq]");
+	if (eqEl) {
+		eqEl.innerHTML = solnStackedFrac(num1, den1) + "<span>" + op + "</span>" + solnStackedFrac(num2, den2);
+	}
+	var textEl = drawer.querySelector("[data-preview-text]");
+	if (textEl) {
+		var textarea = drawer.querySelector("textarea[name=question_text]");
+		textEl.textContent = textarea
+			? textarea.value
+			: "What is " + num1 + "/" + den1 + " " + op + " " + num2 + "/" + den2 + "?";
+	}
+}
+
+document.body.addEventListener("input", function (evt) {
+	var form = evt.target.closest("#fraction-question-form");
+	var textarea = evt.target.closest("#question-drawer textarea[name=question_text]");
+	if (form) {
+		solnUpdateFractionPreview(form);
+	} else if (textarea) {
+		var ownForm = document.getElementById("fraction-question-form");
+		if (ownForm) {
+			solnUpdateFractionPreview(ownForm);
+		}
+	}
+});

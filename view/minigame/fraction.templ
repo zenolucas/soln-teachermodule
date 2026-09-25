@@ -122,6 +122,7 @@ type FractionDrawerData struct {
 	QuestionID    int
 	RowNumber     int // this question's position in the list - only meaningful when Editing
 	SceneName     string
+	Sprite        string // the scene's sprite image, for the in-game preview (T3.6)
 	Operation     string // "Addition" or "Subtraction"
 	Op            string // "+" or the U+2212 minus sign, for the operator chip
 	Worded        bool
@@ -152,6 +153,17 @@ func fractionFormAction(editing, worded bool) string {
 	default:
 		return "/add/fractionquestions"
 	}
+}
+
+// previewText is the in-game preview's speech box text (DEC-18, T3.6) - question_text
+// for a worded scene, or "What is a/b op c/d?" for a fraction scene. The initial
+// render; index.js's input listener keeps it live from there (worded: the textarea's
+// current value, fraction: the current inputs), matching this exactly.
+func previewText(d FractionDrawerData) string {
+	if d.Worded {
+		return d.QuestionText
+	}
+	return fmt.Sprintf("What is %d/%d %s %d/%d?", d.Num1, d.Den1, d.Op, d.Num2, d.Den2)
 }
 
 templ FractionDrawer(d FractionDrawerData) {
@@ -189,6 +201,7 @@ templ FractionDrawer(d FractionDrawerData) {
 				}
 				<form
 					id="fraction-question-form"
+					data-op={ d.Op }
 					hx-post={ fractionFormAction(d.Editing, d.Worded) }
 					hx-target="#question-rows"
 					hx-swap="innerHTML"
@@ -215,6 +228,30 @@ templ FractionDrawer(d FractionDrawerData) {
 					</div>
 				</form>
 				<span class="text-xs opacity-60">The answer is calculated for you. Denominators must be 1 or more.</span>
+			</div>
+			<div class="flex flex-col gap-2">
+				<div class="flex justify-between items-baseline">
+					<span class="text-[13px] font-bold">In-game preview</span>
+					<span class="text-[11.5px] opacity-60">Updates as you type</span>
+				</div>
+				<div class="h-[210px] rounded-box bg-base-content relative overflow-hidden">
+					<img src={ d.Sprite } alt="" class="absolute left-3.5 top-3 w-24 h-[118px] object-cover [image-rendering:pixelated] rounded-sm" />
+					<div data-preview-text class="absolute left-[122px] top-[18px] right-3.5 p-2.5 bg-polar1 border-[3px] border-base-100 font-mono text-xs leading-[1.4] text-base-100">
+						{ previewText(d) }
+					</div>
+					<div class="absolute left-3.5 right-3.5 bottom-3 h-[62px] bg-polar1 border-[3px] border-base-100 flex items-center justify-center gap-3.5 font-mono font-bold text-base text-base-100">
+						<span data-preview-eq class="flex items-center gap-3.5">
+							@stackedFraction(d.Num1, d.Den1)
+							<span>{ d.Op }</span>
+							@stackedFraction(d.Num2, d.Den2)
+						</span>
+						<span>=</span>
+						<span class="inline-flex flex-col items-center gap-[3px]">
+							<span class="w-[22px] h-4 border-2 border-info"></span>
+							<span class="w-[22px] h-4 border-2 border-info"></span>
+						</span>
+					</div>
+				</div>
 			</div>
 			if d.ShowAccuracy {
 				<div class="flex items-center gap-2.5 p-3 rounded-box bg-base-200 text-[12.5px]">
