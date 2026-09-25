@@ -1,21 +1,5 @@
 package types
 
-type QuizClassStatistics struct {
-	Score int `json:"score"`
-	Count int `json:"count"`
-}
-
-type QuizResponseStatistics struct {
-	Choice string `json:"choice"`
-	Count  int    `json:"count"`
-}
-
-type StudentQuizScore struct {
-	FirstName string
-	LastName  string
-	Score     int
-}
-
 type StudentFractionStatistics struct {
 	// QuestionID lets a caller match this summary row back to the question it's for
 	// (see 02 §B3, T3.2) - GetFractionQuestionSummaries/GetWordedQuestionSummaries
