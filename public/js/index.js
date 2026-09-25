@@ -352,3 +352,19 @@ document.body.addEventListener("click", function (evt) {
 		block.style.display = hide ? "none" : "";
 	});
 });
+
+// A live "n / 200" counter next to any [data-count-for] textarea/input (currently just
+// the create-classroom modal's Description field, T2.3) - delegated on document.body,
+// like the rest of this file's listeners, so it keeps working after an htmx swap
+// re-renders the field with a validation error, without needing to be re-bound.
+document.body.addEventListener("input", function (evt) {
+	var field = evt.target.closest("[data-count-for]");
+	if (!field) {
+		return;
+	}
+	var label = field.closest("label");
+	var counter = label && label.querySelector("[data-count]");
+	if (counter) {
+		counter.textContent = field.value.length;
+	}
+});

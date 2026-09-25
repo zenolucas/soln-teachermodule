@@ -13,49 +13,91 @@ type CreateParams struct {
 	Description string
 }
 
+// CreateErrors is per-field (02 §C10), not one combined message: each error renders
+// under the field it belongs to, instead of a single top banner that left a teacher
+// guessing which field was wrong (see 01 §2b). General is for a failure that isn't any
+// field's fault - just the DB insert itself failing - so it still gets its own banner.
 type CreateErrors struct {
-	ErrorMessage string
+	Classname   string
+	Section     string
+	Description string
+	General     string
+}
+
+func (e CreateErrors) hasAny() bool {
+	return e.Classname != "" || e.Section != "" || e.Description != "" || e.General != ""
 }
 
 templ CreateClassForm(data CreateParams, errors CreateErrors) {
 <!-- data-autoopen re-shows this after an htmx swap re-renders it with an error, so the
      modal stays open instead of silently closing on the client with the teacher's
      input discarded (FE-02); see solnOpenPendingModals in public/js/index.js. -->
-<dialog id="create-classroom-modal" class="modal" data-autoopen={ fmt.Sprint(len(errors.ErrorMessage) > 0) }>
-	<div class="modal-box">
-		<h3 class="text-lg font-bold">Create Classroom</h3>
-		if len(errors.ErrorMessage) > 0 {
-			<div role="alert" class="alert alert-error mt-4">
-				<span>{ errors.ErrorMessage }</span>
+<dialog id="create-classroom-modal" class="modal" data-autoopen={ fmt.Sprint(errors.hasAny()) }>
+	<div class="modal-box w-[500px]">
+		<div class="flex items-center">
+			<span class="flex-1 text-lg font-bold">New classroom</span>
+			<button type="button" data-modal-close aria-label="Close" class="opacity-60 hover:opacity-100">
+				<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			</button>
+		</div>
+		<p class="text-sm opacity-70 mt-1">You can add students once the classroom exists.</p>
+		if errors.General != "" {
+			<div role="alert" class="alert alert-error mt-4 py-2">
+				<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+				<span>{ errors.General }</span>
 			</div>
 		}
-		<form id="create-classroom-form" hx-post="/createclassroom" hx-swap="outerHTML" hx-target="#create-classroom-modal">
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Class name</span>
+		<form id="create-classroom-form" hx-post="/createclassroom" hx-swap="outerHTML" hx-target="#create-classroom-modal" class="flex flex-col gap-3.5 mt-4">
+			<label class="form-control w-full">
+				<div class="label py-0 pb-1.5">
+					<span class="label-text font-semibold">Class name</span>
 				</div>
-				<input type="text" name="classname" value={ data.Classname } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
+				<input type="text" name="classname" value={ data.Classname } placeholder="Mathematics 6" required maxlength="100"
+					class={ "input input-bordered w-full", templ.KV("input-error", errors.Classname != "") } />
+				if errors.Classname != "" {
+					@fieldError(errors.Classname)
+				}
 			</label>
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Section</span>
+			<label class="form-control w-full">
+				<div class="label py-0 pb-1.5">
+					<span class="label-text font-semibold">Section</span>
 				</div>
-				<input type="text" name="section" value={ data.Section } placeholder="Type here" required maxlength="100" class="input input-bordered w-full" />
+				<input type="text" name="section" value={ data.Section } placeholder="e.g. St. Anne" required maxlength="100"
+					class={ "input input-bordered w-full", templ.KV("input-error", errors.Section != "") } />
+				if errors.Section != "" {
+					@fieldError(errors.Section)
+				}
 			</label>
-			<label class="form-control w-full max-w-s">
-				<div class="label">
-					<span class="label-text">Description</span>
+			<label class="form-control w-full">
+				<div class="label py-0 pb-1.5">
+					<span class="label-text font-semibold">Description <span class="font-normal opacity-60">(optional)</span></span>
 				</div>
-				<textarea name="description" placeholder="Type here" maxlength="200" class="textarea textarea-bordered w-full">{ data.Description }</textarea>
+				<textarea name="description" placeholder="Morning class · Room 204" maxlength="200" data-count-for="description"
+					class={ "textarea textarea-bordered w-full", templ.KV("textarea-error", errors.Description != "") }>{ data.Description }</textarea>
+				<div class="label py-0 pt-1 justify-end">
+					<span class="label-text-alt opacity-60"><span data-count>{ fmt.Sprint(len(data.Description)) }</span> / 200</span>
+				</div>
+				if errors.Description != "" {
+					@fieldError(errors.Description)
+				}
 			</label>
 		</form>
-		<div class="modal-action">
+		<div class="modal-action border-t border-base-300 pt-3.5 -mx-6 -mb-2 px-6">
 			<button type="button" class="btn" data-modal-close>Cancel</button>
-			<button type="submit" form="create-classroom-form" class="btn btn-secondary">Create</button>
+			<button type="submit" form="create-classroom-form" class="btn btn-primary">Create classroom</button>
 		</div>
 	</div>
 	<form method="dialog" class="modal-backdrop">
 		<button>close</button>
 	</form>
 </dialog>
+}
+
+templ fieldError(message string) {
+	<div class="label py-0 pt-1">
+		<span class="label-text-alt text-error flex items-center gap-1.5">
+			<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+			{ message }
+		</span>
+	</div>
 }
