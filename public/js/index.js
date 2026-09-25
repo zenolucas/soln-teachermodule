@@ -447,6 +447,16 @@ document.body.addEventListener("click", function (evt) {
 	});
 });
 
+// The statistics page's scene picker (01 §1g, T5.2) navigates on change - each
+// <option>'s own value is the full destination URL (see scenepicker.templ), so this
+// just assigns it, rather than an inline onchange="location=...".
+document.body.addEventListener("change", function (evt) {
+	var select = evt.target.closest("[data-nav-select]");
+	if (select && select.value) {
+		window.location.href = select.value;
+	}
+});
+
 // A live "n / 200" counter next to any [data-count-for] textarea/input (currently just
 // the create-classroom modal's Description field, T2.3) - delegated on document.body,
 // like the rest of this file's listeners, so it keeps working after an htmx swap
