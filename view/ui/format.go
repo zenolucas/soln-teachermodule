@@ -2,6 +2,7 @@ package ui
 
 import (
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -32,6 +33,25 @@ func Initials(first, last string) string {
 	default:
 		return f + l
 	}
+}
+
+// Greeting returns "Good morning"/"Good afternoon"/"Good evening" for the given local
+// hour (0-23), per DEC-16: morning is before 12, afternoon before 18, otherwise
+// evening.
+func Greeting(hour int) string {
+	switch {
+	case hour < 12:
+		return "Good morning"
+	case hour < 18:
+		return "Good afternoon"
+	default:
+		return "Good evening"
+	}
+}
+
+// LongDate formats t as "Monday, 25 September" (DEC-16) - weekday and day, no year.
+func LongDate(t time.Time) string {
+	return t.Format("Monday, 2 January")
 }
 
 func firstRuneUpper(s string) string {

@@ -10,6 +10,7 @@ import (
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
 	"soln-teachermodule/view/classroom"
+	"soln-teachermodule/view/home"
 	"soln-teachermodule/view/ui"
 	"strconv"
 )
@@ -126,41 +127,7 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// A brand-new teacher's very first view of the app was blank space with no hint
-	// of what to do next - the "+" that opens the create-classroom modal isn't
-	// obviously connected to this empty area (see FE-20).
-	if len(classrooms) == 0 {
-		// The label-for-checkbox toggle this once was has been dead since modals
-		// became <dialog> elements in #43 - a for= attribute does nothing on a
-		// <dialog>, and it named a ghost id besides. Opening it now goes through
-		// the same data-modal-open JS every other modal uses (see X10).
-		fmt.Fprint(w, `
-		<div class="flex flex-col items-center justify-center w-full py-20 text-white">
-			<p class="text-xl mb-4">No classrooms yet.</p>
-			<button type="button" class="btn btn-primary text-white" data-modal-open="create-classroom-modal">Create classroom</button>
-		</div>
-		`)
-		return nil
-	}
-
-	for _, classroom := range classrooms {
-		fmt.Fprintf(w, `
-		<div class="glass card card-bordered bg-neutral w-96 shadow-xl h-80 flex justify-center ml-8 mt-8">
-				<figure>
-					<img src="/public/images/bg/soln-card-image.png" alt="" />
-				</figure>
-				<div class="card-body">
-					<h2 class="card-title">%s - %s</h2>
-					<p>%s</p>
-					<div class="card-actions justify-end">
-						<a href="/classroom?classroom_id=%s" class="btn btn-secondary"> Open </a>
-					</div>
-				</div>
-			</div>
-		`, esc(classroom.ClassroomName), esc(classroom.Section), esc(classroom.Description), esc(classroom.ClassroomID))
-	}
-
-	return nil
+	return render(w, r, home.ClassCards(classrooms))
 }
 
 func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {

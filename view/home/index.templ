@@ -1,28 +1,72 @@
 package home
 
 import (
+	"fmt"
+	"time"
+
+	"soln-teachermodule/types"
 	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
 )
 
-templ Index(p layout.Page) {
+// now is passed in (rather than each read inside the templ) so the greeting/date are
+// computed once, from the same instant, and so tests can pin it instead of racing the
+// real clock.
+templ Index(p layout.Page, now time.Time) {
 @layout.Base(p) {
 <!-- No sidebar column here anymore - layout.Base renders one shared ui.Sidebar for every
      authenticated page now, instead of this page's half being permanently empty
      (see FE-11, D4). The navbar is gone too (T1.4, DEC-1), so this no longer needs to
      account for its height. -->
-<div class="w-full min-h-full bg-base-300 justify-center gap-4 p-4">
-	<div class="flex justify-between items-center mb-4">
-		<h2 class="text-2xl font-bold">Classrooms</h2>
+<div class="w-full min-h-full bg-base-300 p-4">
+	<div class="flex justify-between items-end mb-4">
+		<div class="flex flex-col gap-1">
+			<h2 class="text-2xl font-bold">{ ui.Greeting(now.Hour()) }, { p.Teacher.DisplayName }</h2>
+			<!-- Classroom/student counts arrive in T4.6 (C3) - this is just the date for
+			     now. -->
+			<span class="text-[13.5px] opacity-60">{ ui.LongDate(now) }</span>
+		</div>
 		<!-- A visible button here instead of only inside the navbar's "+" dropdown, which
 		     used to be the only way to create a classroom (see FE-14, D4). The modal
 		     itself moved to view/ui (DEC-2) - layout.Base renders it once for every Shell
 		     page, so this button just needs to open it by id. -->
-		<button type="button" class="btn btn-primary text-white" data-modal-open="create-classroom-modal">+ Create Classroom</button>
+		<button type="button" class="btn btn-primary btn-sm h-9" data-modal-open="create-classroom-modal">+ New classroom</button>
 	</div>
-	<div class="flex flex-wrap w-full text-white" hx-get="/getclassrooms" hx-trigger="load" hx-target="this">
+	<div hx-get="/getclassrooms" hx-trigger="load" hx-target="this">
 		<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
 	</div>
 </div>
 
 }
+}
+
+// ClassCards is the /getclassrooms fragment (see HandleGetClassrooms). Only card items
+// 1 (name/section) and 5 (Open classroom) render here - the attention badge, stats and
+// world bar (items 2-4) need C3 data and land in T4.6.
+templ ClassCards(rooms []types.Classroom) {
+	if len(rooms) == 0 {
+		<!-- A brand-new teacher's very first view of the app was blank space with no hint
+		     of what to do next - the "+" that opens the create-classroom modal isn't
+		     obviously connected to this empty area (see FE-20). -->
+		<div class="card bg-base-100 border border-base-content/10">
+			<div class="card-body items-center text-center py-16">
+				<p class="text-lg opacity-70">No classrooms yet.</p>
+				<button type="button" class="btn btn-primary mt-2" data-modal-open="create-classroom-modal">Create classroom</button>
+			</div>
+		</div>
+	} else {
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+			for _, room := range rooms {
+				<div class="card bg-base-100 border border-base-content/10">
+					<div class="card-body gap-1">
+						<h3 class="text-[15.5px] font-bold">{ room.ClassroomName }</h3>
+						<p class="text-sm opacity-70">Section { room.Section }</p>
+						<div class="card-actions justify-end mt-3">
+							<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) } class="btn btn-secondary btn-sm">Open classroom</a>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
 }

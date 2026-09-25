@@ -1,6 +1,9 @@
 package ui
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestDisplayName(t *testing.T) {
 	tests := []struct {
@@ -40,5 +43,41 @@ func TestInitials(t *testing.T) {
 				t.Errorf("Initials(%q, %q) = %q, want %q", tt.first, tt.last, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestGreeting(t *testing.T) {
+	tests := []struct {
+		hour int
+		want string
+	}{
+		{0, "Good morning"},
+		{9, "Good morning"},
+		{11, "Good morning"},
+		{12, "Good afternoon"},
+		{17, "Good afternoon"},
+		{18, "Good evening"},
+		{23, "Good evening"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			if got := Greeting(tt.hour); got != tt.want {
+				t.Errorf("Greeting(%d) = %q, want %q", tt.hour, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLongDate(t *testing.T) {
+	got := LongDate(time.Date(2026, time.September, 25, 10, 0, 0, 0, time.UTC))
+	want := "Friday, 25 September"
+	if got != want {
+		t.Errorf("LongDate(...) = %q, want %q", got, want)
+	}
+
+	got = LongDate(time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC))
+	want = "Sunday, 1 March"
+	if got != want {
+		t.Errorf("LongDate(...) = %q, want %q", got, want)
 	}
 }
