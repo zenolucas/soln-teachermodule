@@ -261,12 +261,22 @@ function solnInitSortableTables(root) {
 		}
 		table.dataset.sortableInitialized = "true";
 
-		var headers = Array.from(table.querySelectorAll("thead th[data-sort]"));
-		headers.forEach(function (th, index) {
+		// Every <th>, not just the sortable ones: a row's cell at position N only
+		// lines up with a header's own data-sort if we count non-sortable leading
+		// columns too (e.g. this task's own Q#/Question/Answer columns before
+		// Right/Wrong/% correct). Filtering to th[data-sort] first and using *that*
+		// array's index - this function's original form - reads the wrong cell
+		// whenever any non-sortable column comes before a sortable one; found live,
+		// since no table used data-sortable until T5.4.
+		var allHeaders = Array.from(table.querySelectorAll("thead th"));
+		allHeaders.forEach(function (th, columnIndex) {
+			if (!th.dataset.sort) {
+				return;
+			}
 			th.style.cursor = "pointer";
 			th.addEventListener("click", function () {
 				var ascending = th.dataset.sortDir !== "asc";
-				headers.forEach(function (h) {
+				allHeaders.forEach(function (h) {
 					delete h.dataset.sortDir;
 				});
 				th.dataset.sortDir = ascending ? "asc" : "desc";
@@ -275,8 +285,8 @@ function solnInitSortableTables(root) {
 				var rows = Array.from(tbody.querySelectorAll("tr"));
 				var type = th.dataset.sort;
 				rows.sort(function (a, b) {
-					var aText = a.children[index].textContent.trim();
-					var bText = b.children[index].textContent.trim();
+					var aText = a.children[columnIndex].textContent.trim();
+					var bText = b.children[columnIndex].textContent.trim();
 					if (type === "number") {
 						var aNum = parseFloat(aText) || 0;
 						var bNum = parseFloat(bText) || 0;
@@ -291,6 +301,16 @@ function solnInitSortableTables(root) {
 		});
 	});
 }
+
+// solnInitSortableTables was previously only ever called from htmx:afterSettle
+// (below), which never fires for a table that's part of a page's own initial HTML -
+// only for content that arrives via a later htmx swap. The fraction/worded
+// statistics page's By-question table (T5.4) is the first data-sortable table
+// rendered directly in a full page load, so it needs this too: found live, a header
+// click silently did nothing because no listener had ever been attached.
+document.addEventListener("DOMContentLoaded", function () {
+	solnInitSortableTables(document.body);
+});
 
 // The add-students modal's select-all (with an indeterminate state when some but not
 // all rows are checked), the "n available"/"n selected" counts, the "Add n students"

@@ -386,3 +386,35 @@ func GetQuizStudentScores(ctx context.Context, classroomID, minigameID int) ([]t
 	}
 	return scores, nil
 }
+
+// GetStudentAccuracy sums each enrolled student's right/wrong attempts on one
+// fraction/worded minigame (02 §C9), for the fraction/worded statistics page's
+// Students card. A student with zero rows for this minigame doesn't appear at all -
+// there's nothing to average.
+func GetStudentAccuracy(ctx context.Context, classroomID, minigameID int) ([]types.StudentAccuracy, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT u.user_id, u.firstname, u.lastname, SUM(fr.num_right_attempts), SUM(fr.num_wrong_attempts)
+		FROM fraction_responses fr
+		JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
+		JOIN users u ON u.user_id = fr.student_id
+		WHERE fr.classroom_id = ? AND fr.minigame_id = ?
+		GROUP BY u.user_id, u.firstname, u.lastname
+	`, classroomID, minigameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []types.StudentAccuracy
+	for rows.Next() {
+		var s types.StudentAccuracy
+		if err := rows.Scan(&s.UserID, &s.First, &s.Last, &s.Right, &s.Wrong); err != nil {
+			return nil, fmt.Errorf("GetStudentAccuracy: %v", err)
+		}
+		out = append(out, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetStudentAccuracy: %v", err)
+	}
+	return out, nil
+}

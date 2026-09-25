@@ -1263,11 +1263,15 @@ func GetFractionQuestionSummaries(ctx context.Context, classroomID int, minigame
 
 // GetWordedQuestionSummaries is GetFractionQuestionSummaries' worded-question
 // equivalent (see FE-30, D6) - same class-wide aggregation, question_text instead of
-// the fraction fields.
+// the fraction fields as the displayed question. It still selects the fraction1/2
+// fields too (added for T5.4): a worded question is still backed by the same two
+// fractions and operator as a fraction question - question_text is just the word
+// problem wrapped around them - and the statistics page's "Answer" column
+// (util.Combine) needs them for worded scenes exactly as it does for fraction ones.
 func GetWordedQuestionSummaries(ctx context.Context, classroomID int, minigameID int) ([]types.StudentFractionStatistics, error) {
 	var summaries []types.StudentFractionStatistics
 
-	rows, err := db.QueryContext(ctx, "SELECT fq.question_id, fq.question_text, COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0) FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.classroom_id = fq.classroom_id AND fr.minigame_id = fq.minigame_id WHERE fq.minigame_id = ? AND fq.classroom_id = ? GROUP BY fq.question_id, fq.question_text", minigameID, classroomID)
+	rows, err := db.QueryContext(ctx, "SELECT fq.question_id, fq.question_text, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator, COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0) FROM fraction_questions fq LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.classroom_id = fq.classroom_id AND fr.minigame_id = fq.minigame_id WHERE fq.minigame_id = ? AND fq.classroom_id = ? GROUP BY fq.question_id, fq.question_text, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator", minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
@@ -1275,7 +1279,7 @@ func GetWordedQuestionSummaries(ctx context.Context, classroomID int, minigameID
 
 	for rows.Next() {
 		var summary types.StudentFractionStatistics
-		if err := rows.Scan(&summary.QuestionID, &summary.QuestionText, &summary.RightAttemptsCount, &summary.WrongAttemptsCount); err != nil {
+		if err := rows.Scan(&summary.QuestionID, &summary.QuestionText, &summary.Fraction1_Numerator, &summary.Fraction1_Denominator, &summary.Fraction2_Numerator, &summary.Fraction2_Denominator, &summary.RightAttemptsCount, &summary.WrongAttemptsCount); err != nil {
 			return nil, fmt.Errorf("GetWordedQuestionSummaries: %v", err)
 		}
 		summaries = append(summaries, summary)

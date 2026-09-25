@@ -12,6 +12,7 @@ import (
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
+	"soln-teachermodule/util"
 
 	// "soln-teachermodule/types"
 	"soln-teachermodule/view/layout"
@@ -96,9 +97,9 @@ func renderStatisticsPage(w http.ResponseWriter, r *http.Request, classroomID in
 
 	switch minigameKinds[minigameID] {
 	case kindFractions:
-		return render(w, r, statistics.FractionStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		return renderFractionStatisticsPage(w, r, page, classroom, classroomID, classroomIDStr, minigameID, minigameIDInt, scene, false)
 	case kindWorded:
-		return render(w, r, statistics.WordedStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		return renderFractionStatisticsPage(w, r, page, classroom, classroomID, classroomIDStr, minigameID, minigameIDInt, scene, true)
 	case kindQuiz:
 		return renderQuizStatisticsPage(w, r, page, classroom, classroomID, classroomIDStr, minigameID, minigameIDInt, scene)
 	default:
@@ -222,6 +223,148 @@ func pctOfMax(count, max int) int {
 		return 0
 	}
 	return count * 100 / max
+}
+
+// renderFractionStatisticsPage builds and renders the merged fraction/worded
+// statistics page (T5.4, 01 §2a). worded selects which of B3's summary queries to
+// use and whether the By-question table shows question_text or the stacked operands -
+// both kinds answer through the same fraction1/2 fields (X9, DEC-21's Scene.Op).
+func renderFractionStatisticsPage(w http.ResponseWriter, r *http.Request, page layout.Page, classroom types.Classroom, classroomID int, classroomIDStr, minigameID string, minigameIDInt int, scene types.Scene, worded bool) error {
+	var summaries []types.StudentFractionStatistics
+	var err error
+	if worded {
+		summaries, err = database.GetWordedQuestionSummaries(r.Context(), classroomID, minigameIDInt)
+	} else {
+		summaries, err = database.GetFractionQuestionSummaries(r.Context(), classroomID, minigameIDInt)
+	}
+	if err != nil {
+		return err
+	}
+
+	accuracy, err := database.GetStudentAccuracy(r.Context(), classroomID, minigameIDInt)
+	if err != nil {
+		return err
+	}
+	enrolled, err := database.GetEnrolledStudents(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+
+	questions := buildFractionQuestionStats(summaries, scene.Op, worded)
+	students := buildStudentAccuracyRows(accuracy)
+
+	totalRight, totalWrong, belowCount := 0, 0, 0
+	for _, s := range summaries {
+		totalRight += s.RightAttemptsCount
+		totalWrong += s.WrongAttemptsCount
+		attempts := s.RightAttemptsCount + s.WrongAttemptsCount
+		if attempts > 0 && s.RightAttemptsCount*100 < types.PassPct*attempts {
+			belowCount++
+		}
+	}
+	classAccuracy := -1
+	if totalRight+totalWrong > 0 {
+		classAccuracy = totalRight * 100 / (totalRight + totalWrong)
+	}
+
+	var world types.World
+	for _, w := range types.Worlds {
+		for _, s := range w.Scenes {
+			if s.MinigameID == minigameIDInt {
+				world = w
+			}
+		}
+	}
+
+	h := ui.Header{
+		Crumbs: []ui.Crumb{
+			{Label: classroom.ClassroomName, Href: fmt.Sprintf("/classroom?classroom_id=%s", classroomIDStr)},
+			{Label: "Statistics"},
+		},
+		Title:    scene.Name,
+		Subtitle: fmt.Sprintf("World %d · %s · %d questions", world.Number, world.Topic, len(summaries)),
+		Sprite:   scene.Image,
+	}
+
+	// T5.4: no <canvas> on this page either - the Chart.js per-question charts are
+	// replaced by the sortable table.
+	page.Charts = false
+
+	sum := statistics.FractionSummary{
+		AccuracyPct:   classAccuracy,
+		TotalAttempts: totalRight + totalWrong,
+		Played:        len(accuracy),
+		Enrolled:      len(enrolled),
+		BelowCount:    belowCount,
+	}
+
+	return render(w, r, statistics.FractionPage(page, h, classroomIDStr, minigameID, sum, questions, students))
+}
+
+// buildFractionQuestionStats composes each question's classroom-wide rollup and the
+// class's computed answer (util.Combine). Number is assigned by question_id ascending
+// before sortWeakestFirst reorders summaries for display, so "Q1" always means the
+// same question regardless of how the table is currently sorted - matching the
+// mockup's own example, where the displayed rows aren't in Q-number order at all.
+func buildFractionQuestionStats(summaries []types.StudentFractionStatistics, op string, worded bool) []statistics.FractionQuestionStat {
+	numberByID := map[int]int{}
+	byID := append([]types.StudentFractionStatistics(nil), summaries...)
+	sort.SliceStable(byID, func(i, j int) bool { return byID[i].QuestionID < byID[j].QuestionID })
+	for i, s := range byID {
+		numberByID[s.QuestionID] = i + 1
+	}
+
+	sortWeakestFirst(summaries)
+
+	rows := make([]statistics.FractionQuestionStat, 0, len(summaries))
+	for _, s := range summaries {
+		a := util.Frac{Num: s.Fraction1_Numerator, Den: s.Fraction1_Denominator}
+		b := util.Frac{Num: s.Fraction2_Numerator, Den: s.Fraction2_Denominator}
+		ansNum, ansDen := 0, 0
+		if ans, ok := util.Combine(a, b, op); ok {
+			ansNum, ansDen = ans.Num, ans.Den
+		}
+
+		attempts := s.RightAttemptsCount + s.WrongAttemptsCount
+		accuracy := -1
+		if attempts > 0 {
+			accuracy = s.RightAttemptsCount * 100 / attempts
+		}
+
+		rows = append(rows, statistics.FractionQuestionStat{
+			Number:      numberByID[s.QuestionID],
+			IsWorded:    worded,
+			Text:        s.QuestionText,
+			Num1:        s.Fraction1_Numerator,
+			Den1:        s.Fraction1_Denominator,
+			Num2:        s.Fraction2_Numerator,
+			Den2:        s.Fraction2_Denominator,
+			Op:          op,
+			AnsNum:      ansNum,
+			AnsDen:      ansDen,
+			Right:       s.RightAttemptsCount,
+			Wrong:       s.WrongAttemptsCount,
+			AccuracyPct: accuracy,
+		})
+	}
+	return rows
+}
+
+// buildStudentAccuracyRows converts each student's raw right/wrong sum into a display
+// row, sorted lowest-accuracy-first (-1 last, though GetStudentAccuracy's GROUP BY
+// means a 0-attempt student never actually appears here).
+func buildStudentAccuracyRows(rows []types.StudentAccuracy) []statistics.StudentAccuracyRow {
+	view := make([]statistics.StudentAccuracyRow, len(rows))
+	for i, s := range rows {
+		total := s.Right + s.Wrong
+		accuracy := -1
+		if total > 0 {
+			accuracy = s.Right * 100 / total
+		}
+		view[i] = statistics.StudentAccuracyRow{First: s.First, Last: s.Last, Right: s.Right, Wrong: s.Wrong, AccuracyPct: accuracy}
+	}
+	sort.SliceStable(view, func(i, j int) bool { return pctAscNoDataLast(view[i].AccuracyPct, view[j].AccuracyPct) })
+	return view
 }
 
 // renderNoQuestionStatistics is shared by the fraction/worded/quiz question-chart

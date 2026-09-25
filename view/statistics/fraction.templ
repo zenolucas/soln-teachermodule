@@ -1,0 +1,215 @@
+package statistics
+
+import (
+	"fmt"
+
+	"soln-teachermodule/types"
+	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
+)
+
+// FractionSummary is a fraction/worded scene's classroom-wide rollup (02 §C9, 01
+// §2a's four stat cards). AccuracyPct is -1 when nobody has attempted any question
+// yet.
+type FractionSummary struct {
+	AccuracyPct   int
+	TotalAttempts int
+	Played        int
+	Enrolled      int
+	BelowCount    int
+}
+
+// FractionQuestionStat is one question's classroom-wide rollup for the By-question
+// table. Number is the question's position among this scene's questions (by
+// question_id, ascending) - assigned before the hardest-first sort (handler's
+// sortWeakestFirst), so it stays stable regardless of display order, the same
+// convention as QuestionStat.Number on the quiz page. Worded scenes show Text instead
+// of the stacked Num1/Den1 Op Num2/Den2 - both kinds show the stacked AnsNum/AnsDen
+// answer (util.Combine), since a worded question is backed by the same two fractions
+// (X9, DEC-21's Scene.Op).
+type FractionQuestionStat struct {
+	Number             int
+	IsWorded           bool
+	Text               string
+	Num1, Den1         int
+	Num2, Den2         int
+	Op                 string
+	AnsNum, AnsDen     int
+	Right, Wrong       int
+	AccuracyPct        int
+}
+
+// StudentAccuracyRow is one student's right/wrong tally for the Students card.
+// AccuracyPct is -1 when Right+Wrong is 0 (shouldn't happen in practice - a student
+// only appears here via database.GetStudentAccuracy's GROUP BY, which requires at
+// least one row - but the display still needs somewhere to go if it ever did).
+type StudentAccuracyRow struct {
+	First, Last string
+	Right, Wrong int
+	AccuracyPct int
+}
+
+// FractionPage is the merged fraction/worded statistics page (01 §2a): the same
+// header/tabs shape as QuizPage (1g), four stat cards, a sortable By-question table,
+// and a Students card (lowest accuracy first, 8 rows, "All n" linking to the full
+// By-student list) - see QuizPage's own doc comment for why the "tabs" are plain
+// anchor links rather than a JS tab switcher, and why classroomID/minigameID are
+// extra parameters beyond what builds h itself.
+templ FractionPage(p layout.Page, h ui.Header, classroomID, minigameID string, sum FractionSummary, questions []FractionQuestionStat, students []StudentAccuracyRow) {
+	@layout.Base(p) {
+		<div class="w-full min-h-full bg-base-300 flex flex-col gap-4 p-4">
+			@ui.PageHeader(h) {
+				@ScenePicker(classroomID, atoiOrZero(minigameID))
+				<a href={ templ.URL(fmt.Sprintf("/minigame?minigameID=%s&classroomID=%s", minigameID, classroomID)) } class="btn btn-sm bg-base-200">
+					<i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+					Edit questions
+				</a>
+			}
+			<div role="tablist" class="tabs tabs-bordered px-4">
+				<a href="#summary" class="tab tab-active">Summary</a>
+				<a href="#by-question" class="tab">By question</a>
+				<a href="#by-student" class="tab">By student</a>
+			</div>
+			<div id="summary" class="px-4 scroll-mt-4">
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+					<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+						<span class="text-[12.5px] opacity-60">Class accuracy</span>
+						<span class="text-2xl font-bold">{ ui.Pct(sum.AccuracyPct) }</span>
+					</div>
+					<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+						<span class="text-[12.5px] opacity-60">Total attempts</span>
+						<span class="text-2xl font-bold">{ fmt.Sprint(sum.TotalAttempts) }</span>
+					</div>
+					<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+						<span class="text-[12.5px] opacity-60">Students who played</span>
+						<span class="text-2xl font-bold">
+							{ fmt.Sprint(sum.Played) }
+							<span class="text-sm font-semibold opacity-60"> / { fmt.Sprint(sum.Enrolled) }</span>
+						</span>
+					</div>
+					<div class="bg-base-100 rounded-box border border-error/45 p-4 flex flex-col gap-0.5">
+						<span class="text-[12.5px] opacity-60 flex items-center gap-1.5">
+							<span class="w-[7px] h-[7px] rounded-full bg-error"></span>
+							Questions below 60%
+						</span>
+						<span class="text-2xl font-bold">{ fmt.Sprint(sum.BelowCount) }</span>
+					</div>
+				</div>
+			</div>
+			<div id="by-question" class="mx-4 grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 scroll-mt-4">
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col overflow-hidden">
+					<div class="flex items-baseline justify-between mb-2">
+						<span class="text-[15px] font-bold">By question</span>
+						<div class="flex gap-3.5 text-xs opacity-60">
+							<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-success"></span>Right</span>
+							<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-error"></span>Wrong</span>
+						</div>
+					</div>
+					if len(questions) == 0 {
+						<p class="text-sm opacity-60 py-4">This scene doesn't have any questions yet.</p>
+					} else {
+						<table data-sortable class="w-full text-[14.5px]">
+							<thead>
+								<tr class="text-xs font-bold opacity-60 text-left">
+									<th class="py-2"></th>
+									<th>Question</th>
+									<th>Answer</th>
+									<th data-sort="number" class="text-center">Right</th>
+									<th data-sort="number" class="text-center">Wrong</th>
+									<th data-sort="number">% correct</th>
+								</tr>
+							</thead>
+							<tbody>
+								for _, q := range questions {
+									@fractionQuestionRow(q)
+								}
+							</tbody>
+						</table>
+					}
+				</div>
+				<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+					<div class="flex items-center justify-between mb-1">
+						<span class="text-[15px] font-bold">Students</span>
+						<span class="text-xs opacity-60">Lowest accuracy first</span>
+					</div>
+					if len(students) == 0 {
+						<p class="text-sm opacity-60 py-4">No students have played this scene yet.</p>
+					} else {
+						for _, s := range firstN(students, 8) {
+							@studentAccuracyRow(s)
+						}
+						<a href="#by-student" class="text-[13px] link link-primary mt-1.5">All { fmt.Sprint(len(students)) } students</a>
+					}
+				</div>
+			</div>
+			<div id="by-student" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5 mx-4 mb-4 scroll-mt-4">
+				<span class="text-[15px] font-bold mb-1">By student</span>
+				if len(students) == 0 {
+					<p class="text-sm opacity-60 py-4">No students have played this scene yet.</p>
+				} else {
+					for _, s := range students {
+						@studentAccuracyRow(s)
+					}
+				}
+			</div>
+		</div>
+	}
+}
+
+// stackedFrac is a numerator-over-denominator display, reused for both a question's
+// operands and its computed answer.
+templ stackedFrac(num, den int) {
+	<span class="inline-flex flex-col items-center leading-none font-semibold min-w-[18px]">
+		<span>{ fmt.Sprint(num) }</span>
+		<span class="w-full h-[1.5px] bg-base-content my-0.5"></span>
+		<span>{ fmt.Sprint(den) }</span>
+	</span>
+}
+
+templ fractionQuestionRow(q FractionQuestionStat) {
+	<tr class="border-t border-base-300 h-[58px]">
+		<td class="text-xs font-bold opacity-60 pr-2 align-middle">Q{ fmt.Sprint(q.Number) }</td>
+		<td class="align-middle">
+			<div class="flex items-center gap-2.5">
+				if q.IsWorded {
+					<span class="text-sm">{ q.Text }</span>
+				} else {
+					@stackedFrac(q.Num1, q.Den1)
+					<span class="opacity-60 text-sm">{ q.Op }</span>
+					@stackedFrac(q.Num2, q.Den2)
+				}
+			</div>
+		</td>
+		<td class="align-middle">@stackedFrac(q.AnsNum, q.AnsDen)</td>
+		<td class="text-center text-[13.5px] align-middle">{ fmt.Sprint(q.Right) }</td>
+		<td class="text-center text-[13.5px] align-middle">{ fmt.Sprint(q.Wrong) }</td>
+		<td class="align-middle">
+			<div class="flex items-center gap-2">
+				<div class="flex-1 flex h-3 rounded-sm overflow-hidden">
+					<div class={ "bg-success", widthPct(max(q.AccuracyPct, 0)) }></div>
+					<div class="flex-1 bg-error"></div>
+				</div>
+				<span class="w-10 text-right text-[13.5px] font-bold">{ ui.Pct(q.AccuracyPct) }</span>
+			</div>
+		</td>
+	</tr>
+}
+
+templ studentAccuracyRow(s StudentAccuracyRow) {
+	<div class="flex items-center gap-2.5 pt-1.5 border-t border-base-300 first:border-t-0 first:pt-0">
+		<span class="w-[26px] h-[26px] shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-[10.5px] font-bold">
+			{ ui.Initials(s.First, s.Last) }
+		</span>
+		<div class="flex-1 min-w-0 flex flex-col leading-tight">
+			<span class="text-[13.5px] font-semibold truncate">{ s.First } { s.Last }</span>
+			<span class="text-[11.5px] opacity-60">{ fmt.Sprint(s.Right) } right · { fmt.Sprint(s.Wrong) } wrong</span>
+		</div>
+		<div class="w-16 h-1.5 rounded bg-base-300 overflow-hidden shrink-0">
+			<div class={ "h-full", widthPct(max(s.AccuracyPct, 0)),
+				templ.KV("bg-error", s.AccuracyPct >= 0 && s.AccuracyPct < types.PassPct),
+				templ.KV("bg-success", s.AccuracyPct >= types.PassPct) }>
+			</div>
+		</div>
+		<span class="w-9 text-right text-[13.5px] font-bold shrink-0">{ ui.Pct(s.AccuracyPct) }</span>
+	</div>
+}
