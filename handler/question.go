@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
@@ -15,10 +16,15 @@ import (
 	"soln-teachermodule/view/minigame"
 )
 
-// HandleQuestionNew renders an empty FractionDrawer for "+ Add question" (T3.4). Only
-// the fraction kind is handled here - worded (T3.5) and quiz (T3.7) share the route
-// space by minigame ID but aren't wired up yet, so any other kind is a 400 rather than
-// silently rendering the wrong drawer.
+// isQuestionDrawerKind reports whether minigameID's kind has a FractionDrawer wired up
+// - fraction (T3.4) and worded (T3.5) share it (FractionDrawerData.Worded); quiz
+// (T3.7) gets its own drawer and isn't handled by /question/new or /question/edit.
+func isQuestionDrawerKind(minigameID int) bool {
+	kind := minigameKinds[strconv.Itoa(minigameID)]
+	return kind == kindFractions || kind == kindWorded
+}
+
+// HandleQuestionNew renders an empty FractionDrawer for "+ Add question" (T3.4/T3.5).
 func HandleQuestionNew(w http.ResponseWriter, r *http.Request) error {
 	minigameID, err := formInt(r, "minigameID")
 	if err != nil {
@@ -32,7 +38,7 @@ func HandleQuestionNew(w http.ResponseWriter, r *http.Request) error {
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
-	if minigameKinds[strconv.Itoa(minigameID)] != kindFractions {
+	if !isQuestionDrawerKind(minigameID) {
 		renderErrorPage(w, r, http.StatusBadRequest, "That question type isn't supported yet.")
 		return errors.New("unsupported minigame kind for /question/new")
 	}
@@ -45,8 +51,7 @@ func HandleQuestionNew(w http.ResponseWriter, r *http.Request) error {
 }
 
 // HandleQuestionEdit renders a FractionDrawer pre-filled with an existing question,
-// for a list row's hx-get (T3.4). See HandleQuestionNew for why only kindFractions is
-// handled.
+// for a list row's hx-get (T3.4/T3.5).
 func HandleQuestionEdit(w http.ResponseWriter, r *http.Request) error {
 	minigameID, err := formInt(r, "minigameID")
 	if err != nil {
@@ -64,7 +69,7 @@ func HandleQuestionEdit(w http.ResponseWriter, r *http.Request) error {
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
 	}
-	if minigameKinds[strconv.Itoa(minigameID)] != kindFractions {
+	if !isQuestionDrawerKind(minigameID) {
 		renderErrorPage(w, r, http.StatusBadRequest, "That question type isn't supported yet.")
 		return errors.New("unsupported minigame kind for /question/edit")
 	}
@@ -98,17 +103,19 @@ func buildFractionDrawerData(ctx context.Context, minigameID, classroomID, quest
 	}
 
 	data := minigame.FractionDrawerData{
-		MinigameID:  minigameID,
-		ClassroomID: classroomID,
-		QuestionID:  questionID,
-		SceneName:   scene.Name,
-		Op:          scene.Op,
-		Operation:   operationLabel(scene.Op),
-		Num1:        q.Fraction1_Numerator,
-		Den1:        q.Fraction1_Denominator,
-		Num2:        q.Fraction2_Numerator,
-		Den2:        q.Fraction2_Denominator,
-		Errors:      errs,
+		MinigameID:   minigameID,
+		ClassroomID:  classroomID,
+		QuestionID:   questionID,
+		SceneName:    scene.Name,
+		Op:           scene.Op,
+		Operation:    operationLabel(scene.Op),
+		Worded:       scene.Kind == types.KindWorded,
+		QuestionText: q.QuestionText,
+		Num1:         q.Fraction1_Numerator,
+		Den1:         q.Fraction1_Denominator,
+		Num2:         q.Fraction2_Numerator,
+		Den2:         q.Fraction2_Denominator,
+		Errors:       errs,
 	}
 	if answer, ok := util.Combine(util.Frac{Num: q.Fraction1_Numerator, Den: q.Fraction1_Denominator}, util.Frac{Num: q.Fraction2_Numerator, Den: q.Fraction2_Denominator}, scene.Op); ok {
 		data.Answer = answer.String()
@@ -164,21 +171,28 @@ func operationLabel(op string) string {
 	}
 }
 
-// validateFractionForm reads and validates a fraction question's numerator/
-// denominator fields from vals - the same field names for both the add and update
-// forms (X4). Pure over url.Values so it's cheap to table-test (question_test.go). The
-// error map is keyed by field name, for the drawer's inline per-field errors (DEC-4).
-// A field left unparseable is 0 in the returned question; one that parses but fails
-// its range check (e.g. a denominator of 0) still gets its literal value, so a
-// rejected submission redisplays exactly what the teacher typed rather than silently
-// resetting it.
-func validateFractionForm(vals url.Values) (types.FractionQuestion, map[string]string) {
+// validateFractionForm reads and validates a fraction/worded question's fields from
+// vals - the same field names for both the add and update forms (X4). Pure over
+// url.Values so it's cheap to table-test (question_test.go). The error map is keyed by
+// field name, for the drawer's inline per-field errors (DEC-4). A field left
+// unparseable is 0 in the returned question; one that parses but fails its range check
+// (e.g. a denominator of 0) still gets its literal value, so a rejected submission
+// redisplays exactly what the teacher typed rather than silently resetting it.
+// requireText additionally requires a non-blank "question_text" (T3.5's worded forms;
+// fraction forms don't have that field at all, so pass false there).
+func validateFractionForm(vals url.Values, requireText bool) (types.FractionQuestion, map[string]string) {
 	errs := map[string]string{}
 	q := types.FractionQuestion{
 		Fraction1_Numerator:   validateFractionField(vals, "fraction1_numerator", 0, errs),
 		Fraction1_Denominator: validateFractionField(vals, "fraction1_denominator", 1, errs),
 		Fraction2_Numerator:   validateFractionField(vals, "fraction2_numerator", 0, errs),
 		Fraction2_Denominator: validateFractionField(vals, "fraction2_denominator", 1, errs),
+	}
+	if requireText {
+		q.QuestionText = vals.Get("question_text")
+		if strings.TrimSpace(q.QuestionText) == "" {
+			errs["question_text"] = "Question text can't be blank."
+		}
 	}
 	return q, errs
 }
