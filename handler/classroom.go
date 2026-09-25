@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
@@ -179,10 +180,39 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		seeAllHref = fmt.Sprintf("/classroom/students?classroom_id=%s", classrooms[0].ClassroomID)
 	}
 
+	// 30, not 6: collapseActivity (T6.2) can merge several of these rows into one
+	// "played" event, so asking the query for exactly 6 could collapse down to fewer
+	// than the card actually has room for. 30 is generous headroom for that without
+	// pulling an unbounded amount of history.
+	rawActivity, err := database.GetRecentActivity(r.Context(), teacherID, 30)
+	if err != nil {
+		return err
+	}
+	collapsed := collapseActivity(rawActivity)
+	if len(collapsed) > 6 {
+		collapsed = collapsed[:6]
+	}
+	now := time.Now()
+	activity := make([]home.ActivityEntry, 0, len(collapsed))
+	for _, a := range collapsed {
+		scene, _ := types.SceneByID(a.MinigameID)
+		text := fmt.Sprintf("played %s", sceneLabel(scene))
+		if a.Kind == "scored" {
+			text = fmt.Sprintf("scored %d/%d on %s", a.Score, a.Total, sceneLabel(scene))
+		}
+		activity = append(activity, home.ActivityEntry{
+			Name:      fmt.Sprintf("%s %s", a.First, a.Last),
+			Text:      text,
+			ClassName: a.ClassName,
+			RelTime:   ui.RelTime(now, a.At),
+			Sprite:    scene.Image,
+		})
+	}
+
 	if err := render(w, r, home.ClassCards(summaries)); err != nil {
 		return err
 	}
-	return render(w, r, home.HomeExtras(len(classrooms), studentCount, entries, seeAllHref))
+	return render(w, r, home.HomeExtras(len(classrooms), studentCount, entries, seeAllHref, activity))
 }
 
 func HandleGetClassroomsMenu(w http.ResponseWriter, r *http.Request) error {

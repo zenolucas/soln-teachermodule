@@ -36,13 +36,16 @@ templ Index(p layout.Page, now time.Time) {
 	<div hx-get="/getclassrooms" hx-trigger="load" hx-target="this">
 		<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
 	</div>
-	<!-- Recent activity (the mockup's right column) waits for P6/D1 (DEC-15) - Needs
-	     attention spans the full width alone until then (T4.6 step 1). Its content
-	     arrives out of band in the same /getclassrooms response as the cards above, so
-	     this starts as a loading placeholder rather than its own hx-get round trip. -->
-	<div class="mt-4">
+	<!-- Both cards' content arrives out of band in the same /getclassrooms response as
+	     the class cards above (HandleGetClassrooms), so each starts as a loading
+	     placeholder rather than its own hx-get round trip. -->
+	<div class="mt-4 grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4">
 		<div id="needs-attention" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1">
 			<span class="text-[15px] font-bold mb-1">Needs attention</span>
+			<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-md" aria-label="Loading"></span></div>
+		</div>
+		<div id="recent-activity" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1">
+			<span class="text-[15px] font-bold mb-1">Recent activity</span>
 			<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-md" aria-label="Loading"></span></div>
 		</div>
 	</div>
@@ -142,11 +145,22 @@ type AttentionEntry struct {
 	FlagDetail    string
 }
 
+// ActivityEntry is one Recent activity row (01 §1a), built from T6.2's
+// database.GetRecentActivity + handler.collapseActivity. Text is already the full
+// "played {scene}" / "scored n/N on {scene}" phrase (DEC-24: never "finished" or
+// "started") and RelTime is already formatted (ui.RelTime) - both computed by the
+// handler, which has the scene lookup and the current time, so this stays a plain
+// data holder.
+type ActivityEntry struct {
+	Name, Text, ClassName, RelTime, Sprite string
+}
+
 // HomeExtras is the /getclassrooms response's out-of-band half (see
-// HandleGetClassrooms): the header's "{n} classrooms · {n} students" count and the
-// Needs attention card (01 §1a), both swapped into placeholders index.templ already
-// rendered. seeAllHref is "" when the teacher has no classrooms yet.
-templ HomeExtras(classroomCount, studentCount int, entries []AttentionEntry, seeAllHref string) {
+// HandleGetClassrooms): the header's "{n} classrooms · {n} students" count, the Needs
+// attention card, and the Recent activity card (01 §1a), all swapped into
+// placeholders index.templ already rendered. seeAllHref is "" when the teacher has no
+// classrooms yet.
+templ HomeExtras(classroomCount, studentCount int, entries []AttentionEntry, seeAllHref string, activity []ActivityEntry) {
 	<span id="home-counts" hx-swap-oob="true"> · { fmt.Sprint(classroomCount) } classrooms · { fmt.Sprint(studentCount) } students</span>
 	<div id="needs-attention" hx-swap-oob="true" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
 		<div class="flex items-baseline justify-between mb-1">
@@ -160,6 +174,22 @@ templ HomeExtras(classroomCount, studentCount int, entries []AttentionEntry, see
 		} else {
 			for _, e := range entries {
 				@attentionRow(e)
+			}
+		}
+	</div>
+	<div id="recent-activity" hx-swap-oob="true" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+		<div class="flex items-baseline justify-between mb-1">
+			<span class="text-[15px] font-bold">Recent activity</span>
+			<span class="text-xs opacity-60 flex items-center gap-1.5">
+				<span class="w-[7px] h-[7px] rounded-full bg-success"></span>
+				Live from the game
+			</span>
+		</div>
+		if len(activity) == 0 {
+			<p class="text-sm opacity-60 py-4">No activity yet.</p>
+		} else {
+			for _, a := range activity {
+				@activityRow(a)
 			}
 		}
 	</div>
@@ -187,4 +217,14 @@ templ attentionRow(e AttentionEntry) {
 		</div>
 		<i class="fa-solid fa-chevron-right text-xs opacity-60" aria-hidden="true"></i>
 	</a>
+}
+
+templ activityRow(a ActivityEntry) {
+	<div class="flex items-center gap-3 py-1.5 border-t border-base-300 first:border-t-0">
+		<img src={ a.Sprite } alt="" class="w-[30px] h-[37px] shrink-0 rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+		<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+			<span class="text-sm"><b class="font-semibold">{ a.Name }</b> { a.Text }</span>
+			<span class="text-xs opacity-60 truncate">{ a.ClassName } · { a.RelTime }</span>
+		</div>
+	</div>
 }

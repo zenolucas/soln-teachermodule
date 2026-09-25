@@ -47,9 +47,15 @@ LIMIT ?
 // rows here. collapseActivity (handler/insights.go) merges those into one event per
 // scene.
 //
-// created_at is scanned as a string and parsed in the app server's local time zone
-// (matching DEC-16's server-local greeting), since the connection isn't opened with
-// the MySQL driver's parseTime option.
+// created_at is scanned as a string and parsed as UTC, not the app server's local
+// time zone: a MySQL/MariaDB TIMESTAMP column is stored in UTC and converted to the
+// *session's* time_zone on read (default "SYSTEM", i.e. the DB server's own OS time
+// zone) - not the connecting client's - so the string this driver receives is on the
+// DB server's clock, which has no reason to match the app server's (confirmed live:
+// this dev DB's SYSTEM zone is UTC while the app server itself runs in Pacific time -
+// parsing as time.Local previously misread a same-second insert as "8 hr ago"). The
+// connection isn't opened with the MySQL driver's parseTime option, which would
+// otherwise handle this conversion automatically.
 func GetRecentActivity(ctx context.Context, teacherID int, limit int) ([]types.Activity, error) {
 	rows, err := db.QueryContext(ctx, getRecentActivitySQL, teacherID, teacherID, limit)
 	if err != nil {
@@ -65,7 +71,7 @@ func GetRecentActivity(ctx context.Context, teacherID int, limit int) ([]types.A
 			&a.MinigameID, &a.Kind, &a.Score, &a.Total, &createdAt); err != nil {
 			return nil, fmt.Errorf("GetRecentActivity: %v", err)
 		}
-		a.At, err = time.ParseInLocation("2006-01-02 15:04:05", createdAt, time.Local)
+		a.At, err = time.ParseInLocation("2006-01-02 15:04:05", createdAt, time.UTC)
 		if err != nil {
 			return nil, fmt.Errorf("GetRecentActivity: parsing created_at %q: %v", createdAt, err)
 		}
