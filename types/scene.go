@@ -28,16 +28,14 @@ type Scene struct {
 	Op string
 }
 
-// StatsPath is the statistics index route for this scene's kind. Fraction and worded
-// scenes both resolve to /statistics/fraction - only /statistics/fraction and
-// /statistics/quiz are registered as index routes, and the handler behind
-// /statistics/fraction already dispatches by minigame ID regardless of kind, so there's
-// no dedicated /statistics/worded route to point at instead.
+// StatsPath is the statistics page route, the same for every scene kind now (T5.5):
+// /classroom/statistics already dispatches by minigame ID regardless of kind
+// (renderStatisticsPage), the way the old /statistics/fraction index route used to for
+// fraction and worded alike. Callers build the query string as
+// "?classroom_id=&minigameID=" (DEC-6: this is a new-style route, so classroom_id, not
+// the old classroomID).
 func (s Scene) StatsPath() string {
-	if s.Kind == KindQuiz {
-		return "/statistics/quiz"
-	}
-	return "/statistics/fraction"
+	return "/classroom/statistics"
 }
 
 // StudentStatsPath is the per-student score fragment route for this scene's kind.

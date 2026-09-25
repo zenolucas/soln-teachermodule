@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -417,4 +418,33 @@ func GetStudentAccuracy(ctx context.Context, classroomID, minigameID int) ([]typ
 		return nil, fmt.Errorf("GetStudentAccuracy: %v", err)
 	}
 	return out, nil
+}
+
+// FirstSceneWithData is the lowest minigame_id an enrolled student has any row for in
+// this classroom (a fraction_responses row or a multiple_choice_scores row) - what a
+// bare /classroom/statistics?classroom_id= link opens (T5.5), so it lands on
+// something the class has actually played instead of always scene 1. 1 when nobody
+// has played anything yet.
+func FirstSceneWithData(ctx context.Context, classroomID int) (int, error) {
+	var minID sql.NullInt64
+	err := db.QueryRowContext(ctx, `
+		SELECT MIN(minigame_id) FROM (
+			SELECT fr.minigame_id
+			FROM fraction_responses fr
+			JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
+			WHERE fr.classroom_id = ?
+			UNION
+			SELECT mcs.minigame_id
+			FROM multiple_choice_scores mcs
+			JOIN enrollments e ON e.classroom_id = mcs.classroom_id AND e.student_id = mcs.student_id
+			WHERE mcs.classroom_id = ?
+		) played
+	`, classroomID, classroomID).Scan(&minID)
+	if err != nil {
+		return 0, fmt.Errorf("FirstSceneWithData: %v", err)
+	}
+	if !minID.Valid {
+		return 1, nil
+	}
+	return int(minID.Int64), nil
 }
