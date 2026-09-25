@@ -58,7 +58,22 @@ templ Base(p Page) {
 
 </head>
 
-<body class="antialiased">
+<body class="antialiased group/shell">
+	<!-- Must run synchronously, before first paint, and be the first thing in <body> -
+	     an inline script (no src) blocks the parser right here, so document.body
+	     already has the right data-sidebar attribute by the time the sidebar itself is
+	     parsed and styled, with no flash of the wrong (expanded, then collapsed) state
+	     (DEC-1). try/catch: a private-browsing tab or a blocked/full localStorage must
+	     not break the page - it just falls back to the width check every time. -->
+	<script>
+		try {
+			var s = localStorage.getItem('soln.sidebar');
+			if (s !== 'collapsed' && s !== 'expanded') {
+				s = window.innerWidth < 1200 ? 'collapsed' : 'expanded';
+			}
+			document.body.dataset.sidebar = s;
+		} catch (e) {}
+	</script>
 	if p.Shell {
 	<!-- The daisyUI drawer + navbar (FE-10, FE-11, D4) are gone - the sidebar is
 	     always visible at this size, since mobile is out of scope (DEC-1). -->

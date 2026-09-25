@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"soln-teachermodule/types"
+	"strings"
 )
 
 // ClassroomMenu is the sidebar's lazy-loaded classroom list (see 01 §Shell items 4-5).
@@ -10,12 +11,20 @@ import (
 // should expand - it needs no ownership check, since rooms only ever holds the
 // requesting teacher's own classrooms, and an id that matches none of them just
 // expands nothing. active is which of those four sections is the current page.
+//
+// There's no server-side collapsed/expanded state (DEC-1) - this one response renders
+// both the expanded row and the collapsed tile for every classroom, each hidden by a
+// group-data-[sidebar=.../shell: variant matching the other's. Only one is ever visible
+// at a time, driven by the body-level attribute the pre-paint script in
+// layout/app.templ sets, so a single sidebar tree (not two duplicated asides needing
+// two separate fetches) can switch between them with pure CSS.
 templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
 	if len(rooms) == 0 {
-		<p class="opacity-60 px-3 mt-2 text-sm">No classrooms yet.</p>
+		<p class="opacity-60 px-3 mt-2 text-sm group-data-[sidebar=collapsed]/shell:hidden">No classrooms yet.</p>
 	} else {
 		for _, room := range rooms {
-			<div class="flex flex-col gap-0.5">
+			<!-- Expanded row -->
+			<div class="flex flex-col gap-0.5 group-data-[sidebar=collapsed]/shell:hidden">
 				<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) }
 					class="h-[38px] flex items-center gap-3 px-3 rounded text-sm">
 					<i class="fa-solid fa-users w-[18px] text-center text-accent text-[13px]" aria-hidden="true"></i>
@@ -26,10 +35,24 @@ templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
 					     part of the full Nord palette, but not one of the daisyUI nord theme's tokens
 					     or polar1. Used literally, per this task's own steps. -->
 					<div class="flex flex-col gap-0.5 ml-[21px] pl-[10px] border-l border-[#434C5E] mb-1.5">
-						@classroomMenuLink(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID), "overview", "Overview", "fa-chart-pie", active)
-						@classroomMenuLink(fmt.Sprintf("/classroom/minigames?classroom_id=%s", room.ClassroomID), "minigames", "Minigames", "fa-gamepad", active)
-						@classroomMenuLink(fmt.Sprintf("/classroom/students?classroom_id=%s", room.ClassroomID), "students", "Students", "fa-user-graduate", active)
-						@classroomMenuLink(fmt.Sprintf("/classroom/statistics?classroom_id=%s", room.ClassroomID), "stats", "Statistics", "fa-chart-column", active)
+						for _, s := range classroomSections(room.ClassroomID) {
+							@classroomMenuLink(s, active)
+						}
+					</div>
+				}
+			</div>
+			<!-- Collapsed tile -->
+			<div class="hidden group-data-[sidebar=collapsed]/shell:flex flex-col items-center gap-1">
+				<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) }
+					aria-label={ room.ClassroomName } data-tip={ room.ClassroomName }
+					class="tooltip tooltip-right w-10 h-10 rounded flex items-center justify-center text-[12.5px] font-bold bg-polar1 text-base-100">
+					{ tileInitials(room.ClassroomName) }
+				</a>
+				if room.ClassroomID == openID {
+					<div class="flex flex-col items-center gap-1 pb-2">
+						for _, s := range classroomSections(room.ClassroomID) {
+							@classroomMenuIconLink(s, active)
+						}
 					</div>
 				}
 			</div>
@@ -37,9 +60,47 @@ templ ClassroomMenu(rooms []types.Classroom, openID string, active string) {
 	}
 }
 
-templ classroomMenuLink(href string, key string, label string, icon string, active string) {
-	<a href={ templ.URL(href) }
-		class={ "h-[34px] flex items-center gap-2.5 px-2.5 rounded text-[13.5px]", templ.KV("bg-primary text-white font-semibold", key == active) }>
-		<i class={ fmt.Sprintf("fa-solid %s w-4 text-center text-xs", icon) } aria-hidden="true"></i>{ label }
+// classroomSection is one of the four Overview/Minigames/Students/Statistics links
+// shown for the open classroom, in both the expanded (labelled) and collapsed
+// (icon-only) sidebar.
+type classroomSection struct {
+	Key, Label, Icon, Href string
+}
+
+func classroomSections(classroomID string) []classroomSection {
+	return []classroomSection{
+		{"overview", "Overview", "fa-chart-pie", fmt.Sprintf("/classroom?classroom_id=%s", classroomID)},
+		{"minigames", "Minigames", "fa-gamepad", fmt.Sprintf("/classroom/minigames?classroom_id=%s", classroomID)},
+		{"students", "Students", "fa-user-graduate", fmt.Sprintf("/classroom/students?classroom_id=%s", classroomID)},
+		{"stats", "Statistics", "fa-chart-column", fmt.Sprintf("/classroom/statistics?classroom_id=%s", classroomID)},
+	}
+}
+
+// tileInitials builds the collapsed rail's 40px classroom tile label from the
+// classroom name's first and last words (see Initials for the single-word case, e.g.
+// a one-word class name doubling its one initial).
+func tileInitials(name string) string {
+	words := strings.Fields(name)
+	switch len(words) {
+	case 0:
+		return "?"
+	case 1:
+		return Initials(words[0], "")
+	default:
+		return Initials(words[0], words[len(words)-1])
+	}
+}
+
+templ classroomMenuLink(s classroomSection, active string) {
+	<a href={ templ.URL(s.Href) }
+		class={ "h-[34px] flex items-center gap-2.5 px-2.5 rounded text-[13.5px]", templ.KV("bg-primary text-white font-semibold", s.Key == active) }>
+		<i class={ fmt.Sprintf("fa-solid %s w-4 text-center text-xs", s.Icon) } aria-hidden="true"></i>{ s.Label }
+	</a>
+}
+
+templ classroomMenuIconLink(s classroomSection, active string) {
+	<a href={ templ.URL(s.Href) } aria-label={ s.Label } data-tip={ s.Label }
+		class={ "tooltip tooltip-right w-9 h-[34px] rounded flex items-center justify-center text-[13px]", templ.KV("bg-primary text-white", s.Key == active) }>
+		<i class={ fmt.Sprintf("fa-solid %s", s.Icon) } aria-hidden="true"></i>
 	</a>
 }

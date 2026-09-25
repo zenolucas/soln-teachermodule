@@ -307,3 +307,22 @@ document.body.addEventListener("submit", function (evt) {
 		);
 	}
 });
+
+// Toggles the sidebar between expanded and collapsed (see sidebar.templ, T1.6). The
+// actual expanded/collapsed markup is pure CSS (group-data-[sidebar=.../shell:
+// variants keyed off this same attribute) - this just flips document.body.dataset
+// and remembers the choice, the same pre-paint script in layout/app.templ reads on
+// every later page load so there's no flash of the wrong state. try/catch: a full or
+// blocked localStorage (private browsing) must not break the toggle itself, just the
+// "remember it next time" part.
+document.body.addEventListener("click", function (evt) {
+	var toggle = evt.target.closest("[data-sidebar-toggle]");
+	if (!toggle) {
+		return;
+	}
+	var next = document.body.dataset.sidebar === "collapsed" ? "expanded" : "collapsed";
+	document.body.dataset.sidebar = next;
+	try {
+		localStorage.setItem("soln.sidebar", next);
+	} catch (e) {}
+});
