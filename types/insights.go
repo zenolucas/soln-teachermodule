@@ -131,3 +131,13 @@ type QuizSummary struct {
 	Below     int
 	Histogram []int
 }
+
+// StudentAccuracy is one enrolled student's summed right/wrong attempts on a single
+// fraction/worded minigame (02 §C9), for the Students card on that scene's
+// statistics page.
+type StudentAccuracy struct {
+	UserID      int
+	First, Last string
+	Right       int
+	Wrong       int
+}
