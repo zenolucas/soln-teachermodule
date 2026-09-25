@@ -1,0 +1,25 @@
+package statistics
+
+import (
+	"fmt"
+
+	"soln-teachermodule/types"
+)
+
+// ScenePicker is the statistics page header's "Scene" dropdown (01 §1g), grouped by
+// world. Each option's value is the full destination URL, not just a minigame id, so
+// the change handler (public/js/index.js's data-nav-select) can navigate with a plain
+// window.location assignment - no template string to fill in client-side.
+templ ScenePicker(classroomID string, current int) {
+	<select class="select select-bordered select-sm" data-nav-select aria-label="Scene">
+		for _, world := range types.Worlds {
+			<optgroup label={ fmt.Sprintf("World %d · %s", world.Number, world.Topic) }>
+				for _, scene := range world.Scenes {
+					<option value={ fmt.Sprintf("/classroom/statistics?classroom_id=%s&minigameID=%d", classroomID, scene.MinigameID) } selected?={ scene.MinigameID == current }>
+						{ scene.Name }
+					</option>
+				}
+			</optgroup>
+		}
+	</select>
+}

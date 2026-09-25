@@ -14,7 +14,9 @@ import (
 	"soln-teachermodule/types"
 
 	// "soln-teachermodule/types"
+	"soln-teachermodule/view/layout"
 	"soln-teachermodule/view/statistics"
+	"soln-teachermodule/view/ui"
 
 	// "github.com/gorilla/sessions"
 )
@@ -98,11 +100,57 @@ func renderStatisticsPage(w http.ResponseWriter, r *http.Request, classroomID in
 	case kindWorded:
 		return render(w, r, statistics.WordedStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
 	case kindQuiz:
-		return render(w, r, statistics.QuizStatistics(page, classroomIDStr, minigameID, classroom.ClassroomName, scene.Name))
+		return renderQuizStatisticsPage(w, r, page, classroom, classroomID, classroomIDStr, minigameID, minigameIDInt, scene)
 	default:
 		renderErrorPage(w, r, http.StatusBadRequest, "That minigame doesn't exist.")
 		return errors.New("bad request")
 	}
+}
+
+// renderQuizStatisticsPage builds and renders the merged quiz statistics page (T5.2,
+// 01 §1g). The By-question section still loads today's Chart.js fragment
+// (LegacyByQuestionFragment) until T5.3 replaces it, which is also why page.Charts
+// stays true here.
+func renderQuizStatisticsPage(w http.ResponseWriter, r *http.Request, page layout.Page, classroom types.Classroom, classroomID int, classroomIDStr, minigameID string, minigameIDInt int, scene types.Scene) error {
+	questionCount, err := database.CountQuizQuestions(r.Context(), minigameIDInt, classroomID)
+	if err != nil {
+		return err
+	}
+
+	scores, err := database.GetQuizStudentScores(r.Context(), classroomID, minigameIDInt)
+	if err != nil {
+		return err
+	}
+	sort.SliceStable(scores, func(i, j int) bool { return scores[i].Score < scores[j].Score })
+
+	enrolled, err := database.GetEnrolledStudents(r.Context(), classroomID)
+	if err != nil {
+		return err
+	}
+
+	sum := summarizeQuiz(scores, questionCount, len(enrolled))
+
+	var world types.World
+	for _, w := range types.Worlds {
+		for _, s := range w.Scenes {
+			if s.MinigameID == minigameIDInt {
+				world = w
+			}
+		}
+	}
+
+	h := ui.Header{
+		Crumbs: []ui.Crumb{
+			{Label: classroom.ClassroomName, Href: fmt.Sprintf("/classroom?classroom_id=%s", classroomIDStr)},
+			{Label: "Statistics"},
+		},
+		Title:    scene.Name,
+		Subtitle: fmt.Sprintf("World %d · %s · %d questions", world.Number, world.Topic, questionCount),
+		Sprite:   scene.Image,
+	}
+
+	byQuestion := statistics.LegacyByQuestionFragment(classroomIDStr, minigameID)
+	return render(w, r, statistics.QuizPage(page, h, classroomIDStr, minigameID, sum, scores, questionCount, byQuestion))
 }
 
 // renderNoQuestionStatistics is shared by the fraction/worded/quiz question-chart
