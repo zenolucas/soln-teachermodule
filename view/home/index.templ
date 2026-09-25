@@ -22,9 +22,10 @@ templ Index(p layout.Page, now time.Time) {
 	<div class="flex justify-between items-end mb-4">
 		<div class="flex flex-col gap-1">
 			<h2 class="text-2xl font-bold">{ ui.Greeting(now.Hour()) }, { p.Teacher.DisplayName }</h2>
-			<!-- Classroom/student counts arrive in T4.6 (C3) - this is just the date for
-			     now. -->
-			<span class="text-[13.5px] opacity-60">{ ui.LongDate(now) }</span>
+			<!-- #home-counts starts empty and is filled out of band by the /getclassrooms
+			     response (HandleGetClassrooms), once it knows how many classrooms/students
+			     there are - see HomeExtras. -->
+			<span class="text-[13.5px] opacity-60">{ ui.LongDate(now) }<span id="home-counts"></span></span>
 		</div>
 		<!-- A visible button here instead of only inside the navbar's "+" dropdown, which
 		     used to be the only way to create a classroom (see FE-14, D4). The modal
@@ -35,16 +36,27 @@ templ Index(p layout.Page, now time.Time) {
 	<div hx-get="/getclassrooms" hx-trigger="load" hx-target="this">
 		<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-lg" aria-label="Loading"></span></div>
 	</div>
+	<!-- Recent activity (the mockup's right column) waits for P6/D1 (DEC-15) - Needs
+	     attention spans the full width alone until then (T4.6 step 1). Its content
+	     arrives out of band in the same /getclassrooms response as the cards above, so
+	     this starts as a loading placeholder rather than its own hx-get round trip. -->
+	<div class="mt-4">
+		<div id="needs-attention" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1">
+			<span class="text-[15px] font-bold mb-1">Needs attention</span>
+			<div class="flex justify-center w-full p-8"><span class="loading loading-spinner loading-md" aria-label="Loading"></span></div>
+		</div>
+	</div>
 </div>
 
 }
 }
 
-// ClassCards is the /getclassrooms fragment (see HandleGetClassrooms). Only card items
-// 1 (name/section) and 5 (Open classroom) render here - the attention badge, stats and
-// world bar (items 2-4) need C3 data and land in T4.6.
-templ ClassCards(rooms []types.Classroom) {
-	if len(rooms) == 0 {
+// ClassCards is the /getclassrooms fragment (see HandleGetClassrooms), one stat card
+// per classroom (01 §1a items 1-5): name/section, an attention/on-track badge, the
+// student count and quiz average, an 8px stacked bar of where students are by world,
+// and an Open classroom link.
+templ ClassCards(summaries []types.ClassroomSummary) {
+	if len(summaries) == 0 {
 		<!-- A brand-new teacher's very first view of the app was blank space with no hint
 		     of what to do next - the "+" that opens the create-classroom modal isn't
 		     obviously connected to this empty area (see FE-20). -->
@@ -56,17 +68,123 @@ templ ClassCards(rooms []types.Classroom) {
 		</div>
 	} else {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			for _, room := range rooms {
+			for _, sum := range summaries {
 				<div class="card bg-base-100 border border-base-content/10">
-					<div class="card-body gap-1">
-						<h3 class="text-[15.5px] font-bold">{ room.ClassroomName }</h3>
-						<p class="text-sm opacity-70">Section { room.Section }</p>
-						<div class="card-actions justify-end mt-3">
-							<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", room.ClassroomID)) } class="btn btn-secondary btn-sm">Open classroom</a>
+					<div class="card-body gap-3.5">
+						<div class="flex justify-between items-start gap-2">
+							<div class="flex flex-col gap-0.5">
+								<h3 class="text-[15.5px] font-bold">{ sum.ClassroomName }</h3>
+								<p class="text-[13px] opacity-70">Section { sum.Section }</p>
+							</div>
+							if sum.FlaggedCount > 0 {
+								<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-box bg-error/15 text-xs font-semibold whitespace-nowrap">
+									<span class="w-[7px] h-[7px] rounded-full bg-error"></span>
+									{ fmt.Sprint(sum.FlaggedCount) } need attention
+								</span>
+							} else {
+								<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-box bg-success/20 text-xs font-semibold whitespace-nowrap">
+									<span class="w-[7px] h-[7px] rounded-full bg-success"></span>
+									All on track
+								</span>
+							}
+						</div>
+						<div class="flex gap-6">
+							<div class="flex flex-col">
+								<span class="text-xl font-bold">{ fmt.Sprint(sum.StudentCount) }</span>
+								<span class="text-xs opacity-60">students</span>
+							</div>
+							<div class="flex flex-col">
+								<span class="text-xl font-bold">{ ui.Pct(sum.QuizAvgPct) }</span>
+								<span class="text-xs opacity-60">quiz average</span>
+							</div>
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<!-- Segment widths are proportional to each world's raw student count
+							     (a templ css function, not a Tailwind class - see barWidthPct in
+							     view/minigame/fraction.templ for why: the JIT compiler can't
+							     generate CSS for a class string built at runtime, and templ's own
+							     style attribute only takes a static string). -->
+							<div class="flex h-2 rounded gap-[2px] overflow-hidden bg-base-300">
+								<div class={ "bg-accent", worldBarSegment(sum.PerWorld[1]) }></div>
+								<div class={ "bg-secondary", worldBarSegment(sum.PerWorld[2]) }></div>
+								<div class={ "bg-primary", worldBarSegment(sum.PerWorld[3]) }></div>
+							</div>
+							<div class="flex gap-3 text-[11.5px] opacity-60">
+								<span>W1 · { fmt.Sprint(sum.PerWorld[1]) }</span>
+								<span>W2 · { fmt.Sprint(sum.PerWorld[2]) }</span>
+								<span>W3 · { fmt.Sprint(sum.PerWorld[3]) }</span>
+								<span class="ml-auto">where students are</span>
+							</div>
+						</div>
+						<div class="card-actions justify-end">
+							<a href={ templ.URL(fmt.Sprintf("/classroom?classroom_id=%s", sum.ClassroomID)) } class="btn btn-secondary btn-sm">Open classroom</a>
 						</div>
 					</div>
 				</div>
 			}
 		</div>
 	}
+}
+
+css worldBarSegment(count int) {
+	flex-grow: { fmt.Sprintf("%d", count) };
+}
+
+// AttentionEntry pairs a flagged student's insight with the classroom it's in and its
+// primary flag's precomputed label/detail - StudentInsight itself doesn't carry
+// classroom context, and view/home can't import handler (which imports view/home) to
+// call handler.FlagLabel itself, so HandleGetClassrooms fills these in.
+type AttentionEntry struct {
+	types.StudentInsight
+	ClassroomID   string
+	ClassroomName string
+	FlagLabel     string
+	FlagDetail    string
+}
+
+// HomeExtras is the /getclassrooms response's out-of-band half (see
+// HandleGetClassrooms): the header's "{n} classrooms · {n} students" count and the
+// Needs attention card (01 §1a), both swapped into placeholders index.templ already
+// rendered. seeAllHref is "" when the teacher has no classrooms yet.
+templ HomeExtras(classroomCount, studentCount int, entries []AttentionEntry, seeAllHref string) {
+	<span id="home-counts" hx-swap-oob="true"> · { fmt.Sprint(classroomCount) } classrooms · { fmt.Sprint(studentCount) } students</span>
+	<div id="needs-attention" hx-swap-oob="true" class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-0.5">
+		<div class="flex items-baseline justify-between mb-1">
+			<span class="text-[15px] font-bold">Needs attention</span>
+			if seeAllHref != "" {
+				<a href={ templ.URL(seeAllHref) } class="text-[13px] link link-primary">See all students</a>
+			}
+		</div>
+		if len(entries) == 0 {
+			<p class="text-sm opacity-60 py-4">All students are on track.</p>
+		} else {
+			for _, e := range entries {
+				@attentionRow(e)
+			}
+		}
+	</div>
+}
+
+templ attentionRow(e AttentionEntry) {
+	<a href={ templ.URL(fmt.Sprintf("/student/score?userID=%s&classroomID=%s", e.UserID, e.ClassroomID)) }
+		class="flex items-center gap-3 py-2 border-t border-base-300 first:border-t-0">
+		<span class="w-[34px] h-[34px] shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-[12.5px] font-bold">
+			{ ui.Initials(e.Firstname, e.Lastname) }
+		</span>
+		<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+			<span class="text-sm font-semibold truncate">{ e.Firstname } { e.Lastname }</span>
+			<span class="text-xs opacity-60 truncate">{ e.ClassroomName }</span>
+		</div>
+		<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-box bg-error/15 text-xs font-semibold whitespace-nowrap">
+			<span class="w-[7px] h-[7px] rounded-full bg-error"></span>
+			{ e.FlagLabel }
+		</span>
+		<div class="w-[190px] shrink-0 flex items-center gap-2 text-[12.5px]">
+			if scene, ok := types.SceneByID(e.Current); ok {
+				<img src={ scene.Image } alt="" class="w-6 h-[29px] shrink-0 rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
+			}
+			<span class="truncate">{ e.FlagDetail }</span>
+		</div>
+		<i class="fa-solid fa-chevron-right text-xs opacity-60" aria-hidden="true"></i>
+	</a>
 }

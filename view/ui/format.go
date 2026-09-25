@@ -55,6 +55,15 @@ func LongDate(t time.Time) string {
 	return t.Format("Monday, 2 January")
 }
 
+// Pct formats a percentage computed elsewhere (-1 meaning "no data", per DEC-20's
+// convention throughout the insight types) as "—" rather than a misleading "-1%".
+func Pct(n int) string {
+	if n < 0 {
+		return "—"
+	}
+	return fmt.Sprintf("%d%%", n)
+}
+
 // RelTime renders how long ago t was, relative to now, for the Recent activity card
 // (01 §1a): "just now", "{n} min ago", "{n} hr ago", "{n}d ago", and a bare date once
 // it's a week or more old. now before t (clock skew, or a just-inserted row) reads as

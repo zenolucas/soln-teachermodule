@@ -82,6 +82,23 @@ func TestLongDate(t *testing.T) {
 	}
 }
 
+func TestPct(t *testing.T) {
+	tests := []struct {
+		n    int
+		want string
+	}{
+		{-1, "—"},
+		{0, "0%"},
+		{60, "60%"},
+		{100, "100%"},
+	}
+	for _, tt := range tests {
+		if got := Pct(tt.n); got != tt.want {
+			t.Errorf("Pct(%d) = %q, want %q", tt.n, got, tt.want)
+		}
+	}
+}
+
 func TestRelTime(t *testing.T) {
 	now := time.Date(2026, time.September, 25, 12, 0, 0, 0, time.UTC)
 
