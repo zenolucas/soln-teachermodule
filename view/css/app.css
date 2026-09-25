@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+	/* daisyUI's nord theme computes primary/secondary button text by raw WCAG
+	   contrast math, which picks near-black (matches base-content) over white for
+	   both #5E81AC (primary) and #81A1C1 (secondary) - technically a hair more
+	   contrasty by the formula, but against these medium-saturation blues it reads
+	   as dark text on a dark-ish button, which is hard to read. Repointing
+	   primary/secondary-content at the theme's own light base-100 tone (the same
+	   OKLCH triplet as --b1 below) fixes every solid .btn-primary/.btn-secondary
+	   app-wide - accent (#88C0D0) is light enough that its default dark text
+	   already reads fine, so it's left alone. */
+	:root {
+		--pc: 95.1276% 0.007445 260.731539;
+		--sc: 95.1276% 0.007445 260.731539;
+	}
+}
+
 @layer components {
 	/* The question list row (or drawer-opener) currently open in the drawer (DEC-3,
 	   T3.3) - toggled by [data-drawer-opener] clicks in index.js. */
