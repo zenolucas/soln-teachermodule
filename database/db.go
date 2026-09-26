@@ -842,25 +842,31 @@ func AddMCQuestions(w http.ResponseWriter, r *http.Request, classroomID int) err
 		}
 	}
 
-	// first insert question_text without the correct_answer id
-	result, err := db.ExecContext(r.Context(), `INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)
+	// One transaction: a failure on any choice must not leave a question with 1-3 choices behind
+	// (the game and the editor both assume exactly 4).
+	tx, err := db.BeginTx(r.Context(), nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(r.Context(), `INSERT INTO multiple_choice_questions (classroom_id, minigame_id, question_text) VALUES (?, ?, ?)`, classroomID, minigameID, questionText)
+	if err != nil {
+		return err
+	}
+	questionID, err := result.LastInsertId()
 	if err != nil {
 		return err
 	}
 
-	// Get the last inserted question_id
-	questionID, _ := result.LastInsertId()
-
-	// Insert choices into the multiple_choice_choices table using the questionID
 	for _, key := range optionKeys {
 		choiceText := r.FormValue(key)
 		isCorrect := key == correctAnswer
-		if _, err := db.ExecContext(r.Context(), "INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, isCorrect); err != nil {
-			return err
+		if _, err := tx.ExecContext(r.Context(), "INSERT INTO multiple_choice_choices (question_id, choice_text, is_correct) VALUES (?, ?, ?)", questionID, choiceText, isCorrect); err != nil {
+			return fmt.Errorf("AddMCQuestions: inserting %s: %w", key, err)
 		}
 	}
-
-	return nil
+	return tx.Commit()
 }
 
 func UpdateMCQuestions(w http.ResponseWriter, r *http.Request) error {
