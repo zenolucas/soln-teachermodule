@@ -115,11 +115,10 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 
 func HandleClassroomMinigames(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroom_id")
-	if classroomIDStr == "" {
-		renderErrorPage(w, r, http.StatusBadRequest, "Missing classroom.")
-		return errors.New("bad request")
+	classroomID, err := queryInt(r, "classroom_id")
+	if err != nil {
+		return err
 	}
-	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -162,11 +161,10 @@ func HandleClassroomMinigames(w http.ResponseWriter, r *http.Request) error {
 
 func HandleClassroomStudents(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroom_id")
-	if classroomIDStr == "" {
-		renderErrorPage(w, r, http.StatusBadRequest, "Missing classroom.")
-		return errors.New("bad request")
+	classroomID, err := queryInt(r, "classroom_id")
+	if err != nil {
+		return err
 	}
-	classroomID, _ := strconv.Atoi(classroomIDStr)
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -419,7 +417,10 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	classroomIDStr := r.FormValue("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	classroomID, err := formInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err

@@ -28,7 +28,10 @@ import (
 // param name; the new one uses the new one).
 func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -45,8 +48,10 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 // /classroom/statistics?classroom_id= link (e.g. from the future sidebar) has
 // something to show instead of erroring on a missing minigame.
 func HandleClassroomStatistics(w http.ResponseWriter, r *http.Request) error {
-	classroomIDStr := r.URL.Query().Get("classroom_id")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	classroomID, err := queryInt(r, "classroom_id")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -411,7 +416,10 @@ func sortWeakestFirst(summaries []types.StudentFractionStatistics) {
 func HandleQuizQuestionStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 	minigameIDStr := r.URL.Query().Get("minigameID")
 	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -607,9 +615,15 @@ func assertEnrolled(w http.ResponseWriter, r *http.Request, studentID, classroom
 // QuizDetail/FractionDetail (T5.8) via the /statistics/student/* handlers below.
 func HandleStudentScoreIndex(w http.ResponseWriter, r *http.Request) error {
 	studentIDStr := r.URL.Query().Get("userID")
-	studentID, _ := strconv.Atoi(studentIDStr)
+	studentID, err := queryInt(r, "userID")
+	if err != nil {
+		return err
+	}
 	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -736,12 +750,18 @@ func sortedStudentIDs(insights []types.StudentInsight, sortKey string) []string 
 // 2. worded
 // 3. quiz
 func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error {
-	studentIDStr := r.URL.Query().Get("userID")
-	studentID, _ := strconv.Atoi(studentIDStr)
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	studentID, err := queryInt(r, "userID")
+	if err != nil {
+		return err
+	}
+	minigameID, err := queryInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -766,12 +786,18 @@ func HandleGetStudentFractionScore(w http.ResponseWriter, r *http.Request) error
 }
 
 func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
-	studentIDStr := r.URL.Query().Get("userID")
-	studentID, _ := strconv.Atoi(studentIDStr)
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	studentID, err := queryInt(r, "userID")
+	if err != nil {
+		return err
+	}
+	minigameID, err := queryInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
@@ -793,12 +819,18 @@ func HandleGetStudentWordedScore(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
-	studentIDStr := r.URL.Query().Get("userID")
-	studentID, _ := strconv.Atoi(studentIDStr)
-	minigameIDStr := r.URL.Query().Get("minigameID")
-	minigameID, _ := strconv.Atoi(minigameIDStr)
-	classroomIDStr := r.URL.Query().Get("classroomID")
-	classroomID, _ := strconv.Atoi(classroomIDStr)
+	studentID, err := queryInt(r, "userID")
+	if err != nil {
+		return err
+	}
+	minigameID, err := queryInt(r, "minigameID")
+	if err != nil {
+		return err
+	}
+	classroomID, err := queryInt(r, "classroomID")
+	if err != nil {
+		return err
+	}
 
 	if err := assertOwnsClassroom(w, r, classroomID); err != nil {
 		return err
