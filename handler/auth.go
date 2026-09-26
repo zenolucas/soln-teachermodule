@@ -74,6 +74,13 @@ func HandleLoginCreate(w http.ResponseWriter, r *http.Request) error {
 }
 
 func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
+	// Resolve the teacher before touching the session: an authenticated session without a
+	// teacherID would pass WithAuth but fail every page that needs it.
+	teacherID, err := database.GetTeacherID(r.Context(), r.FormValue("username"))
+	if err != nil {
+		return err
+	}
+
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   3600 * 8,
@@ -88,7 +95,7 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	session, _ := store.Get(r, sessionUserKey)
 
 	session.Values["authenticated"] = true
-	session.Values["teacherID"], _ = database.GetTeacherID(w, r)
+	session.Values["teacherID"] = teacherID
 	return session.Save(r, w)
 }
 
