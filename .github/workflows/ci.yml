@@ -9,6 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A throwaway MariaDB for the integration tests (main_test.go), which build their own soln_test
+    # database from soln_db.sql on every run.
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
     steps:
       - uses: actions/checkout@v4
 
@@ -41,3 +55,9 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+      # -v so the log names each integration test as PASS; without the DSN they'd silently SKIP.
+      - name: Integration tests
+        env:
+          SOLN_TEST_DB_ROOT_DSN: "root@tcp(127.0.0.1:3306)/"
+        run: go test -count=1 -run Integration -v .
