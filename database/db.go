@@ -345,17 +345,24 @@ func GetUnenrolledStudents(ctx context.Context, classroomID int, q string) ([]ty
 // statement (WHERE NOT EXISTS) rather than a separate SELECT then INSERT, so a second
 // request racing the same student in between can't both pass the check and enroll them
 // twice.
-func AddStudents(ctx context.Context, studentIDs []string, classroomID int) error {
+// AddStudents enrolls every student in one transaction: all of them or, on any error, none, so a
+// failure halfway can't leave the class half-updated.
+func AddStudents(ctx context.Context, studentIDs []int, classroomID int) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	for _, studentID := range studentIDs {
-		_, err := db.ExecContext(ctx,
+		_, err := tx.ExecContext(ctx,
 			"INSERT INTO enrollments (classroom_id, student_id) SELECT ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM enrollments WHERE student_id = ?)",
 			classroomID, studentID, studentID)
 		if err != nil {
-			return err
+			return fmt.Errorf("AddStudents: enrolling student %d: %w", studentID, err)
 		}
 	}
-
-	return nil
+	return tx.Commit()
 }
 
 func UnenrollStudent(ctx context.Context, studentID int, classroomID int) error {
@@ -375,23 +382,13 @@ func InsertClassroom(ctx context.Context, classroom types.Classroom, teacherID i
 	return nil
 }
 
-func GetTeacherID(w http.ResponseWriter, r *http.Request) (int, error) {
-	userCreds := types.UserCredentials{
-		Username: r.FormValue("username"),
-	}
-
+// GetTeacherID resolves a teacher's user_id from their username.
+func GetTeacherID(ctx context.Context, username string) (int, error) {
 	var teacherID int
-	err := db.QueryRowContext(r.Context(), "SELECT user_id FROM users WHERE username = ? AND usertype = ?", userCreds.Username, "teacher").Scan(&teacherID)
-
+	err := db.QueryRowContext(ctx, "SELECT user_id FROM users WHERE username = ? AND usertype = ?", username, "teacher").Scan(&teacherID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "User not found", http.StatusNotFound)
-			return 0, err
-		}
-		http.Error(w, "Database error", http.StatusInternalServerError)
-		return 0, err
+		return 0, fmt.Errorf("GetTeacherID: %w", err)
 	}
-
 	return teacherID, nil
 }
 

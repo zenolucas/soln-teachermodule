@@ -426,9 +426,19 @@ func HandleAddStudents(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	studentIDs := r.Form["userID"]
+	studentIDs := make([]int, 0, len(r.Form["userID"]))
+	for _, raw := range r.Form["userID"] {
+		id, err := strconv.Atoi(raw)
+		if err != nil {
+			http.Error(w, "invalid student id", http.StatusBadRequest)
+			return nil
+		}
+		studentIDs = append(studentIDs, id)
+	}
 
-	database.AddStudents(r.Context(), studentIDs, classroomID)
+	if err := database.AddStudents(r.Context(), studentIDs, classroomID); err != nil {
+		return err
+	}
 
 	// Redirect back to the Students route, instead of landing on Overview with no sign
 	// the students they just added were actually added (see FE-08).
