@@ -57,11 +57,22 @@ Usage
 
 Demo data
 
-    `testdata/demo_seed.sql` is optional, dev-only data (19 enrolled students, quiz retakes,
-    misconception-triggering answers) layered on top of the base seed, for exercising screens
-    that need more than a couple of students to look real. Load both together with:
+    `soln_db.sql` is the schema only. `testdata/showcase_seed.sql` fills it with semi-realistic
+    demo data for showing the portal off:
+    - one teacher, **teacher / teacher** (Clarissa Reyes), with three Grade 6 sections (84 students);
+    - a question set for every scene, including word problems and quiz distractors that model common
+      fraction mistakes;
+    - a few weeks of simulated play that follows the game's rules (energy, game overs, quiz retakes),
+      so progress, flags, "Got stuck", quiz statistics and misconception hints all have something to show.
+    Every student's password is `student` (e.g. log in to the game as one of them). Timestamps are
+    relative to the day the file is loaded, so recent activity always looks current.
+
+    Load it into the dev database with:
 
     cd ~/.local/share/soln-devtools/setupdb && go run . --reset --demo
+
+    The file is generated. To change the data, edit `testdata/showcase/main.go` and run
+    `go run ./testdata/showcase > testdata/showcase_seed.sql`.
 
 Migrations
 
@@ -84,9 +95,10 @@ Deploying with HTTPS
 
     Only Caddy is exposed; the app and MariaDB stay on Docker's internal network, and
     the session cookie is marked Secure (COOKIE_SECURE=true). The schema is loaded on the
-    first start. It includes the sample accounts from soln_db.sql, whose passwords are
-    public: change or delete them before sharing the link, or keep them on purpose as a
-    demo login.
+    first start, together with the showcase data (see "Demo data"), so visitors can log in
+    as teacher / teacher. Those passwords are public: that's the point of a demo, but for a
+    real school deployment remove the `02-showcase.sql` line from deploy/docker-compose.yml
+    before the first start.
 
     In the game, students type the full address (https://your-domain) into the server
     box instead of an IP. A bare IP still means plain HTTP on port 3000, for a school LAN.
