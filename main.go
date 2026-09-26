@@ -34,6 +34,47 @@ func main() {
 		log.Fatal(err)
 	}
 
+	router := newRouter()
+
+	port := os.Getenv("HTTP_LISTEN_ADDRESS")
+
+	// The zero-value server (a bare http.ListenAndServe call) has no timeouts at all,
+	// so a single slow or half-open client could hold a connection indefinitely.
+	// WriteTimeout is set well above a typical "5s" default deliberately: this server
+	// also serves public/downloads/soln.zip (~57MB, the game client) straight off
+	// disk, and a blanket 10s WriteTimeout would cut that download off for any
+	// connection slower than ~45Mbps sustained - 5 minutes comfortably covers even a
+	// slow mobile connection (~1.5Mbps) while still bounding a genuinely stuck one.
+	srv := &http.Server{
+		Addr:         port,
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Minute,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	go func() {
+		slog.Info("application running", "port", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
+	slog.Info("server stopped gracefully")
+}
+
+// newRouter builds every route and middleware. Split out of main so integration tests can serve
+// the real router through httptest.
+func newRouter() http.Handler {
 	router := chi.NewMux()
 	// Several handlers still panic on bad input (unchecked type assertions, index
 	// access with no bounds check) rather than returning an error - without this,
@@ -110,39 +151,5 @@ func main() {
 		auth.Get("/statistics/student/quiz", handler.Make(handler.HandleGetStudentQuizScore))
 		auth.Get("/statistics/quiz/question", handler.Make(handler.HandleQuizQuestionStatisticsIndex))
 	})
-
-	port := os.Getenv("HTTP_LISTEN_ADDRESS")
-
-	// The zero-value server (a bare http.ListenAndServe call) has no timeouts at all,
-	// so a single slow or half-open client could hold a connection indefinitely.
-	// WriteTimeout is set well above a typical "5s" default deliberately: this server
-	// also serves public/downloads/soln.zip (~57MB, the game client) straight off
-	// disk, and a blanket 10s WriteTimeout would cut that download off for any
-	// connection slower than ~45Mbps sustained - 5 minutes comfortably covers even a
-	// slow mobile connection (~1.5Mbps) while still bounding a genuinely stuck one.
-	srv := &http.Server{
-		Addr:         port,
-		Handler:      router,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Minute,
-		IdleTimeout:  120 * time.Second,
-	}
-
-	go func() {
-		slog.Info("application running", "port", port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
-		}
-	}()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal(err)
-	}
-	slog.Info("server stopped gracefully")
+	return router
 }
