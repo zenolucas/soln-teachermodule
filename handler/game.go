@@ -1,13 +1,13 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"soln-teachermodule/database"
-	"soln-teachermodule/types"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -235,23 +235,28 @@ func HandleGetSaveData(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	var response types.SaveData
-
-	response, saveError := database.GetSavedData(r.Context(), studentID)
-	if saveError != nil {
-		fmt.Print("a get saved data error has occurred!")
-		fmt.Print(saveError)
-		return saveError
+	doc, err := database.GetSaveData(r.Context(), studentID)
+	if err != nil {
+		return err
 	}
+
+	// The fixed-column response this replaced carried student_id; keep the payload shape.
+	var save map[string]json.RawMessage
+	if err := json.Unmarshal(doc, &save); err != nil {
+		return fmt.Errorf("stored save for student %d isn't a JSON object: %w", studentID, err)
+	}
+	save["student_id"], _ = json.Marshal(studentID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(save)
 	return nil
 }
 
-func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
+// maxSaveBytes caps a posted save. Today's is ~1.3 KB; this leaves room for the game to grow.
+const maxSaveBytes = 64 << 10
 
+func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return nil
@@ -266,35 +271,45 @@ func HandleUpdateSaveData(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxSaveBytes))
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		http.Error(w, "save data is too large or unreadable", http.StatusBadRequest)
 		return nil
 	}
 	defer r.Body.Close()
 
+	patch, err := cleanSavePatch(body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil
+	}
+
+	if err := database.MergeSaveData(r.Context(), studentID, patch); err != nil {
+		return err
+	}
+
 	type Response struct {
 		Success bool `json:"success"`
 	}
-
-	var data types.SaveData
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		return err
-	}
-	data.StudentID = studentID
-
-	fmt.Print(data)
-
-	err = database.SaveData(r.Context(), data)
-	if err != nil {
-		return err
-	}
-
-	response := Response{Success: true}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(Response{Success: true})
 	return nil
+}
+
+// cleanSavePatch validates a posted save and returns the JSON to merge into the stored one. It must
+// be a JSON object. student_id is dropped because the token decides whose save it is, and top-level
+// nulls are dropped because a null in a merge patch deletes the key - DefaultSave's value included.
+func cleanSavePatch(body []byte) ([]byte, error) {
+	var patch map[string]json.RawMessage
+	if err := json.Unmarshal(body, &patch); err != nil || patch == nil {
+		return nil, errors.New("save data must be a JSON object")
+	}
+	delete(patch, "student_id")
+	for key, value := range patch {
+		if string(bytes.TrimSpace(value)) == "null" {
+			delete(patch, key)
+		}
+	}
+	return json.Marshal(patch)
 }

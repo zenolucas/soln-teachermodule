@@ -70,6 +70,7 @@ Migrations
     an older `soln_db.sql`. Apply one against an existing database with:
 
     mariadb -u$DB_USER -p$DB_PASSWORD $DB_NAME < migrations/001_created_at.sql
+    mariadb -u$DB_USER -p$DB_PASSWORD $DB_NAME < migrations/002_save_states_json.sql
 
 Contributing
 
