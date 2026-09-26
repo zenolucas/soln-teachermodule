@@ -233,11 +233,25 @@ func TestIntegrationTeacherAuthAndOwnership(t *testing.T) {
 		}
 	}
 
-	// Logout deletes the cookie, so the same client is logged out afterwards.
+	// A copy of the session cookie taken before logout (another device, or a stolen cookie).
+	copied := newClient(t)
+	u, _ := url.Parse(testServer.URL)
+	copied.Jar.SetCookies(u, c.Jar.Cookies(u))
+	if resp, _ := do(t, copied, http.MethodGet, "/home", nil, nil); resp.StatusCode != http.StatusOK {
+		t.Fatalf("copied cookie before logout: %d, want 200", resp.StatusCode)
+	}
+
+	// Logout deletes the cookie, so the same client is logged out afterwards...
 	postForm(t, c, "/logout", nil, nil)
 	if resp, _ := do(t, c, http.MethodGet, "/home", nil, nil); resp.StatusCode != http.StatusSeeOther {
 		t.Errorf("/home after logout: %d, want 303", resp.StatusCode)
 	}
+	// ...and the server invalidates the session, so the copy stops working too.
+	if resp, _ := do(t, copied, http.MethodGet, "/home", nil, nil); resp.StatusCode != http.StatusSeeOther {
+		t.Errorf("copied cookie after logout: %d, want 303 (session should be invalidated server-side)", resp.StatusCode)
+	}
+	// Logging in again works.
+	teacherClient(t)
 }
 
 func TestIntegrationCSRF(t *testing.T) {

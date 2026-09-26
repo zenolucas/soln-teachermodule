@@ -349,6 +349,24 @@ func InsertClassroom(ctx context.Context, classroom types.Classroom, teacherID i
 	return nil
 }
 
+// GetSessionVersion is the teacher's current session_version: a session cookie is only valid if it
+// carries this value (server-side logout).
+func GetSessionVersion(ctx context.Context, userID int) (int, error) {
+	var version int
+	if err := db.QueryRowContext(ctx, "SELECT session_version FROM users WHERE user_id = ?", userID).Scan(&version); err != nil {
+		return 0, fmt.Errorf("GetSessionVersion: %w", err)
+	}
+	return version, nil
+}
+
+// BumpSessionVersion invalidates every session cookie the teacher has, on every device.
+func BumpSessionVersion(ctx context.Context, userID int) error {
+	if _, err := db.ExecContext(ctx, "UPDATE users SET session_version = session_version + 1 WHERE user_id = ?", userID); err != nil {
+		return fmt.Errorf("BumpSessionVersion: %w", err)
+	}
+	return nil
+}
+
 // GetTeacherID resolves a teacher's user_id from their username.
 func GetTeacherID(ctx context.Context, username string) (int, error) {
 	var teacherID int
