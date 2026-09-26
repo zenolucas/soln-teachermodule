@@ -209,14 +209,6 @@ func respondFractionDrawerErrors(w http.ResponseWriter, r *http.Request, minigam
 	return render(w, r, minigame.FractionDrawer(data))
 }
 
-// renderNoQuestions is shared by all three question-list fragments (fractions, worded,
-// multiple choice) - each was rendering nothing at all for a freshly-created minigame,
-// leaving just the "Add Question" form floating with no indication the game itself has
-// no content yet (see FE-20).
-func renderNoQuestions(w http.ResponseWriter) {
-	fmt.Fprint(w, `<p class="text-white text-opacity-60 mt-4">No questions yet. Add one below to get started.</p>`)
-}
-
 func HandleAddFractions(w http.ResponseWriter, r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return err
