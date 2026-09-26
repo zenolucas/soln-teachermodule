@@ -43,6 +43,14 @@ func Make(h func(http.ResponseWriter, *http.Request) error) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rec := &responseRecorder{ResponseWriter: w}
 		if err := h(rec, r); err != nil {
+			var bad badRequestError
+			if errors.As(err, &bad) {
+				slog.Info("bad request", "err", err, "path", r.URL.Path)
+				if !rec.wroteHeader {
+					renderErrorPage(w, r, http.StatusBadRequest, "This link is missing some information or has an invalid ID. Please go back and try again.")
+				}
+				return
+			}
 			slog.Error("internal server error", "err", err, "path", r.URL.Path)
 			if !rec.wroteHeader {
 				renderErrorPage(w, r, http.StatusInternalServerError, "Something went wrong on our end. Please try again.")
@@ -159,12 +167,28 @@ func assertOwnsClassroom(w http.ResponseWriter, r *http.Request, classroomID int
 // strconv.Atoi with the error discarded is what let a bad or missing ID quietly turn
 // into a query against ID 0 (see BUG-03) instead of failing loudly.
 func formInt(r *http.Request, key string) (int, error) {
-	n, err := strconv.Atoi(r.FormValue(key))
+	return parseIntParam(key, r.FormValue(key))
+}
+
+// queryInt is formInt for a URL query parameter only (never the request body).
+func queryInt(r *http.Request, key string) (int, error) {
+	return parseIntParam(key, r.URL.Query().Get(key))
+}
+
+func parseIntParam(key, raw string) (int, error) {
+	n, err := strconv.Atoi(raw)
 	if err != nil {
-		return 0, fmt.Errorf("invalid or missing %q: %w", key, err)
+		return 0, badRequestError{fmt.Errorf("invalid or missing %q: %w", key, err)}
 	}
 	return n, nil
 }
+
+// badRequestError marks a client mistake, such as a missing or malformed ID. Make answers it with
+// a 400 instead of logging it as a server error.
+type badRequestError struct{ err error }
+
+func (e badRequestError) Error() string { return e.err.Error() }
+func (e badRequestError) Unwrap() error { return e.err }
 
 // escJS renders s as a JSON string literal (quotes included), safe to embed directly
 // inside a hand-built <script> block - a plain %s there could break out of the script
