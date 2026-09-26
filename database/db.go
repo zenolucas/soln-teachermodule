@@ -1180,47 +1180,50 @@ func GetWordedQuestionSummaries(ctx context.Context, classroomID int, minigameID
 	return summaries, nil
 }
 
-func GetStudentQuizStatistics(ctx context.Context, userID int, minigameID int, classroomID int) ([]types.StudentQuizStatistics, error) {
-	var statistics []types.StudentQuizStatistics
-
-	// One query replaces what used to be three (questions, then correct answers via a
-	// dynamically-built IN (...), then the student's answers) plus a manual join in Go.
-	// The IN (...) version broke with a SQL syntax error whenever a minigame had zero
-	// questions (an empty placeholder list builds "IN ()"); grouping by question here
-	// sidesteps that failure mode entirely instead of needing a special case for it.
-	// COALESCE covers a question with no choice marked correct, and a question the
-	// student hasn't answered - both would otherwise scan as SQL NULL into a Go string.
+// GetStudentQuizClicks returns every answer click a student posted in one quiz, in click order.
+func GetStudentQuizClicks(ctx context.Context, studentID, minigameID, classroomID int) ([]types.QuizClick, error) {
 	rows, err := db.QueryContext(ctx, `
-		SELECT
-			q.question_id,
-			q.question_text,
-			COALESCE(MAX(CASE WHEN c.is_correct THEN c.choice_text END), '') AS correct_answer,
-			COALESCE(MAX(CASE WHEN r.choice_id = c.choice_id THEN c.choice_text END), '') AS user_answer
-		FROM multiple_choice_questions q
-		JOIN multiple_choice_choices c ON c.question_id = q.question_id
-		LEFT JOIN multiple_choice_responses r ON r.question_id = q.question_id
-			AND r.student_id = ? AND r.minigame_id = ?
-		WHERE q.minigame_id = ? AND q.classroom_id = ?
-		GROUP BY q.question_id, q.question_text
-		ORDER BY q.question_id
-	`, userID, minigameID, minigameID, classroomID)
+		SELECT response_id, question_id, choice_id, UNIX_TIMESTAMP(created_at)
+		FROM multiple_choice_responses
+		WHERE student_id = ? AND minigame_id = ? AND classroom_id = ?
+		ORDER BY response_id
+	`, studentID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var clicks []types.QuizClick
 	for rows.Next() {
-		var questionID int
-		var statistic types.StudentQuizStatistics
-		if err := rows.Scan(&questionID, &statistic.QuestionText, &statistic.CorrectAnswer, &statistic.UserAnswer); err != nil {
-			return nil, fmt.Errorf("failed to scan student quiz statistic: %v", err)
+		var c types.QuizClick
+		if err := rows.Scan(&c.ResponseID, &c.QuestionID, &c.ChoiceID, &c.At); err != nil {
+			return nil, fmt.Errorf("GetStudentQuizClicks: %v", err)
 		}
-		if statistic.UserAnswer == statistic.CorrectAnswer {
-			statistic.Score = 1
-		}
-		statistics = append(statistics, statistic)
+		clicks = append(clicks, c)
 	}
-
-	return statistics, nil
+	return clicks, rows.Err()
 }
 
+// GetStudentQuizScoreRecords returns every score a student posted for one quiz, oldest first.
+func GetStudentQuizScoreRecords(ctx context.Context, studentID, minigameID, classroomID int) ([]types.QuizScoreRecord, error) {
+	rows, err := db.QueryContext(ctx, `
+		SELECT score, UNIX_TIMESTAMP(created_at)
+		FROM multiple_choice_scores
+		WHERE student_id = ? AND minigame_id = ? AND classroom_id = ?
+		ORDER BY created_at, statistic_id
+	`, studentID, minigameID, classroomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var scores []types.QuizScoreRecord
+	for rows.Next() {
+		var sc types.QuizScoreRecord
+		if err := rows.Scan(&sc.Score, &sc.At); err != nil {
+			return nil, fmt.Errorf("GetStudentQuizScoreRecords: %v", err)
+		}
+		scores = append(scores, sc)
+	}
+	return scores, rows.Err()
+}

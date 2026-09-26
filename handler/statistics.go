@@ -810,26 +810,85 @@ func HandleGetStudentQuizScore(w http.ResponseWriter, r *http.Request) error {
 
 	scene, _ := types.SceneByID(minigameID)
 
-	stats, err := database.GetStudentQuizStatistics(r.Context(), studentID, minigameID, classroomID)
+	questions, err := database.GetQuizQuestions(r.Context(), minigameID, classroomID)
+	if err != nil {
+		return err
+	}
+	clicks, err := database.GetStudentQuizClicks(r.Context(), studentID, minigameID, classroomID)
+	if err != nil {
+		return err
+	}
+	scores, err := database.GetStudentQuizScoreRecords(r.Context(), studentID, minigameID, classroomID)
 	if err != nil {
 		return err
 	}
 
-	rows := make([]statistics.QuizDetailRow, len(stats))
-	var wrong []struct{ Question, Chosen string }
-	score := 0
-	for i, s := range stats {
-		right := s.Score == 1
-		rows[i] = statistics.QuizDetailRow{Question: s.QuestionText, Correct: s.CorrectAnswer, Answer: s.UserAnswer, Right: right}
-		if right {
-			score++
-		} else {
-			wrong = append(wrong, struct{ Question, Chosen string }{s.QuestionText, s.UserAnswer})
-		}
-	}
-	// StudentHint (02 §B6, T5.3) fires when >=2 of this student's wrong answers in the
-	// quiz match the same misconception rule.
+	rows, score, wrong := studentQuizDetail(questions, clicks, scores)
+	// StudentHint (02 §B6, T5.3) fires when >=2 of this student's wrong first tries match the
+	// same misconception rule.
 	hint, _ := StudentHint(wrong)
 
-	return render(w, r, statistics.QuizDetail(scene, score, len(stats), hint, rows))
+	return render(w, r, statistics.QuizDetail(scene, score, len(questions), hint, rows))
+}
+
+// studentQuizDetail builds one student's quiz panel from their raw clicks (BUG-25). The game keeps
+// a question in play until it's answered correctly and posts every click, so "their answer" means
+// the first try at each question, in the student's latest finished run. score is the latest posted
+// score (DEC-9, the number the rest of the portal shows), or -1 if they never finished the quiz.
+// wrong holds the wrong first tries, for StudentHint.
+func studentQuizDetail(questions []types.MultipleChoiceQuestion, clicks []types.QuizClick, scores []types.QuizScoreRecord) (rows []statistics.QuizDetailRow, score int, wrong []struct{ Question, Chosen string }) {
+	score = -1
+	if len(scores) > 0 {
+		score = scores[len(scores)-1].Score
+	}
+
+	firstTry := map[int]types.QuizClick{}
+	for _, c := range latestRunClicks(clicks, scores) {
+		if prev, ok := firstTry[c.QuestionID]; !ok || c.ResponseID < prev.ResponseID {
+			firstTry[c.QuestionID] = c
+		}
+	}
+
+	rows = make([]statistics.QuizDetailRow, 0, len(questions))
+	for _, q := range questions {
+		row := statistics.QuizDetailRow{Question: q.QuestionText}
+		choiceText := map[int]string{}
+		choiceRight := map[int]bool{}
+		for _, ch := range q.Choices {
+			choiceText[ch.ChoiceID] = ch.ChoiceText
+			choiceRight[ch.ChoiceID] = ch.IsCorrect
+			if ch.IsCorrect {
+				row.Correct = ch.ChoiceText
+			}
+		}
+		if c, ok := firstTry[q.QuestionID]; ok {
+			row.Answer = choiceText[c.ChoiceID]
+			row.Right = choiceRight[c.ChoiceID]
+			if !row.Right {
+				wrong = append(wrong, struct{ Question, Chosen string }{q.QuestionText, row.Answer})
+			}
+		}
+		rows = append(rows, row)
+	}
+	return rows, score, wrong
+}
+
+// latestRunClicks keeps the clicks of the student's latest finished run: everything after the
+// second-latest posted score (a score is posted only when a run is won, so it marks where a run ended).
+// If that leaves nothing - seed data, where every row shares one load-time timestamp - it keeps all clicks.
+func latestRunClicks(clicks []types.QuizClick, scores []types.QuizScoreRecord) []types.QuizClick {
+	if len(scores) < 2 {
+		return clicks
+	}
+	after := scores[len(scores)-2].At
+	var run []types.QuizClick
+	for _, c := range clicks {
+		if c.At > after {
+			run = append(run, c)
+		}
+	}
+	if len(run) == 0 {
+		return clicks
+	}
+	return run
 }
