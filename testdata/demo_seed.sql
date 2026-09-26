@@ -13,9 +13,11 @@
 --   (reached minigame 11 with a score, not yet scored on 12), 3 completed (scored on 12).
 --   World 1 is unreachable here: soln_db.sql already gives every student (3-22) a minigame-5
 --   score, which DEC-10 always bumps into World 2 - see TASKS.md discrepancy X16.
--- - Flagged students (quiz_below_60 and/or low_accuracy): 9 - students 4, 8, 9, 14, 16, 17,
---   18, 19, 21. All 9 are quiz_below_60 (mg5: 4, 8, 9, 14, 17, 19; mg11: 16, 21; mg12: 18);
---   9 and 19 are also low_accuracy (mg7: 1/7 right = 14%; mg8: 1/6 right = 17%).
+-- - Flagged students (quiz_below_60 and/or low_accuracy): 10 - students 4, 8, 9, 14, 16, 17,
+--   18, 19, 21 from this file, plus student 3, whose low_accuracy flags come from soln_db.sql's own
+--   base rows for minigames 1-4 (33% right, 9-12 attempts each). The 9 from this file are all
+--   quiz_below_60 (mg5: 4, 8, 9, 14, 17, 19; mg11: 16, 21; mg12: 18); 9 and 19 are also
+--   low_accuracy (mg7: 1/7 right = 14%; mg8: 1/6 right = 17%).
 -- - Minigame 5 (latest attempt per student, DEC-9): average 62.1%, median 60% (score 6/10),
 --   6 of 19 students below 60%.
 -- - Took the quiz (has a score row): minigame 5 - 19; minigame 11 - 6; minigame 12 - 3.
