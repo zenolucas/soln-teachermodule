@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"soln-teachermodule/types"
@@ -90,7 +91,7 @@ func InitializeDatabase() error {
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("pinging database: %w", err)
 	}
-	fmt.Println("Database connection established.")
+	slog.Info("database connection established")
 
 	// Go's default is unlimited open connections, so a classroom of 30 students
 	// hitting /game/* at once could exhaust MySQL's max_connections; idle
@@ -481,7 +482,6 @@ func GetFractionQuestions(ctx context.Context, minigame_id int, classroom_id int
 		fractions = append(fractions, fraction)
 	}
 
-	fmt.Print("we got fractions: ", fractions)
 
 	return fractions, nil
 }
@@ -677,7 +677,6 @@ func UpdateWordedQuestions(w http.ResponseWriter, r *http.Request) error {
 	// parse form to fix bug where the values in request aren't retrieved.
 	err := r.ParseForm()
 	if err != nil {
-		fmt.Println("Error parsing form:", err)
 		return err
 	}
 
@@ -1050,7 +1049,6 @@ func AddFractionStatistics(w http.ResponseWriter, r *http.Request, studentID int
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
 		return err
 	}
-	fmt.Print("we got statistics data: ", data)
 
 	_, err = db.ExecContext(r.Context(), "INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts) VALUES (?, ?, ?, ?, ?, ?)", data.ClassroomID, data.MinigameID, data.QuestionID, studentID, data.Num_Right_Attempts, data.Num_Wrong_Attempts)
 	if err != nil {

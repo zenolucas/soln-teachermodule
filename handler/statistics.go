@@ -467,7 +467,6 @@ func HandlePostQuizScore(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Print("we recieved data: ", data)
 
 	type QuizScoreResponse struct {
 		Success bool `json:"success"`
@@ -539,7 +538,6 @@ func HandleQuizResponse(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Print("we recieved data: ", data)
 
 	type QuizResponseResult struct {
 		Success bool `json:"success"`

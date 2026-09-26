@@ -50,8 +50,6 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// fmt.Print("classroomID is ", session.Values["classroomID"])
-
 	// So the page can show which classroom the teacher is looking at (see FE-12) -
 	// ownership was already checked above, so this is just fetching the display text.
 	fullClassroom, err := database.GetClassroom(r.Context(), classroomID)
@@ -355,7 +353,6 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 	err := r.ParseForm()
 	if err != nil {
-		fmt.Println("Error parsing form:", err)
 		return err
 	}
 	studentID, err := formInt(r, "studentID")
@@ -371,11 +368,9 @@ func HandleUnenrollStudent(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	fmt.Print("we got studentID ")
 	if err := database.UnenrollStudent(r.Context(), studentID, classroomID); err != nil {
 		return err
 	}
-	fmt.Print("delete success!")
 
 	// Returning empty content removes the row (because hx-swap="outerHTML")
 	w.Header().Set("Content-Type", "text/html")
