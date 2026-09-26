@@ -7,8 +7,9 @@ install:
 	@go mod vendor
 	@go mod tidy
 	@go mod download
-	@npm install -D tailwindcss
-	@npm install -D daisyui@latest
+	@# Install exactly what package-lock.json pins: daisyui@latest is v5, which needs
+	@# Tailwind 4 and breaks this Tailwind 3 setup (no theme colours, so the CSS build fails).
+	@npm ci
 
 css:
 	@npx tailwindcss -i view/css/app.css -o public/styles.css --watch

@@ -30,3 +30,4 @@ ENTRYPOINT [ "/soln-teachermodule" ]
 #   SESSION_SECRET                - required, >= 32 characters
 #   GAME_TOKEN_SECRET              - required
 #   HTTP_LISTEN_ADDRESS            - e.g. ":3000"
+#   COOKIE_SECURE                  - "true" when served over HTTPS (see deploy/)

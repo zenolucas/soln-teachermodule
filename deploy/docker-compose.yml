@@ -1,0 +1,61 @@
+# Portal + MariaDB + Caddy (HTTPS). Run from the repo root:
+#   cp deploy/.env.example deploy/.env   # then edit it
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+# Only Caddy is published; the app and the database stay on the internal network.
+services:
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DBNAME:?set DBNAME}
+      MARIADB_USER: ${DBUSER:?set DBUSER}
+      MARIADB_PASSWORD: ${DBPASS:?set DBPASS}
+    volumes:
+      - db_data:/var/lib/mysql
+      # Runs once, on the first start with an empty volume.
+      - ../soln_db.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: ..
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DBHOST: db
+      DBPORT: "3306"
+      DBUSER: ${DBUSER}
+      DBPASS: ${DBPASS}
+      DBNAME: ${DBNAME}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+      GAME_TOKEN_SECRET: ${GAME_TOKEN_SECRET:?set GAME_TOKEN_SECRET}
+      HTTP_LISTEN_ADDRESS: ":3000"
+      # The browser only ever sees HTTPS (through Caddy), so mark the session cookie Secure.
+      COOKIE_SECURE: "true"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
