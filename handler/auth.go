@@ -153,10 +153,15 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 }
 
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
-	// store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	session, _ := store.Get(r, sessionUserKey)
-	session.Values["authenticated"] = false
-	session.Save(r, w)
+	// Clear the session and tell the browser to delete the cookie. The cookie store keeps no
+	// server-side state, so a copy of the cookie taken before logout stays valid until it
+	// expires (8h); revoking it would need a server-side session store.
+	session.Values = map[interface{}]interface{}{}
+	session.Options.MaxAge = -1
+	if err := session.Save(r, w); err != nil {
+		return err
+	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 	return nil
 }
