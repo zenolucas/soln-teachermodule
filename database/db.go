@@ -1081,11 +1081,12 @@ func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int,
 
 	rows, err := db.QueryContext(ctx, `
 		SELECT fq.question_id, fq.question_text,
+		       fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator,
 		       COALESCE(SUM(fr.num_right_attempts), 0), COALESCE(SUM(fr.num_wrong_attempts), 0), COALESCE(MAX(fr.num_wrong_attempts), 0)
 		FROM fraction_questions fq
 		LEFT JOIN fraction_responses fr ON fq.question_id = fr.question_id AND fr.student_id = ? AND fr.minigame_id = ?
 		WHERE fq.minigame_id = ? AND fq.classroom_id = ?
-		GROUP BY fq.question_id, fq.question_text
+		GROUP BY fq.question_id, fq.question_text, fq.fraction1_numerator, fq.fraction1_denominator, fq.fraction2_numerator, fq.fraction2_denominator
 	`, userID, minigameID, minigameID, classroomID)
 	if err != nil {
 		return nil, err
@@ -1094,7 +1095,9 @@ func GetStudentWordedStatistics(ctx context.Context, userID int, minigameID int,
 
 	for rows.Next() {
 		var statistic types.StudentFractionStatistics
-		if err := rows.Scan(&statistic.QuestionID, &statistic.QuestionText, &statistic.RightAttemptsCount, &statistic.WrongAttemptsCount, &statistic.MaxWrongAttemptsCount); err != nil {
+		if err := rows.Scan(&statistic.QuestionID, &statistic.QuestionText,
+			&statistic.Fraction1_Numerator, &statistic.Fraction1_Denominator, &statistic.Fraction2_Numerator, &statistic.Fraction2_Denominator,
+			&statistic.RightAttemptsCount, &statistic.WrongAttemptsCount, &statistic.MaxWrongAttemptsCount); err != nil {
 			return nil, fmt.Errorf("GetStudentWordedStatistics: %v", err)
 		}
 		statistics = append(statistics, statistic)
