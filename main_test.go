@@ -6,7 +6,9 @@ package main
 //	SOLN_TEST_DB_ROOT_DSN='root@tcp(127.0.0.1:3306)/' go test -run Integration -v .
 //
 // Each run drops and recreates the database "soln_test" (never the dev database), loads soln_db.sql
-// plus testdata/demo_seed.sql into it, and connects as a dedicated "soln_test" user.
+// plus testdata/showcase_seed.sql into it, adds the fixtures below, and connects as a dedicated "soln_test"
+// user. The tests rely on the showcase data only for teacher / teacher owning classroom 1; everything else
+// they need comes from testFixtures, so the showcase data can change freely.
 
 import (
 	"bytes"
@@ -34,6 +36,21 @@ const (
 	testDBUser = "soln_test"
 	testDBPass = "soln_test_pw"
 )
+
+// testFixtures adds what the tests need on top of the showcase data: another teacher's classroom (for
+// ownership checks) and a student with password "pw" and a save, enrolled in classroom 1.
+const testFixtures = `
+INSERT INTO users (username, usertype, password) VALUES
+('it_other_teacher', 'teacher', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua');
+INSERT INTO classrooms (classroom_name, section, description, teacher_id)
+SELECT 'IT other class', 'x', '', user_id FROM users WHERE username = 'it_other_teacher';
+INSERT INTO users (username, firstname, lastname, usertype, section, class_number, password) VALUES
+('it_student', 'IT', 'Student', 'student', 'x', '1', '$2a$10$9JvwzEQIZIg1MhN9Q3E8TeIKtLCjHU/6MVcIApnaSWxxGPP8QuOua');
+INSERT INTO enrollments (classroom_id, student_id) SELECT 1, user_id FROM users WHERE username = 'it_student';
+INSERT INTO save_states (student_id, save_data)
+SELECT user_id, '{"current_floor": 1, "current_quest": "share_pie_with_racket", "player_badges": {"shiny_rock": true, "bowl": true}}'
+FROM users WHERE username = 'it_student';
+`
 
 var (
 	testServer *httptest.Server
@@ -100,12 +117,15 @@ func setupTestDatabase(rootDSN string) error {
 	if _, err := loader.Exec(schemaSQL); err != nil {
 		return fmt.Errorf("loading soln_db.sql: %w", err)
 	}
-	seed, err := os.ReadFile("testdata/demo_seed.sql")
+	seed, err := os.ReadFile("testdata/showcase_seed.sql")
 	if err != nil {
 		return err
 	}
 	if _, err := loader.Exec(string(seed)); err != nil {
-		return fmt.Errorf("loading demo_seed.sql: %w", err)
+		return fmt.Errorf("loading showcase_seed.sql: %w", err)
+	}
+	if _, err := loader.Exec(testFixtures); err != nil {
+		return fmt.Errorf("loading test fixtures: %w", err)
 	}
 
 	for key, value := range map[string]string{
@@ -203,6 +223,11 @@ func gameLogin(t *testing.T, username string) map[string]any {
 	return out
 }
 
+func idOf(t *testing.T, query string, args ...any) int {
+	t.Helper()
+	return count(t, query, args...)
+}
+
 func count(t *testing.T, query string, args ...any) int {
 	t.Helper()
 	var n int
@@ -220,13 +245,14 @@ func TestIntegrationTeacherAuthAndOwnership(t *testing.T) {
 	}
 
 	c := teacherClient(t)
+	other := idOf(t, "SELECT classroom_id FROM classrooms WHERE classroom_name = 'IT other class'")
 	for path, want := range map[string]int{
-		"/home":                                   http.StatusOK,
-		"/classroom?classroom_id=1":               http.StatusOK,
-		"/classroom?classroom_id=3":               http.StatusForbidden, // classroom 3 belongs to user2
-		"/classroom?classroom_id=999":             http.StatusNotFound,  // no such classroom
-		"/classroom/students?classroom_id=x":      http.StatusBadRequest,
-		"/student/score?userID=abc&classroomID=1": http.StatusBadRequest,
+		"/home":                     http.StatusOK,
+		"/classroom?classroom_id=1": http.StatusOK,
+		fmt.Sprintf("/classroom?classroom_id=%d", other): http.StatusForbidden, // another teacher's classroom
+		"/classroom?classroom_id=999":                    http.StatusNotFound,  // no such classroom
+		"/classroom/students?classroom_id=x":             http.StatusBadRequest,
+		"/student/score?userID=abc&classroomID=1":        http.StatusBadRequest,
 	} {
 		if resp, _ := do(t, c, http.MethodGet, path, nil, nil); resp.StatusCode != want {
 			t.Errorf("GET %s: %d, want %d", path, resp.StatusCode, want)
@@ -310,10 +336,12 @@ func TestIntegrationGameLoginAndSaves(t *testing.T) {
 		t.Errorf("unenrolled login = %v", out)
 	}
 
-	login := gameLogin(t, "user3")
+	studentID := idOf(t, "SELECT user_id FROM users WHERE username = 'it_student'")
+	otherStudentID := idOf(t, "SELECT MIN(user_id) FROM users WHERE usertype = 'student' AND username <> 'it_student'")
+	login := gameLogin(t, "it_student")
 	token, _ := login["token"].(string)
 	if login["success"] != true || token == "" {
-		t.Fatalf("user3 login = %v", login)
+		t.Fatalf("it_student login = %v", login)
 	}
 	c := newClient(t)
 	if resp, _ := postJSON(t, c, "/game/getsavedata", map[string]any{}, ""); resp.StatusCode != http.StatusUnauthorized {
@@ -330,13 +358,13 @@ func TestIntegrationGameLoginAndSaves(t *testing.T) {
 		return save
 	}
 	before := load()
-	if len(before) != 30 || before["student_id"] != float64(3) {
-		t.Fatalf("loaded save has %d keys, student_id %v; want 30 and 3", len(before), before["student_id"])
+	if len(before) != 30 || before["student_id"] != float64(studentID) {
+		t.Fatalf("loaded save has %d keys, student_id %v; want 30 and %d", len(before), before["student_id"], studentID)
 	}
 
-	// A partial save with a spoofed student_id and a null: merged into user3's save only.
+	// A partial save with a spoofed student_id and a null: merged into it_student's save only.
 	resp, _ := postJSON(t, c, "/game/postsavedata", map[string]any{
-		"student_id": 4, "current_quest": "it_quest", "rock_removed": nil, "player_badges": map[string]bool{"sword": true},
+		"student_id": otherStudentID, "current_quest": "it_quest", "rock_removed": nil, "player_badges": map[string]bool{"sword": true},
 	}, token)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("save: %d", resp.StatusCode)
@@ -346,8 +374,8 @@ func TestIntegrationGameLoginAndSaves(t *testing.T) {
 	if after["current_quest"] != "it_quest" || badges["sword"] != true || badges["shiny_rock"] != before["player_badges"].(map[string]any)["shiny_rock"] || after["rock_removed"] != before["rock_removed"] {
 		t.Errorf("merge result wrong: quest=%v sword=%v shiny_rock=%v rock_removed=%v", after["current_quest"], badges["sword"], badges["shiny_rock"], after["rock_removed"])
 	}
-	if n := count(t, "SELECT COUNT(*) FROM save_states WHERE student_id = 4"); n != 0 {
-		t.Errorf("a body student_id wrote a save for student 4")
+	if n := count(t, "SELECT COUNT(*) FROM save_states WHERE student_id = ?", otherStudentID); n != 0 {
+		t.Errorf("a body student_id wrote a save for student %d", otherStudentID)
 	}
 
 	for score, want := range map[int]int{-3: http.StatusBadRequest, 7: http.StatusOK} {

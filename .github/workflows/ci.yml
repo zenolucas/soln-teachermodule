@@ -51,7 +51,11 @@ jobs:
         run: go build ./...
 
       - name: Vet
-        run: go vet ./...
+        run: go vet ./... ./testdata/showcase
+
+      # The showcase seed is generated; fail if the generator changed without regenerating it.
+      - name: Showcase seed is up to date
+        run: go run ./testdata/showcase | cmp - testdata/showcase_seed.sql
 
       - name: Test
         run: go test ./...
