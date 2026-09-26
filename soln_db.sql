@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     usertype ENUM('teacher', 'student') NOT NULL,
     section  VARCHAR(50),
     class_number VARCHAR(50), 
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL,
+    -- Incremented on logout; a session cookie carrying an older value is rejected (server-side logout).
+    session_version INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS classrooms (

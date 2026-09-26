@@ -80,6 +80,10 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	sessionVersion, err := database.GetSessionVersion(r.Context(), teacherID)
+	if err != nil {
+		return err
+	}
 
 	store.Options = &sessions.Options{
 		Path:     "/",
@@ -96,6 +100,7 @@ func setAuthCookie(w http.ResponseWriter, r *http.Request) error {
 
 	session.Values["authenticated"] = true
 	session.Values["teacherID"] = teacherID
+	session.Values["sessionVersion"] = sessionVersion
 	return session.Save(r, w)
 }
 
@@ -152,9 +157,13 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 
 func HandleLogoutCreate(w http.ResponseWriter, r *http.Request) error {
 	session, _ := store.Get(r, sessionUserKey)
-	// Clear the session and tell the browser to delete the cookie. The cookie store keeps no
-	// server-side state, so a copy of the cookie taken before logout stays valid until it
-	// expires (8h); revoking it would need a server-side session store.
+	// Invalidate the session server-side: bumping the version makes every copy of this teacher's
+	// cookie (other devices, a copied cookie) fail WithAuth. Then delete the browser's copy too.
+	if teacherID, ok := session.Values["teacherID"].(int); ok {
+		if err := database.BumpSessionVersion(r.Context(), teacherID); err != nil {
+			return err
+		}
+	}
 	session.Values = map[interface{}]interface{}{}
 	session.Options.MaxAge = -1
 	if err := session.Save(r, w); err != nil {
