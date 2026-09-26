@@ -28,39 +28,3 @@ func WithAuth(next http.Handler) http.Handler {
 	}
 	return http.HandlerFunc(fn)
 }
-
-// WithCrossOriginProtection rejects cross-site state-changing requests (CSRF, SEC-08), following
-// the same rules as Go 1.25's http.CrossOriginProtection. Browsers send Sec-Fetch-Site on every
-// request; without it, a present Origin must match the Host. A request with neither isn't from a
-// browser (curl, the Godot game), so it can't be CSRF and passes. The session cookie's SameSite=Lax
-// stays as a second layer.
-func WithCrossOriginProtection(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !crossOriginAllowed(r) {
-			http.Error(w, "cross-origin request rejected", http.StatusForbidden)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func crossOriginAllowed(r *http.Request) bool {
-	switch r.Method {
-	case http.MethodGet, http.MethodHead, http.MethodOptions:
-		return true
-	}
-	switch r.Header.Get("Sec-Fetch-Site") {
-	case "same-origin", "none":
-		return true
-	case "":
-		// Older browser or non-browser client: fall back to Origin.
-	default: // "cross-site", "same-site"
-		return false
-	}
-	origin := r.Header.Get("Origin")
-	if origin == "" {
-		return true
-	}
-	u, err := url.Parse(origin)
-	return err == nil && u.Host == r.Host
-}

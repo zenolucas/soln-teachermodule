@@ -80,7 +80,9 @@ func newRouter() http.Handler {
 	// access with no bounds check) rather than returning an error - without this,
 	// each of those drops the connection instead of the client getting a 500.
 	router.Use(middleware.Recoverer)
-	router.Use(handler.WithCrossOriginProtection)
+	// CSRF (SEC-08): rejects cross-site non-GET requests via Sec-Fetch-Site / Origin. Non-browser
+	// clients (the Godot game) send neither header and pass.
+	router.Use(http.NewCrossOriginProtection().Handler)
 
 	// handle static files in public folder
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
