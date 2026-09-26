@@ -193,16 +193,6 @@ func GetTeacher(ctx context.Context, teacherID int) (types.Teacher, error) {
 	return teacher, nil
 }
 
-func GetStudent(ctx context.Context, userID int) (types.Student, error) {
-	var student types.Student
-
-	err := db.QueryRowContext(ctx, "SELECT firstname, lastname FROM users WHERE user_id = ?", userID).Scan(&student.Firstname, &student.Lastname)
-	if err != nil {
-		return student, err
-	}
-	return student, nil
-}
-
 func RegisterAccount(w http.ResponseWriter, r *http.Request) error {
 	userCreds := types.UserCredentials{
 		Username: r.FormValue("username"),
@@ -260,30 +250,6 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 	// DefaultSave (SAVE-01). That also removes the second, non-transactional write (BUG-14).
 	_, err = db.ExecContext(r.Context(), "INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
 	return err
-}
-
-func GetStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
-	var students []types.Student
-	// get students given classroomID
-	rows, err := db.QueryContext(ctx, "SELECT users.firstname, users.lastname, users.user_id FROM enrollments e JOIN users ON e.student_id = users.user_id WHERE e.classroom_id = ? ", classroomID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var student types.Student
-		if err := rows.Scan(&student.Firstname, &student.Lastname, &student.UserID); err != nil {
-			return nil, fmt.Errorf("GetStudents: %v", err)
-		}
-		students = append(students, student)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("GetUsers: %v", err)
-	}
-
-	return students, nil
 }
 
 // likeEscaper escapes % and _ - the two characters that are wildcards inside a LIKE
@@ -391,15 +357,6 @@ func GetTeacherID(ctx context.Context, username string) (int, error) {
 		return 0, fmt.Errorf("GetTeacherID: %w", err)
 	}
 	return teacherID, nil
-}
-
-func GetSection(classroomID int) (string, error) {
-	var section string
-	err := db.QueryRow("SELECT section FROM classrooms WHERE classroom_id = ?", classroomID).Scan(&section)
-	if err != nil {
-		return "", err
-	}
-	return section, nil
 }
 
 // GetClassroomTeacherID returns the teacher_id that owns a classroom, so a caller can
