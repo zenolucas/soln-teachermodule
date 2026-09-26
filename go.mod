@@ -1,8 +1,8 @@
 module soln-teachermodule
 
-go 1.23.0
+go 1.25.0
 
-toolchain go1.23.1
+toolchain go1.25.14
 
 require (
 	github.com/a-h/templ v0.3.819
@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/joho/godotenv v1.5.1
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.52.0
 )
 
 require filippo.io/edwards25519 v1.1.1 // indirect
