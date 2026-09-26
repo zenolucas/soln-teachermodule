@@ -39,6 +39,7 @@ func main() {
 	// access with no bounds check) rather than returning an error - without this,
 	// each of those drops the connection instead of the client getting a 500.
 	router.Use(middleware.Recoverer)
+	router.Use(handler.WithCrossOriginProtection)
 
 	// handle static files in public folder
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
