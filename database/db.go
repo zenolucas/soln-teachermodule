@@ -132,6 +132,10 @@ func AuthenticateGameUser(ctx context.Context, username string, password string)
 	return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
 }
 
+// ErrNotEnrolled means the student exists but no teacher has added them to a classroom yet. Game
+// registration doesn't enroll anyone, so every newly registered student starts in this state.
+var ErrNotEnrolled = errors.New("student is not enrolled in any classroom")
+
 // gets classroomID of a student
 func GetClassroomID(ctx context.Context, username string) (int, error) {
 	var classroomID int
@@ -150,6 +154,9 @@ func GetClassroomID(ctx context.Context, username string) (int, error) {
 		WHERE u.username = ? AND u.usertype = 'student'
 		LIMIT 1
 	`, username).Scan(&classroomID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, ErrNotEnrolled
+	}
 	if err != nil {
 		return 0, err
 	}

@@ -51,6 +51,13 @@ func HandleGameLogin(w http.ResponseWriter, r *http.Request) error {
 	if database.AuthenticateGameUser(r.Context(), data.Username, data.Password) {
 		// get classroomID student is enrolled in
 		classroomID, err := database.GetClassroomID(r.Context(), data.Username)
+		if errors.Is(err, database.ErrNotEnrolled) {
+			// A normal state, not a server error: the game shows error_text only on a 200.
+			response := LoginResponse{Success: false, ErrorText: "You're not in a class yet. Ask your teacher to add you, then log in again."}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+			return nil
+		}
 		if err != nil {
 			return err
 		}
