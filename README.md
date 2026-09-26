@@ -73,6 +73,27 @@ Migrations
     mariadb -u$DB_USER -p$DB_PASSWORD $DB_NAME < migrations/002_save_states_json.sql
     mariadb -u$DB_USER -p$DB_PASSWORD $DB_NAME < migrations/003_session_version.sql
 
+Deploying with HTTPS
+
+    `deploy/` runs the portal on the internet behind Caddy, which gets and renews a
+    Let's Encrypt certificate automatically. You need a server with Docker, a domain
+    whose DNS points at it, and ports 80 and 443 open.
+
+    cp deploy/.env.example deploy/.env      # set DOMAIN, the DB passwords and both secrets
+    docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+
+    Only Caddy is exposed; the app and MariaDB stay on Docker's internal network, and
+    the session cookie is marked Secure (COOKIE_SECURE=true). The schema is loaded on the
+    first start. It includes the sample accounts from soln_db.sql, whose passwords are
+    public: change or delete them before sharing the link, or keep them on purpose as a
+    demo login.
+
+    In the game, students type the full address (https://your-domain) into the server
+    box instead of an IP. A bare IP still means plain HTTP on port 3000, for a school LAN.
+
+    To try the stack locally first, set DOMAIN=localhost: Caddy then uses its own
+    certificate authority, so the browser will show a warning.
+
 Contributing
 
 Contributions are welcome! Please fork the repository and make a pull request with a clear description of changes.

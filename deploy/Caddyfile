@@ -1,0 +1,8 @@
+# Caddy terminates HTTPS in front of the portal. With a real domain in DOMAIN it
+# gets and renews a Let's Encrypt certificate by itself; with DOMAIN=localhost it
+# uses its own local CA (fine for trying the stack out, browsers will warn).
+{$DOMAIN} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:3000
+}
