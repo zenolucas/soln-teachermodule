@@ -248,32 +248,10 @@ func RegisterGameAccount(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	result, err := db.ExecContext(r.Context(), "INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
-	if err != nil {
-		return err
-	}
-
-	studentID, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// after creating account, create save state
-	err = CreateSaveState(r.Context(), studentID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func CreateSaveState(ctx context.Context, studentID int64) error {
-	_, err := db.ExecContext(ctx, "INSERT INTO save_states (student_id) VALUES (?)", studentID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// No save_states row here: a student's first save creates it, and until then loading returns
+	// DefaultSave (SAVE-01). That also removes the second, non-transactional write (BUG-14).
+	_, err = db.ExecContext(r.Context(), "INSERT INTO users (username, usertype, firstname, lastname, section, class_number, password) VALUES (?, ?, ?, ?, ?, ?, ?)", data.Username, "student", data.FirstName, data.Lastname, data.Section, data.ClassNumber, string(hash))
+	return err
 }
 
 func GetStudents(ctx context.Context, classroomID int) ([]types.Student, error) {
@@ -1081,54 +1059,6 @@ func AddQuizResponse(ctx context.Context, classroomID int, minigameID int, quest
 	return nil
 }
 
-// GetSavedData used to run three separate QueryRow calls against the same save_states
-// row, one per disjoint column subset (base fields, badges, quest actionables) - all
-// three scan targets are in scope at once, so one query covering all of them replaces
-// all three round trips.
-func GetSavedData(ctx context.Context, studentID int) (types.SaveData, error) {
-	var save_data types.SaveData
-	var badges types.Badges
-
-	row := db.QueryRowContext(ctx, `
-		SELECT student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
-			first_time_init_floor1, first_time_init_floor2, first_time_init_floor3,
-			badge_rock, badge_bowl, badge_carrot, badge_cake, badge_sword, badge_mushroom,
-			badge_bucket1, badge_flask, badge_bucket2, badge_bucket3, badge_crystal_ball,
-			badge_shell, badge_original_robot,
-			rock_removed, disable_rock_removed, raket_sneaking_quest_complete,
-			unlock_cave_collision, raket_sword_complete, raket_quest_progress,
-			disable_dead_robot_quest, do_raket_blacksmith_animation, sword_bottom,
-			sword_guard, sword_lower_blade, sword_middle_blade, sword_top_blade,
-			disable_raket_stealing_quest, disable_fresh_dialogue_quest,
-			disable_water_logged_1_quest, disable_water_logged_2_quest,
-			disable_water_logged_3_quest, disable_chip_quest,
-			disable_rat_wizard_training_quest
-		FROM save_states WHERE student_id = ?
-	`, studentID)
-	err := row.Scan(
-		&save_data.StudentID, &save_data.CurrentFloor, &save_data.CurrentQuest, &save_data.SavedScene, &save_data.VectorX, &save_data.VectorY,
-		&save_data.FirstTimeInitFloor1, &save_data.FirstTimeInitFloor2, &save_data.FirstTimeInitFloor3,
-		&badges.ShinyRock, &badges.Bowl, &badges.Carrot, &badges.Cake, &badges.Sword, &badges.Mushroom,
-		&badges.Bucket1, &badges.Flask, &badges.Bucket2, &badges.Bucket3, &badges.CrystalBall,
-		&badges.Shell, &badges.OriginalRobot,
-		&save_data.RockRemoved, &save_data.DisableRockRemoved, &save_data.RaketSneakingQuestComplete,
-		&save_data.UnlockCaveCollision, &save_data.RaketSwordComplete, &save_data.RaketQuestProgress,
-		&save_data.DisableDeadRobotQuest, &save_data.DoRaketBlacksmithAnimation, &save_data.SwordBottom,
-		&save_data.SwordGuard, &save_data.SwordLowerBlade, &save_data.SwordMiddleBlade, &save_data.SwordTopBlade,
-		&save_data.DisableRaketStealingQuest, &save_data.DisableFreshDialogueQuest,
-		&save_data.DisableWaterLogged1Quest, &save_data.DisableWaterLogged2Quest,
-		&save_data.DisableWaterLogged3Quest, &save_data.DisableChipQuest,
-		&save_data.DisableRatWizardTrainingQuest,
-	)
-	if err != nil {
-		return save_data, err
-	}
-
-	save_data.PlayerBadges = badges
-
-	return save_data, nil
-}
-
 // GetStudentFractionStatistics is one student's per-question performance in a
 // fraction minigame. Aggregated (SUM right, SUM wrong, MAX wrong per question, fixing
 // X7): a plain LEFT JOIN without GROUP BY produced one row per fraction_responses
@@ -1287,72 +1217,3 @@ func GetStudentQuizStatistics(ctx context.Context, userID int, minigameID int, c
 	return statistics, nil
 }
 
-func SaveData(ctx context.Context, data types.SaveData) error {
-
-	_, err := db.ExecContext(ctx, `
-    UPDATE save_states
-    SET 
-        current_floor = ?, 
-        current_quest = ?, 
-        saved_scene = ?, 
-        vector_x = ?, 
-        vector_y = ?, 
-        rock_removed = ?,
-        disable_rock_removed = ?,
-        raket_sneaking_quest_complete = ?,
-        unlock_cave_collision = ?,
-        raket_sword_complete = ?,
-        raket_quest_progress = ?,
-        do_raket_blacksmith_animation = ?,
-        sword_bottom = ?,
-        sword_guard = ?,
-        sword_lower_blade = ?,
-        sword_middle_blade = ?,
-        sword_top_blade = ?,
-        badge_rock = ?, 
-        badge_bowl = ?, 
-        badge_carrot = ?, 
-        badge_cake = ?, 
-        badge_sword = ?, 
-        badge_mushroom = ?, 
-        badge_bucket1 = ?, 
-        badge_flask = ?, 
-        badge_bucket2 = ?, 
-        badge_bucket3 = ?, 
-        badge_crystal_ball = ?, 
-        badge_shell = ?,
-        badge_original_robot = ?, 
-        first_time_init_floor1 = ?, 
-        first_time_init_floor2 = ?, 
-        first_time_init_floor3 = ?, 
-        disable_dead_robot_quest = ?, 
-        disable_raket_stealing_quest = ?, 
-        disable_fresh_dialogue_quest = ?, 
-        disable_water_logged_1_quest = ?, 
-        disable_water_logged_2_quest = ?, 
-        disable_water_logged_3_quest = ?, 
-        disable_chip_quest = ?, 
-        disable_rat_wizard_training_quest = ?
-    WHERE student_id = ?
-`,
-		data.CurrentFloor, data.CurrentQuest, data.SavedScene, data.VectorX, data.VectorY,
-		data.RockRemoved, data.DisableRockRemoved, data.RaketSneakingQuestComplete, data.UnlockCaveCollision,
-		data.RaketSwordComplete, data.RaketQuestProgress, data.DoRaketBlacksmithAnimation, data.SwordBottom,
-		data.SwordGuard, data.SwordLowerBlade, data.SwordMiddleBlade, data.SwordTopBlade,
-		data.PlayerBadges.ShinyRock, data.PlayerBadges.Bowl, data.PlayerBadges.Carrot, data.PlayerBadges.Cake,
-		data.PlayerBadges.Sword, data.PlayerBadges.Mushroom, data.PlayerBadges.Bucket1, data.PlayerBadges.Flask,
-		data.PlayerBadges.Bucket2, data.PlayerBadges.Bucket3, data.PlayerBadges.CrystalBall, data.PlayerBadges.Shell,
-		data.PlayerBadges.OriginalRobot, data.FirstTimeInitFloor1, data.FirstTimeInitFloor2, data.FirstTimeInitFloor3,
-		data.DisableDeadRobotQuest, data.DisableRaketStealingQuest, data.DisableFreshDialogueQuest,
-		data.DisableWaterLogged1Quest, data.DisableWaterLogged2Quest, data.DisableWaterLogged3Quest,
-		data.DisableChipQuest, data.DisableRatWizardTrainingQuest,
-		data.StudentID,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Print("Update Save State Success!")
-	return nil
-}

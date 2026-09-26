@@ -30,50 +30,13 @@ CREATE TABLE IF NOT EXISTS enrollments (
     UNIQUE KEY unique_enrollment (classroom_id, student_id)
 );
 
+-- One JSON document per student (SAVE-01): the game owns the save's shape, and loading merges it over
+-- database.DefaultSave, which holds the defaults. No row until the student first saves.
 CREATE TABLE IF NOT EXISTS save_states (
     save_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL UNIQUE,
-    current_floor INT DEFAULT 1,
-    current_quest VARCHAR(100) DEFAULT 'starting',
-    saved_scene VARCHAR(100) DEFAULT 'res://scenes/levels/Floor1.tscn',
-    vector_x FLOAT DEFAULT 353,
-    vector_y FLOAT DEFAULT 163,
-    rock_removed BOOLEAN DEFAULT FALSE,
-    disable_rock_removed BOOLEAN DEFAULT FALSE,
-    raket_sneaking_quest_complete BOOLEAN DEFAULT FALSE,
-    unlock_cave_collision BOOLEAN DEFAULT FALSE,
-    raket_sword_complete BOOLEAN DEFAULT FALSE,
-    raket_quest_progress INT DEFAULT 0,
-    do_raket_blacksmith_animation BOOLEAN DEFAULT FALSE,
-    sword_bottom BOOLEAN DEFAULT FALSE,
-    sword_guard BOOLEAN DEFAULT FALSE,
-    sword_lower_blade BOOLEAN DEFAULT FALSE,
-    sword_middle_blade BOOLEAN DEFAULT FALSE,
-    sword_top_blade BOOLEAN DEFAULT FALSE,
-    badge_rock BOOLEAN DEFAULT FALSE,
-    badge_bowl BOOLEAN DEFAULT FALSE,
-    badge_carrot BOOLEAN DEFAULT FALSE,
-    badge_cake BOOLEAN DEFAULT FALSE,
-    badge_sword BOOLEAN DEFAULT FALSE,
-    badge_mushroom BOOLEAN DEFAULT FALSE,
-    badge_bucket1 BOOLEAN DEFAULT FALSE,
-    badge_flask BOOLEAN DEFAULT FALSE,
-    badge_bucket2 BOOLEAN DEFAULT FALSE,
-    badge_bucket3 BOOLEAN DEFAULT FALSE,
-    badge_crystal_ball BOOLEAN DEFAULT FALSE,
-    badge_shell BOOLEAN DEFAULT FALSE,
-    badge_original_robot BOOLEAN DEFAULT FALSE,
-    first_time_init_floor1 BOOLEAN DEFAULT FALSE,
-    first_time_init_floor2 BOOLEAN DEFAULT FALSE,
-    first_time_init_floor3 BOOLEAN DEFAULT FALSE,
-    disable_dead_robot_quest BOOLEAN DEFAULT FALSE,
-    disable_raket_stealing_quest BOOLEAN DEFAULT FALSE,
-    disable_fresh_dialogue_quest BOOLEAN DEFAULT FALSE,
-    disable_water_logged_1_quest BOOLEAN DEFAULT FALSE,
-    disable_water_logged_2_quest BOOLEAN DEFAULT FALSE,
-    disable_water_logged_3_quest BOOLEAN DEFAULT FALSE,
-    disable_chip_quest BOOLEAN DEFAULT FALSE,
-    disable_rat_wizard_training_quest BOOLEAN DEFAULT FALSE,
+    save_data JSON NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES users(user_id)
 );
 
@@ -482,12 +445,8 @@ INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_
 (1, 4, 12, 3, 1, 2);
 
 
--- SAMPLE VALUE FOR SAVED STATES
-INSERT INTO save_states (
-    student_id, current_floor, current_quest, saved_scene, vector_x, vector_y,
-    badge_rock, badge_bowl, badge_carrot, badge_cake
-) VALUES (
-    3, 1, 'share_pie_with_racket', 'res://scenes/levels/Floor1.tscn', 1232.74, 1043.073,
-    TRUE, TRUE, TRUE, TRUE
+-- SAMPLE VALUE FOR SAVED STATES (only the keys that differ from database.DefaultSave; load fills the rest)
+INSERT INTO save_states (student_id, save_data) VALUES (
+    3, '{"current_floor": 1, "current_quest": "share_pie_with_racket", "saved_scene": "res://scenes/levels/Floor1.tscn", "vector_x": 1232.74, "vector_y": 1043.073, "player_badges": {"shiny_rock": true, "bowl": true, "carrot": true, "cake": true}}'
 );
 
