@@ -12,6 +12,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -382,6 +383,24 @@ func TestIntegrationGameLoginAndSaves(t *testing.T) {
 		resp, _ := postJSON(t, c, "/game/add/statistics/quiz", map[string]int{"ClassroomID": 1, "MinigameID": 11, "Score": score}, token)
 		if resp.StatusCode != want {
 			t.Errorf("quiz score %d: %d, want %d", score, resp.StatusCode, want)
+		}
+	}
+}
+
+func TestIntegrationStudentWordedStatisticsHaveFractions(t *testing.T) {
+	requireDB(t)
+	studentID := idOf(t, "SELECT user_id FROM users WHERE username = 'it_student'")
+	stats, err := database.GetStudentWordedStatistics(context.Background(), studentID, 3, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stats) == 0 {
+		t.Fatal("classroom 1 has no worded questions for minigame 3")
+	}
+	for _, st := range stats {
+		if st.QuestionText == "" || st.Fraction1_Denominator == 0 || st.Fraction2_Denominator == 0 {
+			t.Errorf("question %d: text %q, fractions %d/%d and %d/%d; the student page computes the answer from these",
+				st.QuestionID, st.QuestionText, st.Fraction1_Numerator, st.Fraction1_Denominator, st.Fraction2_Numerator, st.Fraction2_Denominator)
 		}
 	}
 }
