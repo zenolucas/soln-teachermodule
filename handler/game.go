@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"soln-teachermodule/database"
 
@@ -103,7 +104,7 @@ func HandleGameRegister(w http.ResponseWriter, r *http.Request) error {
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
 			response = RegisterResponse{Success: false, ErrorText: "username is already taken"}
 		} else {
-			fmt.Print(err)
+			slog.Error("game registration failed", "err", err)
 			response = RegisterResponse{Success: false, ErrorText: "register error"}
 		}
 	} else {
@@ -141,9 +142,6 @@ func HandleGetGameFractions(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	fmt.Print("at get fractions, we got minigame id ", data.MinigameID)
-	fmt.Print("at get fractions, we got classroom id ", data.ClassroomID)
-
 	fractions, err := database.GetFractionQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
@@ -179,8 +177,6 @@ func HandleGetGameWorded(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	fmt.Print("we got minigameID ", data.MinigameID)
-
 	questions, err := database.GetWordedQuestions(r.Context(), data.MinigameID, data.ClassroomID)
 	if err != nil {
 		return err
@@ -200,7 +196,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		fmt.Print(err.Error())
+		slog.Info("bad game request", "path", r.URL.Path, "err", err)
 		return nil
 	}
 	defer r.Body.Close()
@@ -214,7 +210,7 @@ func HandleGetGameMCQuestions(w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-		fmt.Print(err.Error())
+		slog.Info("bad game request", "path", r.URL.Path, "err", err)
 		return nil
 	}
 

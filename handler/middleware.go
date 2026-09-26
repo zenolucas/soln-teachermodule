@@ -24,7 +24,6 @@ func WithAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		// fmt.Print("authenticated is : ", session.Values["authenticated"])
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)

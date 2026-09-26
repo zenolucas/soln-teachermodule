@@ -110,8 +110,6 @@ func HandleRegisterCreate(w http.ResponseWriter, r *http.Request) error {
 		ConfirmPassword: r.FormValue("confirmPassword"),
 	}
 
-	fmt.Println("username is : ", credentials.Username)
-
 	errorMessage, validCredentials := util.ValidateUsername(credentials.Username)
 	if validCredentials {
 	errorMessage, validCredentials = util.ValidatePassword(credentials.Password)
