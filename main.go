@@ -112,9 +112,6 @@ func main() {
 
 	port := os.Getenv("HTTP_LISTEN_ADDRESS")
 
-	// Wrap the entire router with CORS
-	wrapped := handler.WithCORS(router)
-
 	// The zero-value server (a bare http.ListenAndServe call) has no timeouts at all,
 	// so a single slow or half-open client could hold a connection indefinitely.
 	// WriteTimeout is set well above a typical "5s" default deliberately: this server
@@ -124,7 +121,7 @@ func main() {
 	// slow mobile connection (~1.5Mbps) while still bounding a genuinely stuck one.
 	srv := &http.Server{
 		Addr:         port,
-		Handler:      wrapped,
+		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Minute,
 		IdleTimeout:  120 * time.Second,

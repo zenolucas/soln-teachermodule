@@ -51,7 +51,6 @@ func HandleClassroomIndex(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// fmt.Print("classroomID is ", session.Values["classroomID"])
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// So the page can show which classroom the teacher is looking at (see FE-12) -
 	// ownership was already checked above, so this is just fetching the display text.

@@ -45,7 +45,6 @@ func HandleStatisticsIndex(w http.ResponseWriter, r *http.Request) error {
 // /classroom/statistics?classroom_id= link (e.g. from the future sidebar) has
 // something to show instead of erroring on a missing minigame.
 func HandleClassroomStatistics(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	classroomIDStr := r.URL.Query().Get("classroom_id")
 	classroomID, _ := strconv.Atoi(classroomIDStr)
 
