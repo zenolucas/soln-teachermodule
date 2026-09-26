@@ -82,7 +82,7 @@ func newRouter() http.Handler {
 	router.Use(middleware.Recoverer)
 	// CSRF (SEC-08): rejects cross-site non-GET requests via Sec-Fetch-Site / Origin. Non-browser
 	// clients (the Godot game) send neither header and pass.
-	router.Use(http.NewCrossOriginProtection().Handler)
+	// router.Use(http.NewCrossOriginProtection().Handler)
 
 	// handle static files in public folder
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
