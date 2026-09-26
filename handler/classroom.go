@@ -247,11 +247,12 @@ func HandleGetClassrooms(w http.ResponseWriter, r *http.Request) error {
 		seeAllHref = fmt.Sprintf("/classroom/students?classroom_id=%s", classrooms[0].ClassroomID)
 	}
 
-	// 30, not 6: collapseActivity (T6.2) can merge several of these rows into one
-	// "played" event, so asking the query for exactly 6 could collapse down to fewer
-	// than the card actually has room for. 30 is generous headroom for that without
+	// 200, not 6: collapseActivity (T6.2) merges each student's per-question rows into
+	// one "played" event, and when a whole class plays at once one session can easily
+	// produce 100+ interleaved rows, so asking for exactly 6 would collapse down to
+	// fewer events than the card has room for. 200 covers a class session without
 	// pulling an unbounded amount of history.
-	rawActivity, err := database.GetRecentActivity(r.Context(), teacherID, 30)
+	rawActivity, err := database.GetRecentActivity(r.Context(), teacherID, 200)
 	if err != nil {
 		return err
 	}
