@@ -17,6 +17,8 @@ func flagLabel(kind types.FlagKind) string {
 		return "Quiz below 60%"
 	case types.FlagLowAccuracy:
 		return "Low accuracy"
+	case types.FlagGotStuck:
+		return "Got stuck"
 	default:
 		return ""
 	}
@@ -303,6 +305,7 @@ type MinigameAttemptRow struct {
 	Scene        types.Scene
 	Right, Wrong int
 	AccuracyPct  int
+	Stuck        int // times the student ran out of energy on this scene
 }
 
 // MinigameAttempts is the student page's right-hand card (01 §1h): static per page
@@ -311,10 +314,11 @@ type MinigameAttemptRow struct {
 templ MinigameAttempts(rows []MinigameAttemptRow) {
 	<div class="bg-base-100 rounded-box border border-base-content/10 p-4 flex flex-col gap-1.5">
 		<span class="text-[15px] font-bold mb-1">Minigame attempts</span>
-		<div class="grid grid-cols-[1fr_56px_56px_96px] px-1 text-xs font-bold opacity-60">
+		<div class="grid grid-cols-[1fr_48px_48px_48px_96px] px-1 text-xs font-bold opacity-60">
 			<span>Scene</span>
 			<span class="text-center">Right</span>
 			<span class="text-center">Wrong</span>
+			<span class="text-center tooltip" data-tip="Times the student ran out of energy">Stuck</span>
 			<span>% correct</span>
 		</div>
 		for _, r := range rows {
@@ -324,13 +328,14 @@ templ MinigameAttempts(rows []MinigameAttemptRow) {
 }
 
 templ minigameAttemptRow(r MinigameAttemptRow) {
-	<div class="grid grid-cols-[1fr_56px_56px_96px] items-center gap-2 py-1.5 px-1 border-t border-base-300 text-[13.5px]">
+	<div class="grid grid-cols-[1fr_48px_48px_48px_96px] items-center gap-2 py-1.5 px-1 border-t border-base-300 text-[13.5px]">
 		<div class="flex items-center gap-2 min-w-0">
 			<img src={ r.Scene.Image } alt="" class="w-5 h-[25px] rounded-sm shrink-0 object-cover object-[center_35%] [image-rendering:pixelated]"/>
 			<span class="truncate">{ r.Scene.Name }</span>
 		</div>
 		<span class="text-center">{ fmt.Sprint(r.Right) }</span>
 		<span class="text-center">{ fmt.Sprint(r.Wrong) }</span>
+		<span class={ "text-center", templ.KV("text-error font-bold", r.Stuck >= types.MinStuckForFlag) }>{ fmt.Sprint(r.Stuck) }</span>
 		<div class="flex items-center gap-1.5">
 			<div class="w-11 h-1.5 rounded bg-base-300 overflow-hidden shrink-0">
 				<div class={ "h-full", widthPct(max(r.AccuracyPct, 0)),

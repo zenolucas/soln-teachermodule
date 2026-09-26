@@ -45,15 +45,20 @@ func EvaluateFlags(quiz []types.QuizScoreRow, frac []types.FractionAggRow) map[i
 		})
 	}
 	for _, f := range frac {
-		total := f.Right + f.Wrong
-		if total < types.MinAttemptsForAccuracy || f.Right*100 >= types.PassPct*total {
-			continue
-		}
 		scene, _ := types.SceneByID(f.MinigameID)
-		detail := fmt.Sprintf("%s · %d%% correct", sceneLabel(scene), f.Right*100/total)
-		flags[f.StudentID] = append(flags[f.StudentID], types.Flag{
-			Kind: types.FlagLowAccuracy, MinigameID: f.MinigameID, Detail: detail,
-		})
+		total := f.Right + f.Wrong
+		if total >= types.MinAttemptsForAccuracy && f.Right*100 < types.PassPct*total {
+			detail := fmt.Sprintf("%s · %d%% correct", sceneLabel(scene), f.Right*100/total)
+			flags[f.StudentID] = append(flags[f.StudentID], types.Flag{
+				Kind: types.FlagLowAccuracy, MinigameID: f.MinigameID, Detail: detail,
+			})
+		}
+		if f.Stuck >= types.MinStuckForFlag {
+			detail := fmt.Sprintf("%s · ran out of energy %d×", sceneLabel(scene), f.Stuck)
+			flags[f.StudentID] = append(flags[f.StudentID], types.Flag{
+				Kind: types.FlagGotStuck, MinigameID: f.MinigameID, Detail: detail,
+			})
+		}
 	}
 	return flags
 }
@@ -65,6 +70,8 @@ func FlagLabel(kind types.FlagKind) string {
 		return "Quiz below 60%"
 	case types.FlagLowAccuracy:
 		return "Low accuracy"
+	case types.FlagGotStuck:
+		return "Got stuck"
 	default:
 		return ""
 	}

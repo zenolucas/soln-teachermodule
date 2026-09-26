@@ -75,6 +75,53 @@ func TestEvaluateFlagsLowAccuracy(t *testing.T) {
 	}
 }
 
+func TestEvaluateFlagsGotStuck(t *testing.T) {
+	tests := []struct {
+		name string
+		rows []types.FractionAggRow
+		want map[int][]types.Flag
+	}{
+		{
+			name: "ran out of energy once is not flagged",
+			rows: []types.FractionAggRow{{StudentID: 1, MinigameID: 7, Right: 6, Wrong: 3, Stuck: 1}},
+			want: map[int][]types.Flag{},
+		},
+		{
+			name: "ran out of energy twice on one scene is flagged, accuracy aside",
+			rows: []types.FractionAggRow{{StudentID: 1, MinigameID: 7, Right: 9, Wrong: 6, Stuck: 2}},
+			want: map[int][]types.Flag{
+				1: {{Kind: types.FlagGotStuck, MinigameID: 7, Detail: "Chip · ran out of energy 2×"}},
+			},
+		},
+		{
+			name: "stuck and low accuracy on the same scene gives both flags",
+			rows: []types.FractionAggRow{{StudentID: 1, MinigameID: 6, Right: 6, Wrong: 6, Stuck: 2}},
+			want: map[int][]types.Flag{
+				1: {
+					{Kind: types.FlagLowAccuracy, MinigameID: 6, Detail: "Waterlogged Room 1 · 50% correct"},
+					{Kind: types.FlagGotStuck, MinigameID: 6, Detail: "Waterlogged Room 1 · ran out of energy 2×"},
+				},
+			},
+		},
+		{
+			name: "once each on two different scenes is not flagged (it's per scene)",
+			rows: []types.FractionAggRow{
+				{StudentID: 1, MinigameID: 6, Right: 6, Wrong: 3, Stuck: 1},
+				{StudentID: 1, MinigameID: 7, Right: 6, Wrong: 3, Stuck: 1},
+			},
+			want: map[int][]types.Flag{},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := EvaluateFlags(nil, tc.rows)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("EvaluateFlags(nil, %+v) = %+v, want %+v", tc.rows, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestEvaluateFlagsMultiplePerStudent(t *testing.T) {
 	quiz := []types.QuizScoreRow{{StudentID: 1, MinigameID: 5, Score: 2, Total: 10}}
 	frac := []types.FractionAggRow{{StudentID: 1, MinigameID: 1, Right: 1, Wrong: 9}}
@@ -500,6 +547,7 @@ func TestFlagLabel(t *testing.T) {
 	}{
 		{types.FlagQuizBelow60, "Quiz below 60%"},
 		{types.FlagLowAccuracy, "Low accuracy"},
+		{types.FlagGotStuck, "Got stuck"},
 	}
 	for _, tc := range tests {
 		if got := FlagLabel(tc.kind); got != tc.want {
