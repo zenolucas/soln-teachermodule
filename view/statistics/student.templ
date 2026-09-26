@@ -193,9 +193,9 @@ templ journeyTile(tile types.JourneyTile, studentID, classroomID string) {
 }
 
 // QuizDetailRow is one quiz question in a student's scene-detail panel (01 §1h):
-// Question · Correct · Their answer · ✓/✗. Answer/Correct come straight from
-// database.GetStudentQuizStatistics - templ escapes them on render, so a question or
-// answer containing "<b>" shows literally rather than getting interpreted as markup.
+// Question · Correct · First try · ✓/✗, built by handler.studentQuizDetail. Answer is "" when the
+// student never answered it. templ escapes the texts on render, so a question or answer containing
+// "<b>" shows literally rather than getting interpreted as markup.
 type QuizDetailRow struct {
 	Question string
 	Correct  string
@@ -204,7 +204,7 @@ type QuizDetailRow struct {
 }
 
 // QuizDetail is the scene-detail panel's content for a quiz scene tile: title + score
-// badge, a misconception callout (handler.StudentHint, only when it fires - 02 §B6),
+// badge (score < 0 means the student never finished the quiz), a misconception callout (handler.StudentHint, only when it fires - 02 §B6),
 // and the question table, capped to 7 rows with "Show all n questions". The cap is a
 // peer-checkbox toggle (same client-only, no-JS technique as
 // view/classroom/students.templ's filter pills) rather than an index.js handler,
@@ -213,11 +213,15 @@ templ QuizDetail(scene types.Scene, score, total int, hint string, rows []QuizDe
 	<div class="flex items-center gap-2.5">
 		<img src={ scene.Image } alt="" class="w-7 h-[34px] rounded object-cover object-[center_35%] [image-rendering:pixelated]"/>
 		<span class="flex-1 text-[15px] font-bold">{ scene.Name }</span>
-		<span class={ "px-2 py-0.5 rounded-box text-[13px] font-bold",
-			templ.KV("bg-error/15", total > 0 && score*100 < types.PassPct*total),
-			templ.KV("bg-success/15", total == 0 || score*100 >= types.PassPct*total) }>
-			{ fmt.Sprint(score) } / { fmt.Sprint(total) }
-		</span>
+		if score < 0 {
+			<span class="px-2 py-0.5 rounded-box text-[13px] font-bold bg-base-200">Not finished</span>
+		} else {
+			<span class={ "px-2 py-0.5 rounded-box text-[13px] font-bold",
+				templ.KV("bg-error/15", total > 0 && score*100 < types.PassPct*total),
+				templ.KV("bg-success/15", total == 0 || score*100 >= types.PassPct*total) }>
+				{ fmt.Sprint(score) } / { fmt.Sprint(total) }
+			</span>
+		}
 	</div>
 	if hint != "" {
 		<div class="px-3 py-2.5 rounded bg-base-200 text-[12.5px] leading-relaxed">
@@ -231,7 +235,7 @@ templ QuizDetail(scene types.Scene, score, total int, hint string, rows []QuizDe
 		<div class="grid grid-cols-[1fr_70px_70px_26px] px-1 text-xs font-bold opacity-60">
 			<span>Question</span>
 			<span class="text-center">Correct</span>
-			<span class="text-center">Their answer</span>
+			<span class="text-center">First try</span>
 			<span></span>
 		</div>
 		<input type="checkbox" id="quiz-detail-show-all" class="hidden peer"/>
@@ -240,11 +244,16 @@ templ QuizDetail(scene types.Scene, score, total int, hint string, rows []QuizDe
 				templ.KV("hidden peer-checked:grid", i >= 7) }>
 				<span class="truncate">{ r.Question }</span>
 				<span class="text-center font-semibold">{ r.Correct }</span>
-				<span class="text-center font-semibold">{ r.Answer }</span>
-				if r.Right {
-					<i class="fa-solid fa-check text-success text-center" aria-hidden="true"></i>
+				if r.Answer == "" {
+					<span class="text-center opacity-60">—</span>
+					<span></span>
 				} else {
-					<i class="fa-solid fa-xmark text-error text-center" aria-hidden="true"></i>
+					<span class="text-center font-semibold">{ r.Answer }</span>
+					if r.Right {
+						<i class="fa-solid fa-check text-success text-center" aria-hidden="true"></i>
+					} else {
+						<i class="fa-solid fa-xmark text-error text-center" aria-hidden="true"></i>
+					}
 				}
 			</div>
 		}

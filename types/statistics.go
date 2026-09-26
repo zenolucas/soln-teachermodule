@@ -29,9 +29,17 @@ type QuestionAccuracy struct {
 	Total      int
 }
 
-type StudentQuizStatistics struct {
-	QuestionText  string `json:"question_text"`
-	CorrectAnswer string `json:"correct_answer"`
-	UserAnswer    string `json:"user_answer"`
-	Score         int `json:"score"`
+// QuizClick is one answer click the game posted for a student. The game posts every click, and keeps a
+// question in play until it's answered correctly, so a question usually has several clicks.
+type QuizClick struct {
+	ResponseID int
+	QuestionID int
+	ChoiceID   int
+	At         int64 // UNIX seconds; only compared, never shown
+}
+
+// QuizScoreRecord is one posted quiz score. The game posts a score only when a run is won.
+type QuizScoreRecord struct {
+	Score int
+	At    int64 // UNIX seconds
 }
