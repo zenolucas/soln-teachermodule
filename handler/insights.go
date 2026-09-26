@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/types"
@@ -376,24 +377,37 @@ func summarizeQuiz(scores []types.StudentScore, total, enrolled int) types.QuizS
 	return sum
 }
 
-// collapseActivity merges consecutive "played" rows for the same student and scene
-// into a single event: a fraction/worded scene writes one row per question, so
-// without this, playing a 3-question scene would show up as 3 near-identical rows.
-// "scored" rows (quiz attempts) are never collapsed - database.GetRecentActivity
-// already returns one per attempt. rows is expected newest-first; order and every
-// non-collapsed row are otherwise preserved. DEC-24: the merged event is always
-// "played {scene}", never "finished" or "started".
+// activitySessionGap is how far apart two of a student's "played" rows for the same scene can be and still
+// count as one play session.
+const activitySessionGap = 30 * time.Minute
+
+// collapseActivity merges a student's "played" rows for the same scene into a single event: a
+// fraction/worded scene writes one row per question, so without this, playing a 3-question scene would
+// show up as 3 near-identical rows. Rows merge when each is within activitySessionGap of the previous
+// one, even with other students' rows in between (a whole class plays at once, so their rows
+// interleave). A "scored" row from the same student starts a new event. "scored" rows (quiz attempts)
+// are never collapsed - database.GetRecentActivity already returns one per attempt. rows is expected
+// newest-first; order and every non-collapsed row are otherwise preserved. DEC-24: the merged event is
+// always "played {scene}", never "finished" or "started".
 func collapseActivity(rows []types.Activity) []types.Activity {
+	type sceneKey struct{ user, classroom, minigame int }
+	lastSeen := map[sceneKey]time.Time{} // the oldest row seen so far in each open run
 	var out []types.Activity
 	for _, r := range rows {
-		if r.Kind == "played" && len(out) > 0 {
-			last := out[len(out)-1]
-			if last.Kind == "played" && last.UserID == r.UserID &&
-				last.ClassroomID == r.ClassroomID && last.MinigameID == r.MinigameID {
-				continue
+		if r.Kind != "played" {
+			for k := range lastSeen {
+				if k.user == r.UserID {
+					delete(lastSeen, k)
+				}
 			}
+			out = append(out, r)
+			continue
 		}
-		out = append(out, r)
+		k := sceneKey{r.UserID, r.ClassroomID, r.MinigameID}
+		if newer, ok := lastSeen[k]; !ok || newer.Sub(r.At) > activitySessionGap {
+			out = append(out, r)
+		}
+		lastSeen[k] = r.At
 	}
 	return out
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"soln-teachermodule/types"
 )
@@ -490,6 +491,12 @@ func TestCollapseActivity(t *testing.T) {
 	played := func(user, classroom, minigame int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "played"}
 	}
+	base := time.Date(2026, 9, 25, 10, 0, 0, 0, time.UTC)
+	playedAt := func(user, minigame, minutesAgo int) types.Activity {
+		a := played(user, 1, minigame)
+		a.At = base.Add(-time.Duration(minutesAgo) * time.Minute)
+		return a
+	}
 	scored := func(user, classroom, minigame, score, total int) types.Activity {
 		return types.Activity{UserID: user, ClassroomID: classroom, MinigameID: minigame, Kind: "scored", Score: score, Total: total}
 	}
@@ -523,6 +530,21 @@ func TestCollapseActivity(t *testing.T) {
 			name: "a scored row breaks up a run of played rows",
 			rows: []types.Activity{played(3, 1, 1), scored(3, 1, 5, 8, 10), played(3, 1, 1)},
 			want: []types.Activity{played(3, 1, 1), scored(3, 1, 5, 8, 10), played(3, 1, 1)},
+		},
+		{
+			name: "classmates' interleaved rows from one class session collapse per student",
+			rows: []types.Activity{playedAt(3, 7, 0), playedAt(4, 7, 1), playedAt(3, 7, 2), playedAt(4, 7, 3), playedAt(3, 7, 4)},
+			want: []types.Activity{playedAt(3, 7, 0), playedAt(4, 7, 1)},
+		},
+		{
+			name: "a long session collapses as long as each row is close to the previous one",
+			rows: []types.Activity{playedAt(3, 7, 0), playedAt(3, 7, 25), playedAt(3, 7, 50), playedAt(3, 7, 75)},
+			want: []types.Activity{playedAt(3, 7, 0)},
+		},
+		{
+			name: "the same scene on another day is a separate event",
+			rows: []types.Activity{playedAt(3, 7, 0), playedAt(3, 7, 24*60)},
+			want: []types.Activity{playedAt(3, 7, 0), playedAt(3, 7, 24*60)},
 		},
 		{
 			name: "empty input",
