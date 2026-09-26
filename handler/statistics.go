@@ -705,7 +705,7 @@ func buildMinigameAttempts(studentID int, frac []types.FractionAggRow) []statist
 		if attempts > 0 {
 			accuracy = agg.Right * 100 / attempts
 		}
-		rows = append(rows, statistics.MinigameAttemptRow{Scene: scene, Right: agg.Right, Wrong: agg.Wrong, AccuracyPct: accuracy})
+		rows = append(rows, statistics.MinigameAttemptRow{Scene: scene, Right: agg.Right, Wrong: agg.Wrong, AccuracyPct: accuracy, Stuck: agg.Stuck})
 	}
 	return rows
 }

@@ -173,7 +173,8 @@ func GetLatestQuizScores(ctx context.Context, classroomID int) ([]types.QuizScor
 // a matter for whoever revisits DEC-24.
 func GetFractionAggregates(ctx context.Context, classroomID int) ([]types.FractionAggRow, error) {
 	rows, err := db.QueryContext(ctx, `
-		SELECT fr.student_id, fr.minigame_id, SUM(fr.num_right_attempts), SUM(fr.num_wrong_attempts)
+		SELECT fr.student_id, fr.minigame_id, SUM(fr.num_right_attempts), SUM(fr.num_wrong_attempts),
+		       SUM(CASE WHEN fr.num_right_attempts = 0 THEN 1 ELSE 0 END)
 		FROM fraction_responses fr
 		JOIN enrollments e ON e.classroom_id = fr.classroom_id AND e.student_id = fr.student_id
 		WHERE fr.classroom_id = ?
@@ -187,7 +188,7 @@ func GetFractionAggregates(ctx context.Context, classroomID int) ([]types.Fracti
 	var aggs []types.FractionAggRow
 	for rows.Next() {
 		var a types.FractionAggRow
-		if err := rows.Scan(&a.StudentID, &a.MinigameID, &a.Right, &a.Wrong); err != nil {
+		if err := rows.Scan(&a.StudentID, &a.MinigameID, &a.Right, &a.Wrong, &a.Stuck); err != nil {
 			return nil, fmt.Errorf("GetFractionAggregates: %v", err)
 		}
 		aggs = append(aggs, a)

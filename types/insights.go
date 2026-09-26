@@ -3,22 +3,28 @@ package types
 import "time"
 
 // Shared thresholds for the insight logic (DEC-20). Views and handlers import these,
-// so no literal 60 appears in markup logic. There's deliberately no WrongStreakMin:
-// DEC-24 drops the wrong_streak flag until the pending game-client audit resolves V1.
+// so no literal 60 appears in markup logic. There's deliberately no wrong-streak threshold:
+// the game caps a streak at the student's energy (at most 5), so the owner chose "got stuck"
+// instead (decision D4).
 const (
 	PassPct                = 60
 	MinAttemptsForAccuracy = 5
 	MinResponsesForHint    = 5
 	StudentsPageSize       = 10
+	// MinStuckForFlag is how many times a student must run out of energy on one scene to be
+	// flagged "Got stuck".
+	MinStuckForFlag = 2
 )
 
-// FlagKind identifies why a student was flagged for teacher attention. wrong_streak
-// is deliberately absent (DEC-24).
+// FlagKind identifies why a student was flagged for teacher attention.
 type FlagKind string
 
 const (
 	FlagQuizBelow60 FlagKind = "quiz_below_60"
 	FlagLowAccuracy FlagKind = "low_accuracy"
+	// FlagGotStuck: the student ran out of energy (game over) on the same scene at least
+	// MinStuckForFlag times.
+	FlagGotStuck FlagKind = "got_stuck"
 )
 
 // Flag is one reason a student needs attention, scoped to a single scene.
@@ -44,6 +50,9 @@ type FractionAggRow struct {
 	MinigameID int
 	Right      int
 	Wrong      int
+	// Stuck counts question attempts that ended in a game over: the game posts a row with
+	// num_right_attempts = 0 when the student runs out of energy on a question.
+	Stuck int
 }
 
 // Activity is one Recent activity event (02 §D1, 01 §1a). Kind is "played" (a

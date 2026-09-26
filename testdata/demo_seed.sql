@@ -13,11 +13,12 @@
 --   (reached minigame 11 with a score, not yet scored on 12), 3 completed (scored on 12).
 --   World 1 is unreachable here: soln_db.sql already gives every student (3-22) a minigame-5
 --   score, which DEC-10 always bumps into World 2 - see TASKS.md discrepancy X16.
--- - Flagged students (quiz_below_60 and/or low_accuracy): 10 - students 4, 8, 9, 14, 16, 17,
---   18, 19, 21 from this file, plus student 3, whose low_accuracy flags come from soln_db.sql's own
---   base rows for minigames 1-4 (33% right, 9-12 attempts each). The 9 from this file are all
+-- - Flagged students (quiz_below_60, low_accuracy and/or got_stuck): 11 - students 4, 7, 8, 9, 14, 16,
+--   17, 18, 19, 21 from this file, plus student 3, whose low_accuracy flags come from soln_db.sql's own
+--   base rows for minigames 1-4 (33% right, 9-12 attempts each). The other 9 from this file are all
 --   quiz_below_60 (mg5: 4, 8, 9, 14, 17, 19; mg11: 16, 21; mg12: 18); 9 and 19 are also
---   low_accuracy (mg7: 1/7 right = 14%; mg8: 1/6 right = 17%).
+--   low_accuracy (mg7: 1/7 right = 14%; mg8: 1/6 right = 17%). Student 7 ran out of energy twice on
+--   mg6, so they're got_stuck there (and low_accuracy: 6 right / 12 attempts = 50%).
 -- - Minigame 5 (latest attempt per student, DEC-9): average 62.1%, median 60% (score 6/10),
 --   6 of 19 students below 60%.
 -- - Took the quiz (has a score row): minigame 5 - 19; minigame 11 - 6; minigame 12 - 3.
@@ -57,6 +58,11 @@ FROM fraction_questions WHERE minigame_id = 6 AND classroom_id = 1;
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts)
 SELECT classroom_id, minigame_id, question_id, 7, 2, 0
 FROM fraction_questions WHERE minigame_id = 6 AND classroom_id = 1;
+-- Student 7 also ran out of energy (game over: 0 right, 3 wrong) on two of those questions, so the
+-- "Got stuck" flag (2+ game overs on one scene) has a demo case.
+INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts)
+SELECT classroom_id, minigame_id, question_id, 7, 0, 3
+FROM fraction_questions WHERE minigame_id = 6 AND classroom_id = 1 ORDER BY question_id LIMIT 2;
 INSERT INTO fraction_responses (classroom_id, minigame_id, question_id, student_id, num_right_attempts, num_wrong_attempts)
 SELECT classroom_id, minigame_id, question_id, 7, 2, 0
 FROM fraction_questions WHERE minigame_id = 7 AND classroom_id = 1;

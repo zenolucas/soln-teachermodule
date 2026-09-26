@@ -103,6 +103,8 @@ func flagLabel(kind types.FlagKind) string {
 		return "Quiz below 60%"
 	case types.FlagLowAccuracy:
 		return "Low accuracy"
+	case types.FlagGotStuck:
+		return "Got stuck"
 	default:
 		return ""
 	}
