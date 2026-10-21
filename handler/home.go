@@ -10,7 +10,7 @@ import (
 )
 
 func HandleLandingIndex(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, landing.Index())
+	return render(w, r, landing.Index(demo))
 }
 
 func HandleHomeIndex(w http.ResponseWriter, r *http.Request) error {

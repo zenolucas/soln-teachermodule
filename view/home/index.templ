@@ -21,11 +21,24 @@ templ Index(p layout.Page, now time.Time) {
 <div class="w-full min-h-full bg-base-300 p-4">
 	<div class="flex justify-between items-end mb-4">
 		<div class="flex flex-col gap-1">
-			<h2 class="text-2xl font-bold">{ ui.Greeting(now.Hour()) }, { p.Teacher.DisplayName }</h2>
+			<!-- The static showcase is rendered once at export time, so a time-of-day greeting
+			     and today's date would both be frozen at whenever it was built. -->
+			if p.Demo.Enabled {
+				<h2 class="text-2xl font-bold">Welcome back, { p.Teacher.DisplayName }</h2>
+			} else {
+				<h2 class="text-2xl font-bold">{ ui.Greeting(now.Hour()) }, { p.Teacher.DisplayName }</h2>
+			}
 			<!-- #home-counts starts empty and is filled out of band by the /getclassrooms
 			     response (HandleGetClassrooms), once it knows how many classrooms/students
 			     there are - see HomeExtras. -->
-			<span class="text-[13.5px] opacity-60">{ ui.LongDate(now) }<span id="home-counts"></span></span>
+			<span class="text-[13.5px] opacity-60">
+				if p.Demo.Enabled {
+					Sample school
+				} else {
+					{ ui.LongDate(now) }
+				}
+				<span id="home-counts"></span>
+			</span>
 		</div>
 		<!-- A visible button here instead of only inside the navbar's "+" dropdown, which
 		     used to be the only way to create a classroom (see FE-14, D4). The modal

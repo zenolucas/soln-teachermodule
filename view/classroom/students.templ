@@ -26,8 +26,9 @@ templ StudentsPage(p layout.Page, room types.Classroom, filter, sortKey, search 
 				     wrapper, and UnenrolledRows' response doesn't re-declare that id. An
 				     outerHTML swap here would replace the div itself and take the id with
 				     it, breaking every hx-get the search box (addstudents.templ) targets at
-				     it afterward. -->
-				<form hx-post="/unenrolledstudents" hx-trigger="load" hx-target="#getunenrolledstudents">
+				     it afterward. A GET, not a POST (the route takes both): it's a plain
+				     read, and the static showcase can only serve reads. -->
+				<form hx-get="/unenrolledstudents" hx-trigger="load" hx-target="#getunenrolledstudents">
 					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
 				</form>
 				<!-- One toolbar form drives every /students fetch (02 §C5): search-as-you-type,
