@@ -2,6 +2,7 @@ package classroom
 
 import "soln-teachermodule/view/ui"
 import "soln-teachermodule/types"
+import "strings"
 
 // AddStudentsForm moved out of classroom.templ (T2.4b) and restyled per 01 §2c. The
 // list itself (UnenrolledRows) still loads via the hidden hx-trigger="load" form in
@@ -74,7 +75,8 @@ templ UnenrolledRows(students []types.Student) {
 		<p class="text-center text-neutral py-8">All students are already enrolled in this classroom.</p>
 	} else {
 		for _, student := range students {
-			<label data-student-row class={ "flex items-center gap-3 h-[52px] px-1 rounded-box cursor-pointer", templ.KV("opacity-60", student.OtherClass != "") }>
+			<!-- data-search-name: searched in the browser by the static showcase (demo.js). -->
+			<label data-student-row data-search-name={ strings.ToLower(student.Firstname + " " + student.Lastname) } class={ "flex items-center gap-3 h-[52px] px-1 rounded-box cursor-pointer", templ.KV("opacity-60", student.OtherClass != "") }>
 				<input type="checkbox" name="userID" value={ student.UserID } disabled?={ student.OtherClass != "" }
 					class="checkbox checkbox-sm checkbox-primary" />
 				<span class="w-[30px] h-[30px] shrink-0 rounded-full bg-secondary text-white flex items-center justify-center text-[11px] font-bold">

@@ -334,6 +334,10 @@ func HandleGetStudents(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	q := parseStudentQuery(r.Form)
+	// The static showcase can't run a search, so public/js/demo.js searches a pre-rendered
+	// copy of every row instead, and page=all is how the export asks for that copy. It's
+	// ignored outside demo mode, so the live portal always pages.
+	q.AllRows = demo.Enabled && r.FormValue("page") == "all"
 	page, total, counts := applyStudentQuery(insights, q)
 
 	pageCount := (total + types.StudentsPageSize - 1) / types.StudentsPageSize

@@ -21,6 +21,14 @@ import (
 var FS embed.FS
 
 func main() {
+	// `go run . export-demo ...` builds the static showcase instead of serving (export.go).
+	if len(os.Args) > 1 && os.Args[1] == "export-demo" {
+		if err := runExportDemo(os.Args[2:]); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	if err := database.InitializeDatabase(); err != nil {
 		log.Fatal(err)
 	}

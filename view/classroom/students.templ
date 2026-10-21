@@ -4,6 +4,7 @@ import "soln-teachermodule/view/layout"
 import "soln-teachermodule/view/ui"
 import "soln-teachermodule/types"
 import "fmt"
+import "strings"
 
 // StudentsPage is classroom.Students' actual content - split into its own file (T2.2)
 // since it's grown past a one-liner: the restyled table, its row-loading fragment, and
@@ -181,7 +182,11 @@ templ studentRow(classroomID, sortKey string, s types.StudentInsight) {
 	     Flags column wraps onto a second line rather than being clipped - a fixed height
 	     let that overflow visually collide with the row below it (found live, with the
 	     demo seed's own data). Most rows still render at exactly 60px. -->
-	<div id={ fmt.Sprintf("student-%s", s.UserID) } class={ "grid", studentsGridCols, "items-center gap-2 px-4 py-2 min-h-[60px] border-t border-base-300 text-sm" }>
+	<!-- data-search-name/-world/-flagged let the static showcase (public/js/demo.js) search,
+	     count and filter a pre-rendered copy of these rows in the browser, mirroring
+	     applyStudentQuery - nothing in the live portal reads them. -->
+	<div id={ fmt.Sprintf("student-%s", s.UserID) } data-search-name={ strings.ToLower(s.Firstname + " " + s.Lastname) } data-world={ fmt.Sprint(s.World) } data-flagged={ fmt.Sprint(len(s.Flags) > 0) }
+		class={ "grid", studentsGridCols, "items-center gap-2 px-4 py-2 min-h-[60px] border-t border-base-300 text-sm" }>
 		<div class="flex items-center gap-2.5 min-w-0">
 			<span class="w-8 h-8 shrink-0 rounded-full bg-secondary text-base-content flex items-center justify-center text-xs font-bold">
 				{ ui.Initials(s.Firstname, s.Lastname) }

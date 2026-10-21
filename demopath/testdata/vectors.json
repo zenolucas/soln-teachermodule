@@ -1,0 +1,12 @@
+[
+  {"path": "/", "query": "", "want": "/"},
+  {"path": "/home", "query": "", "want": "/home/"},
+  {"path": "/home/", "query": "", "want": "/home/"},
+  {"path": "/classroom", "query": "classroom_id=1", "want": "/classroom/~classroom_id=1/"},
+  {"path": "/classroom/statistics", "query": "minigameID=3&classroom_id=1", "want": "/classroom/statistics/~classroom_id=1/~minigameID=3/"},
+  {"path": "/getclassrooms_menu", "query": "classroom_id=&active=home", "want": "/getclassrooms_menu/~active=home/"},
+  {"path": "/students", "query": "classroomID=2&q=&filter=w1&sort=quiz&page=2", "want": "/students/~classroomID=2/~filter=w1/~page=2/~sort=quiz/"},
+  {"path": "/x", "query": "q=Ma%20ria&n=1.5", "want": "/x/~n=1.2e5/~q=Ma.20ria/"},
+  {"path": "/x", "query": "q=%C3%B1&id=..", "want": "/x/~id=.2e.2e/~q=.c3.b1/"},
+  {"path": "/x", "query": "userID=4&userID=7", "want": "/x/~userID=4/~userID=7/"}
+]

@@ -51,7 +51,7 @@ Usage
 
     Run the Server:
 
-    go run main.go
+    go run .
 
     The portal will be available at http://localhost: [ insert port number / HTTP_LISTEN_ADDRESS ]
 
@@ -73,6 +73,27 @@ Demo data
 
     The file is generated. To change the data, edit `testdata/showcase/main.go` and run
     `go run ./testdata/showcase > testdata/showcase_seed.sql`.
+
+Static showcase
+
+    The teacher portal can also be published as a plain static site, with no server or
+    database: every read-only page and htmx fragment, pre-rendered from the showcase data
+    (see "Demo data"), with a "Book a live demo" button for anyone who wants the real thing.
+
+    make demo SOLN_EXPORT_DB_ROOT_DSN='root@tcp(127.0.0.1:3306)/'
+
+    That writes dist/. The export (export.go) loads the showcase data into a throwaway
+    database, soln_demo_export (it never touches the dev database), runs the real portal
+    in-process with DEMO_MODE=true, and saves every page it can reach. It fails if any
+    page or fragment doesn't load. Optional settings, read from the environment:
+    - DEMO_BOOKING_URL: the scheduling page "Book a live demo" opens. Unset hides the buttons.
+    - DEMO_DOWNLOAD_URL: where the landing page's game download points. Unset copies
+      public/downloads/soln.zip into dist/, which is too big for some static hosts
+      (Cloudflare Pages caps files at 25 MiB).
+
+    Static hosts ignore query strings, so each URL's query becomes part of its path
+    (demopath/): /classroom?classroom_id=1 is saved as /classroom/~classroom_id=1/. Any
+    static file server can serve dist/, e.g. `cd dist && python3 -m http.server`.
 
 Migrations
 

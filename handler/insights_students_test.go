@@ -233,3 +233,19 @@ func TestApplyStudentQueryEmpty(t *testing.T) {
 		t.Errorf(`counts["all"] = %d, want 0`, counts["all"])
 	}
 }
+
+// AllRows (the static showcase's search copy) returns every filtered row, unpaged.
+func TestApplyStudentQueryAllRows(t *testing.T) {
+	var all []types.StudentInsight
+	for i := 0; i < types.StudentsPageSize+5; i++ {
+		all = append(all, types.StudentInsight{Student: types.Student{UserID: string(rune('a' + i))}, World: 1})
+	}
+	paged, total, _ := applyStudentQuery(all, StudentQuery{Filter: "all", Sort: "name", Page: 1})
+	if len(paged) != types.StudentsPageSize || total != len(all) {
+		t.Fatalf("paged: got %d rows (total %d); want %d (total %d)", len(paged), total, types.StudentsPageSize, len(all))
+	}
+	rows, total, _ := applyStudentQuery(all, StudentQuery{Filter: "all", Sort: "name", Page: 1, AllRows: true})
+	if len(rows) != len(all) || total != len(all) {
+		t.Errorf("AllRows: got %d rows (total %d); want %d", len(rows), total, len(all))
+	}
+}
