@@ -17,6 +17,8 @@ type Page struct {
 	Shell       bool   // false for landing/login/register
 	Active      string // "home"|"overview"|"minigames"|"students"|"stats"|"about"|""
 	ClassroomID string // "" when not classroom-scoped
+	// The classroom's name and section, for demo.js. Only set in demo mode (handler.pageFor).
+	ClassroomName, ClassroomSection string
 	Teacher     TeacherNav
 	Demo        ui.Demo // the static showcase's banner/buttons; zero value = normal portal
 }
@@ -56,7 +58,18 @@ templ Base(p Page) {
 
 </head>
 
-<body class="antialiased group/shell">
+<!-- Demo mode only: what the static showcase's script needs to know about this page's
+     classroom, and which classroom is the export's template (ui.DemoTemplateClassroomID). -->
+<body class="antialiased group/shell"
+	if p.Demo.Enabled {
+		data-demo-classroom-id={ p.ClassroomID }
+		data-demo-classroom-name={ p.ClassroomName }
+		data-demo-classroom-section={ p.ClassroomSection }
+		data-demo-template-id={ ui.DemoTemplateClassroomID }
+		data-demo-template-name={ ui.DemoTemplateName }
+		data-demo-template-section={ ui.DemoTemplateSection }
+	}
+>
 	<!-- Must run synchronously, before first paint, and be the first thing in <body> -
 	     an inline script (no src) blocks the parser right here, so document.body
 	     already has the right data-sidebar attribute by the time the sidebar itself is

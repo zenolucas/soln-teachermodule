@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 	"flag"
@@ -38,6 +39,7 @@ import (
 	"soln-teachermodule/demopath"
 	"soln-teachermodule/handler"
 	"soln-teachermodule/view/errorpage"
+	"soln-teachermodule/view/ui"
 
 	"golang.org/x/net/html"
 )
@@ -71,7 +73,9 @@ func runExportDemo(args []string) error {
 	os.Setenv("DEMO_MODE", "true")
 	os.Setenv("DEMO_BOOKING_URL", *booking)
 	os.Setenv("DEMO_DOWNLOAD_URL", *download)
-	if _, err := loadShowcaseDatabase(*rootDSN, showcaseDB{Name: "soln_demo_export", User: "soln_demo_export", Pass: randomHex(16)}); err != nil {
+	dbPass := randomHex(16)
+	addr, err := loadShowcaseDatabase(*rootDSN, showcaseDB{Name: "soln_demo_export", User: "soln_demo_export", Pass: dbPass})
+	if err != nil {
 		return err
 	}
 	if err := handler.InitSessionStore(); err != nil {
@@ -102,6 +106,9 @@ func runExportDemo(args []string) error {
 	if err := e.crawl(); err != nil {
 		return err
 	}
+	if err := e.exportTemplates(fmt.Sprintf("soln_demo_export:%s@tcp(%s)/soln_demo_export", dbPass, addr)); err != nil {
+		return err
+	}
 	if err := e.copyPublic(*download == ""); err != nil {
 		return err
 	}
@@ -110,6 +117,44 @@ func runExportDemo(args []string) error {
 	}
 	slog.Info("static showcase exported", "out", *out, "pages_and_fragments", len(e.written), "took", time.Since(start).Round(time.Millisecond))
 	return nil
+}
+
+// exportTemplates adds what demo.js needs to fake a visitor's classroom and roster
+// changes, after the main crawl so none of it shows up in the pages already written:
+//
+//  1. The template classroom (ui.DemoTemplateClassroomID), empty like a freshly created
+//     one, and all its pages - standing in for any classroom a visitor creates - plus
+//     demo=template copies of the home cards and sidebar list, which demo.js clones its
+//     card and menu entry from.
+//  2. Then every student who isn't in any classroom (the only ones Add students can pick)
+//     is enrolled in it, for their real "not started yet" row (a demo=enrolled copy of the
+//     students list) and their student pages - shown for a student a visitor adds.
+//
+// The handlers ignore the demo parameter; it only gives each copy its own static path.
+func (e *exporter) exportTemplates(dsn string) error {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	id := ui.DemoTemplateClassroomID
+	if _, err := db.Exec(`INSERT INTO classrooms (classroom_id, classroom_name, section, description, teacher_id)
+		SELECT ?, ?, ?, '', user_id FROM users WHERE username = 'teacher'`, id, ui.DemoTemplateName, ui.DemoTemplateSection); err != nil {
+		return fmt.Errorf("export-demo: adding the template classroom: %w", err)
+	}
+	e.enqueue(crawlItem{url: "/classroom?classroom_id=" + id, from: "(template)"})
+	e.enqueue(crawlItem{url: "/getclassrooms?demo=template", from: "(template)", fragment: true})
+	e.enqueue(crawlItem{url: "/getclassrooms_menu?active=home&demo=template", from: "(template)", fragment: true})
+	if err := e.crawl(); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec(`INSERT INTO enrollments (classroom_id, student_id)
+		SELECT ?, user_id FROM users WHERE usertype = 'student' AND user_id NOT IN (SELECT student_id FROM enrollments)`, id); err != nil {
+		return fmt.Errorf("export-demo: enrolling the template classroom: %w", err)
+	}
+	e.enqueue(crawlItem{url: "/students?classroomID=" + id + "&filter=all&sort=name&page=all&demo=enrolled", from: "(template)", fragment: true})
+	return e.crawl()
 }
 
 // prepareOutDir creates out, or empties it if it holds an earlier export. Anything else

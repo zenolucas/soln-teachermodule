@@ -11,6 +11,16 @@ type Demo struct {
 	DownloadURL string
 }
 
+// The template classroom: an empty classroom the static export adds after its main crawl
+// (export.go's exportTemplates). public/js/demo.js shows its pages for any classroom a
+// visitor creates, and its students' pages for students a visitor adds, with the name
+// and section swapped for the right ones. layout.Base hands these to demo.js on <body>.
+const (
+	DemoTemplateClassroomID = "900"
+	DemoTemplateName        = "Your new classroom"
+	DemoTemplateSection     = "New section"
+)
+
 // ShowBooking reports whether the "Book a demo" buttons and dialog should render.
 func (d Demo) ShowBooking() bool {
 	return d.Enabled && d.BookingURL != ""

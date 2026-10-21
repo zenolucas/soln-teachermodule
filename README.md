@@ -91,6 +91,11 @@ Static showcase
       public/downloads/soln.zip into dist/, which is too big for some static hosts
       (Cloudflare Pages caps files at 25 MiB).
 
+    Visitors can still try the editing features: creating a classroom, adding and
+    removing students, and adding, editing and deleting questions are faked in the
+    browser (public/js/demo.js) and kept in sessionStorage until the tab closes or they
+    click "Reset demo". Statistics stay as exported.
+
     Static hosts ignore query strings, so each URL's query becomes part of its path
     (demopath/): /classroom?classroom_id=1 is saved as /classroom/~classroom_id=1/. Any
     static file server can serve dist/, e.g. `cd dist && python3 -m http.server`.

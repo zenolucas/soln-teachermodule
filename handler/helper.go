@@ -119,14 +119,28 @@ func pageFor(r *http.Request, title, active, classroomID string) (layout.Page, e
 	if err != nil {
 		return layout.Page{}, err
 	}
-	return layout.Page{
+	page := layout.Page{
 		Title:       title,
 		Shell:       true,
 		Active:      active,
 		ClassroomID: classroomID,
 		Teacher:     layout.TeacherNav{DisplayName: ui.DisplayName(teacher.Firstname, teacher.Username)},
 		Demo:        demo,
-	}, nil
+	}
+	// The static showcase's demo.js needs the classroom's name and section on every
+	// classroom page (to stand the template classroom in for one a visitor created).
+	if demo.Enabled && classroomID != "" {
+		id, err := strconv.Atoi(classroomID)
+		if err != nil {
+			return layout.Page{}, err
+		}
+		room, err := database.GetClassroom(r.Context(), id)
+		if err != nil {
+			return layout.Page{}, err
+		}
+		page.ClassroomName, page.ClassroomSection = room.ClassroomName, room.Section
+	}
+	return page, nil
 }
 
 // assertOwnsClassroom verifies the authenticated teacher owns the given classroom,
