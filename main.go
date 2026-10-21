@@ -26,13 +26,14 @@ func main() {
 	}
 
 	// Must run after InitializeDatabase, which loads .env - SESSION_SECRET/
-	// GAME_TOKEN_SECRET need to be visible to os.Getenv by this point.
+	// GAME_TOKEN_SECRET/DEMO_* need to be visible to os.Getenv by this point.
 	if err := handler.InitSessionStore(); err != nil {
 		log.Fatal(err)
 	}
 	if err := handler.InitGameTokenStore(); err != nil {
 		log.Fatal(err)
 	}
+	handler.InitDemo()
 
 	router := newRouter()
 

@@ -18,6 +18,7 @@ type Page struct {
 	Active      string // "home"|"overview"|"minigames"|"students"|"stats"|"about"|""
 	ClassroomID string // "" when not classroom-scoped
 	Teacher     TeacherNav
+	Demo        ui.Demo // the static showcase's banner/buttons; zero value = normal portal
 }
 
 // Base renders the page shell. title is the full <title> text (see FE-17 - every page
@@ -48,6 +49,9 @@ templ Base(p Page) {
 	<script src="/public/vendor/htmx.min.js" defer></script>
 	<script src="/public/vendor/fontawesome.min.js" defer></script>
 	<script src="/public/js/index.js" defer></script>
+	if p.Demo.Enabled {
+	<script src="/public/js/demo.js" defer></script>
+	}
 
 </head>
 
@@ -71,8 +75,11 @@ templ Base(p Page) {
 	<!-- The daisyUI drawer + navbar (FE-10, FE-11, D4) are gone - the sidebar is
 	     always visible at this size, since mobile is out of scope (DEC-1). -->
 	<div class="flex h-screen">
-		@ui.Sidebar(p.Active, p.ClassroomID, p.Teacher.DisplayName)
+		@ui.Sidebar(p.Active, p.ClassroomID, p.Teacher.DisplayName, p.Demo)
 		<main class="flex-1 min-w-0 overflow-y-auto bg-base-300">
+			if p.Demo.Enabled {
+			@ui.DemoBanner(p.Demo)
+			}
 			{ children... }
 		</main>
 	</div>
@@ -81,6 +88,9 @@ templ Base(p Page) {
 	@ui.CreateClassForm(ui.CreateParams{}, ui.CreateErrors{})
 	} else {
 	{ children... }
+	}
+	if p.Demo.ShowBooking() {
+	@ui.BookDemoDialog(p.Demo)
 	}
 </body>
 

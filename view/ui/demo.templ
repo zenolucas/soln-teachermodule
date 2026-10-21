@@ -1,0 +1,53 @@
+package ui
+
+// BookDemoDialogID is the id every "Book a demo" button opens via data-modal-open.
+const BookDemoDialogID = "book-demo-modal"
+
+// DemoBanner sits at the top of <main> on every Shell page of the static showcase, so a
+// visitor always knows the data is made up and that their edits aren't saved anywhere.
+// "Reset demo" is wired up by public/js/demo.js (data-demo-reset).
+templ DemoBanner(d Demo) {
+	<div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-[13px] bg-info/15 border-b border-info/30">
+		<i class="fa-solid fa-flask text-info" aria-hidden="true"></i>
+		<span><span class="font-semibold">Demo with sample data.</span> Your edits only last while this tab is open.</span>
+		<button type="button" data-demo-reset class="link link-hover opacity-80">Reset demo</button>
+		if d.ShowBooking() {
+			<button type="button" data-modal-open={ BookDemoDialogID } class="btn btn-primary btn-xs ml-auto">
+				<i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+				Book a live demo
+			</button>
+		}
+	</div>
+}
+
+// BookDemoDialog is rendered once by layout.Base whenever d.ShowBooking() - on Shell
+// pages and the landing page alike - so every "Book a demo" button opens the same one.
+templ BookDemoDialog(d Demo) {
+	<dialog id={ BookDemoDialogID } class="modal">
+		<div class="modal-box w-[460px] text-base-content">
+			<div class="flex items-center">
+				<span class="flex-1 text-lg font-bold">See Sol'n live</span>
+				<button type="button" data-modal-close aria-label="Close" class="opacity-60 hover:opacity-100">
+					<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+				</button>
+			</div>
+			<p class="text-sm opacity-80 mt-3">
+				This site is a static walkthrough with sample data. In a live demo we set up a portal just for your school:
+				your students play the game, and you watch their progress come in here as it happens.
+			</p>
+			<ul class="text-sm mt-3 flex flex-col gap-1.5">
+				<li><i class="fa-solid fa-check text-success w-5" aria-hidden="true"></i>Your own classrooms and question sets</li>
+				<li><i class="fa-solid fa-check text-success w-5" aria-hidden="true"></i>Real game sessions feeding the statistics</li>
+				<li><i class="fa-solid fa-check text-success w-5" aria-hidden="true"></i>A walkthrough of every teacher feature</li>
+			</ul>
+			<div class="flex justify-end gap-2 mt-5">
+				<button type="button" class="btn" data-modal-close>Not now</button>
+				<a href={ templ.URL(d.BookingURL) } target="_blank" rel="noopener" class="btn btn-primary">
+					<i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+					Pick a time
+				</a>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
+}

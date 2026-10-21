@@ -125,6 +125,7 @@ func pageFor(r *http.Request, title, active, classroomID string) (layout.Page, e
 		Active:      active,
 		ClassroomID: classroomID,
 		Teacher:     layout.TeacherNav{DisplayName: ui.DisplayName(teacher.Firstname, teacher.Username)},
+		Demo:        demo,
 	}, nil
 }
 

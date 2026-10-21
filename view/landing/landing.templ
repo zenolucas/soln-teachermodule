@@ -1,9 +1,14 @@
 package landing
 
-import "soln-teachermodule/view/layout"
+import (
+	"soln-teachermodule/view/layout"
+	"soln-teachermodule/view/ui"
+)
 
-templ Index() {
-@layout.Base(layout.Page{Title: "Sol'n"}) {
+// In the static showcase (d.Enabled) there's no login, so the portal button walks
+// straight into the sample teacher's home page, and "Book a demo" offers a live one.
+templ Index(d ui.Demo) {
+@layout.Base(layout.Page{Title: "Sol'n", Demo: d}) {
     <div
     class="hero min-h-screen"
     style="background-image: url(/public/images/bg/lighthouse.png);">
@@ -14,9 +19,20 @@ templ Index() {
         <p class="mb-5">
         Sol’n is a pixel-based game designed to be a supplementary tool to teach Grade 6 students at Saint Louis University Basic Education School fundamental Math concepts, starting with fractions. The game aims to enhance students' interest and deepen their understanding of the subject.
         </p>
-        <a href="/public/downloads/soln.zip" class="btn btn-primary text-white">Download for Windows (.zip, 55 MB)</a>
+        <a href={ templ.URL(d.Download()) } class="btn btn-primary text-white">Download for Windows (.zip, 55 MB)</a>
         <div class="divider text-white before:bg-white after:bg-white my-[5px]">OR</div>
+        if d.Enabled {
+        <a href="/home" class="btn btn-primary text-white">Explore the Teacher Portal</a>
+        <p class="mt-2 text-sm opacity-80">A walkthrough with sample classrooms. No sign-up needed.</p>
+        if d.ShowBooking() {
+        <button type="button" data-modal-open={ ui.BookDemoDialogID } class="btn btn-outline text-white mt-5">
+            <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+            Book a live demo with us
+        </button>
+        }
+        } else {
         <a href="/login" class="btn btn-primary text-white">Login to Teacher Portal</a>
+        }
         </div>
     </div>
     </div>

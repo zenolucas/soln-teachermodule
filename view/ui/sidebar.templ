@@ -16,7 +16,7 @@ import "fmt"
 // other with group-data-[sidebar=.../shell: variants, matched against the
 // data-sidebar attribute the pre-paint script in layout/app.templ sets on <body>
 // before first render - see T1.6.
-templ Sidebar(active string, classroomID string, teacherName string) {
+templ Sidebar(active string, classroomID string, teacherName string, demo Demo) {
 	<aside class="w-[248px] group-data-[sidebar=collapsed]/shell:w-16 shrink-0 bg-base-content text-base-300 flex flex-col h-screen">
 		<!-- The collapse/expand toggle lives here in both states (owner request: one place
 		     instead of the spec's top-when-expanded, bottom-when-collapsed split). Two
@@ -65,6 +65,15 @@ templ Sidebar(active string, classroomID string, teacherName string) {
 				<i class="fa-solid fa-plus" aria-hidden="true"></i>
 			</button>
 		</nav>
+		if demo.ShowBooking() {
+			<div class="shrink-0 px-2.5 pb-3 group-data-[sidebar=collapsed]/shell:flex group-data-[sidebar=collapsed]/shell:justify-center group-data-[sidebar=collapsed]/shell:px-0">
+				<button type="button" data-modal-open={ BookDemoDialogID } aria-label="Book a live demo" data-tip="Book a live demo"
+					class="btn btn-primary btn-sm w-full group-data-[sidebar=collapsed]/shell:w-10 group-data-[sidebar=collapsed]/shell:h-10 group-data-[sidebar=collapsed]/shell:p-0 group-data-[sidebar=collapsed]/shell:tooltip group-data-[sidebar=collapsed]/shell:tooltip-right">
+					<i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+					<span class="group-data-[sidebar=collapsed]/shell:hidden">Book a live demo</span>
+				</button>
+			</div>
+		}
 		<div class="shrink-0 flex items-center gap-2.5 px-4 py-3 group-data-[sidebar=collapsed]/shell:flex-col group-data-[sidebar=collapsed]/shell:gap-3 group-data-[sidebar=collapsed]/shell:px-0 border-t border-polar1">
 			<img src="/public/images/bg/sample_user.png" alt="" class="w-[34px] h-[34px] shrink-0 rounded-full object-cover bg-base-100" />
 			<div class="flex-1 min-w-0 flex flex-col leading-[1.25] group-data-[sidebar=collapsed]/shell:hidden">
@@ -75,7 +84,15 @@ templ Sidebar(active string, classroomID string, teacherName string) {
 				<i class="fa-solid fa-circle-question" aria-hidden="true"></i>
 			</a>
 			<div class="group-data-[sidebar=collapsed]/shell:hidden">
-				@LogoutForm()
+				<!-- The static showcase has no session to end, so "log out" just leaves the
+				     demo for the landing page. -->
+				if demo.Enabled {
+					<a href="/" aria-label="Exit demo" class="text-[14px] opacity-80 hover:opacity-100">
+						<i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+					</a>
+				} else {
+					@LogoutForm()
+				}
 			</div>
 		</div>
 	</aside>
