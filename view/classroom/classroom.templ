@@ -72,7 +72,8 @@ templ Minigames(p layout.Page, room types.Classroom, scenes map[int]types.SceneS
 									<div class="p-2.5 flex flex-col gap-2 flex-1">
 										<span class="text-[13px] font-bold leading-tight min-h-8 line-clamp-2">{ scene.Name }</span>
 										<div class="flex flex-col gap-0.5 text-[11.5px] opacity-70 min-h-[28px]">
-											<span>{ fmt.Sprint(scenes[scene.MinigameID].QuestionCount) } questions</span>
+											<!-- data-question-count: the static showcase (demo.js) adjusts this for questions a visitor added or deleted. -->
+											<span data-question-count={ fmt.Sprint(scene.MinigameID) }>{ fmt.Sprint(scenes[scene.MinigameID].QuestionCount) } questions</span>
 											@sceneMetaLine(scene, scenes[scene.MinigameID])
 										</div>
 										<div class="flex gap-1.5 mt-auto">

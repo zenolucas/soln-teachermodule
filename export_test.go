@@ -50,7 +50,8 @@ func TestDiscoverStudentsToolbar(t *testing.T) {
 	<form hx-post="/addstudents"><input type="hidden" name="classroomID" value="1"/>
 		<input type="search" name="q" hx-get="/unenrolledstudents" hx-include="closest form"/>
 		<input type="checkbox" name="userID" value="9"/></form>
-	<a href="/home">home</a>`
+	<a href="/home">home</a>
+	<template id="demo-question-row"><div hx-get="/question/edit?questionID=0"></div></template>`
 	items, err := discover([]byte(page), crawlItem{url: "/classroom/students?classroom_id=1"})
 	if err != nil {
 		t.Fatal(err)

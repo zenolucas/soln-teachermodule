@@ -488,8 +488,13 @@ func (e *exporter) writeNotFound() error {
 	return writeFile(filepath.Join(e.out, "404.html"), b.Bytes())
 }
 
+// walk visits every element under n, except inside <template>: that's inert markup for
+// demo.js to clone (e.g. #demo-question-row), not links a visitor can follow.
 func walk(n *html.Node, fn func(*html.Node)) {
 	if n.Type == html.ElementNode {
+		if n.Data == "template" {
+			return
+		}
 		fn(n)
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
