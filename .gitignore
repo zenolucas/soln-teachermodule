@@ -14,3 +14,5 @@ node_modules
 # together reconflicted on it every time (see D1).
 /public/styles.css
 .claude/settings.local.json
+# The static showcase export (`make demo`, export.go).
+/dist

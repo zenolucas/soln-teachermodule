@@ -16,6 +16,9 @@ type StudentQuery struct {
 	Filter string
 	Sort   string
 	Page   int
+	// AllRows skips paging and returns every filtered row. Only the static showcase sets it
+	// (see HandleGetStudents).
+	AllRows bool
 }
 
 // parseStudentQuery reads a StudentQuery from url.Values, defaulting Filter to "all",
@@ -139,6 +142,9 @@ func applyStudentQuery(all []types.StudentInsight, q StudentQuery) (page []types
 	})
 
 	total = len(filtered)
+	if q.AllRows {
+		return filtered, total, counts
+	}
 
 	pageCount := (total + types.StudentsPageSize - 1) / types.StudentsPageSize
 	if pageCount < 1 {

@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -28,8 +27,6 @@ import (
 
 	"soln-teachermodule/database"
 	"soln-teachermodule/handler"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -75,68 +72,12 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestDatabase(rootDSN string) error {
-	cfg, err := mysql.ParseDSN(rootDSN)
+	// Before loadShowcaseDatabase: it runs database.InitializeDatabase, which loads .env, and
+	// godotenv never overrides a variable that's already set.
+	os.Setenv("SESSION_SECRET", "integration-test-session-secret-0123456789")
+	os.Setenv("GAME_TOKEN_SECRET", "integration-test-game-token-secret-012345")
+	addr, err := loadShowcaseDatabase(rootDSN, showcaseDB{Name: testDBName, User: testDBUser, Pass: testDBPass, Extra: testFixtures})
 	if err != nil {
-		return fmt.Errorf("parsing SOLN_TEST_DB_ROOT_DSN: %w", err)
-	}
-	host, port, err := net.SplitHostPort(cfg.Addr)
-	if err != nil {
-		return fmt.Errorf("SOLN_TEST_DB_ROOT_DSN address %q: %w", cfg.Addr, err)
-	}
-	cfg.DBName = ""
-	cfg.MultiStatements = true
-	root, err := sql.Open("mysql", cfg.FormatDSN())
-	if err != nil {
-		return err
-	}
-	defer root.Close()
-	if _, err := root.Exec(fmt.Sprintf(`
-		DROP DATABASE IF EXISTS %[1]s;
-		CREATE DATABASE %[1]s;
-		CREATE USER IF NOT EXISTS '%[2]s'@'%%' IDENTIFIED BY '%[3]s';
-		GRANT ALL PRIVILEGES ON %[1]s.* TO '%[2]s'@'%%';
-		FLUSH PRIVILEGES;`, testDBName, testDBUser, testDBPass)); err != nil {
-		return fmt.Errorf("creating %s: %w", testDBName, err)
-	}
-
-	cfg.DBName = testDBName
-	loader, err := sql.Open("mysql", cfg.FormatDSN())
-	if err != nil {
-		return err
-	}
-	defer loader.Close()
-	loader.SetMaxOpenConns(1)
-	schema, err := os.ReadFile("soln_db.sql")
-	if err != nil {
-		return err
-	}
-	// soln_db.sql targets the dev database by name; point it at the test database instead.
-	schemaSQL := strings.NewReplacer(
-		"CREATE DATABASE IF NOT EXISTS soln_db;", "",
-		"USE soln_db;", "USE "+testDBName+";",
-	).Replace(string(schema))
-	if _, err := loader.Exec(schemaSQL); err != nil {
-		return fmt.Errorf("loading soln_db.sql: %w", err)
-	}
-	seed, err := os.ReadFile("testdata/showcase_seed.sql")
-	if err != nil {
-		return err
-	}
-	if _, err := loader.Exec(string(seed)); err != nil {
-		return fmt.Errorf("loading showcase_seed.sql: %w", err)
-	}
-	if _, err := loader.Exec(testFixtures); err != nil {
-		return fmt.Errorf("loading test fixtures: %w", err)
-	}
-
-	for key, value := range map[string]string{
-		"DBUSER": testDBUser, "DBPASS": testDBPass, "DBNAME": testDBName, "DBHOST": host, "DBPORT": port,
-		"SESSION_SECRET":    "integration-test-session-secret-0123456789",
-		"GAME_TOKEN_SECRET": "integration-test-game-token-secret-012345",
-	} {
-		os.Setenv(key, value)
-	}
-	if err := database.InitializeDatabase(); err != nil {
 		return err
 	}
 	if err := handler.InitSessionStore(); err != nil {
@@ -145,7 +86,7 @@ func setupTestDatabase(rootDSN string) error {
 	if err := handler.InitGameTokenStore(); err != nil {
 		return err
 	}
-	testDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", testDBUser, testDBPass, cfg.Addr, testDBName))
+	testDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", testDBUser, testDBPass, addr, testDBName))
 	if err != nil {
 		return err
 	}

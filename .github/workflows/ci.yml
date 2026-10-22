@@ -65,3 +65,15 @@ jobs:
         env:
           SOLN_TEST_DB_ROOT_DSN: "root@tcp(127.0.0.1:3306)/"
         run: go test -count=1 -run Integration -v .
+
+      # public/js/demopath.js must map URLs exactly like demopath.StaticPath, or the static
+      # showcase's htmx requests miss their pre-rendered files.
+      - name: Static showcase path tests (JS)
+        run: node --test demopath/demopath.test.js
+
+      # Builds the whole static showcase (export.go). Any page or fragment that doesn't
+      # answer 200 fails the export, so this is also the showcase's broken-link check.
+      - name: Static showcase export
+        env:
+          SOLN_EXPORT_DB_ROOT_DSN: "root@tcp(127.0.0.1:3306)/"
+        run: go run . export-demo -out dist

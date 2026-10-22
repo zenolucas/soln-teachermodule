@@ -22,4 +22,12 @@ templ:
 
 build: css-build
 	@templ generate view
-	@go build -tags dev -o bin/soln-teachermodule main.go 
+	@go build -tags dev -o bin/soln-teachermodule .
+
+# The static showcase (export.go): every read-only page, pre-rendered into dist/ from the
+# showcase data. Needs a MariaDB root DSN, e.g.
+#   make demo SOLN_EXPORT_DB_ROOT_DSN='root@tcp(127.0.0.1:3306)/'
+# DEMO_BOOKING_URL and DEMO_DOWNLOAD_URL are read from the environment too.
+demo: css-build
+	@templ generate view
+	@go run . export-demo -out dist
