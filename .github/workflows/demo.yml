@@ -1,0 +1,77 @@
+name: Static showcase
+
+# Builds the static showcase (export.go) and publishes it to Cloudflare Pages. It's
+# skipped until the repo is set up for it: the CLOUDFLARE_PAGES_PROJECT variable plus the
+# secrets below (see the README's "Static showcase").
+#
+# Weekly as well as on every push: the showcase data's timestamps are relative to the day
+# it's exported, so a rebuild keeps "Recent activity" looking recent.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: static-showcase
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ vars.CLOUDFLARE_PAGES_PROJECT != '' }}
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install CSS build dependencies
+        run: npm ci
+
+      - name: Build CSS
+        run: npx tailwindcss -i view/css/app.css -o public/styles.css --minify
+
+      - name: Generate templ files
+        run: go run github.com/a-h/templ/cmd/templ@v0.3.819 generate view
+
+      # Without a download link the export copies the ~55MB soln.zip into dist/, and
+      # Cloudflare Pages rejects files over 25MiB.
+      - name: Check the download link is set
+        if: ${{ vars.DEMO_DOWNLOAD_URL == '' }}
+        run: |
+          echo "::error::Set the DEMO_DOWNLOAD_URL repository variable (e.g. the soln.zip release asset's URL)."
+          exit 1
+
+      - name: Export
+        env:
+          SOLN_EXPORT_DB_ROOT_DSN: "root@tcp(127.0.0.1:3306)/"
+          DEMO_BOOKING_URL: ${{ vars.DEMO_BOOKING_URL }}
+          DEMO_DOWNLOAD_URL: ${{ vars.DEMO_DOWNLOAD_URL }}
+        run: go run . export-demo -out dist
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main

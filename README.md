@@ -100,6 +100,24 @@ Static showcase
     (demopath/): /classroom?classroom_id=1 is saved as /classroom/~classroom_id=1/. Any
     static file server can serve dist/, e.g. `cd dist && python3 -m http.server`.
 
+    Publishing it: .github/workflows/demo.yml builds the showcase and deploys it to
+    Cloudflare Pages on every push to main (and weekly, so the relative timestamps stay
+    fresh). It does nothing until the repository is set up:
+    1. Put the game somewhere a link can point at, e.g. a GitHub release:
+       gh release create game-v1 public/downloads/soln.zip --title "Sol'n for Windows"
+    2. In Cloudflare, create a Pages project ("Direct Upload") and an API token with the
+       "Cloudflare Pages: Edit" permission.
+    3. In the GitHub repository's Settings → Secrets and variables → Actions, add the
+       secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and the variables
+       CLOUDFLARE_PAGES_PROJECT (the project's name), DEMO_DOWNLOAD_URL (the release
+       asset's URL) and DEMO_BOOKING_URL (your scheduling page, e.g. Cal.com or Calendly).
+    The site is then at https://<project>.pages.dev, or on a custom domain set up in
+    Cloudflare. It has to be served from the root of the domain: every link in the
+    portal starts with "/".
+
+    The full stack below ("Deploying with HTTPS") is for a live demo for a particular
+    client: the real portal and database, which the game can connect to.
+
 Migrations
 
     `soln_db.sql` is the current schema; a fresh load already includes every migration.
