@@ -8,6 +8,18 @@ import (
      "soln-teachermodule/view/ui"
 )
 
+// demoFractionRows and demoQuizRows are one sample row each, rendered into a <template>
+// on the static showcase's editor pages (layout.Page.Demo). public/js/demo.js clones it to
+// draw a question a visitor adds, and overwrites its values - so a faked row is always
+// the real row markup, never a JS copy that could drift from it.
+func demoFractionRows(scene types.Scene) []FractionRow {
+	return []FractionRow{{MinigameID: scene.MinigameID, Number: 1, QuestionText: "-", Num1: 1, Den1: 1, Num2: 1, Den2: 1, Op: scene.Op, Answer: "-"}}
+}
+
+func demoQuizRows(scene types.Scene) []QuizRow {
+	return []QuizRow{{MinigameID: scene.MinigameID, Number: 1, QuestionText: "-", Answer: "-"}}
+}
+
 // Fractions is the fraction editor's list + drawer page (01 §1e, T3.4). scene/world
 // carry everything the header needs (sprite, "World N · Topic" badge, stats route) -
 // see handler.worldForScene, which looks world up since types.Scene alone doesn't know
@@ -48,6 +60,9 @@ templ Fractions(p layout.Page, classroomID string, classroomName string, scene t
           </div>
      </div>
      <aside id="question-drawer" hidden class="w-[392px] shrink-0 sticky top-0 h-screen overflow-y-auto bg-base-100 border-l border-base-content/10"></aside>
+     if p.Demo.Enabled {
+     <template id="demo-question-row">@FractionRows(demoFractionRows(scene), 0, false)</template>
+     }
 </div>
 }
 }
@@ -91,6 +106,9 @@ templ Worded(p layout.Page, classroomID string, classroomName string, scene type
           </div>
      </div>
      <aside id="question-drawer" hidden class="w-[392px] shrink-0 sticky top-0 h-screen overflow-y-auto bg-base-100 border-l border-base-content/10"></aside>
+     if p.Demo.Enabled {
+     <template id="demo-question-row">@FractionRows(demoFractionRows(scene), 0, true)</template>
+     }
 </div>
 }
 }
@@ -133,6 +151,9 @@ templ Quiz(p layout.Page, classroomID string, classroomName string, scene types.
           </div>
      </div>
      <aside id="question-drawer" hidden class="w-[392px] shrink-0 sticky top-0 h-screen overflow-y-auto bg-base-100 border-l border-base-content/10"></aside>
+     if p.Demo.Enabled {
+     <template id="demo-question-row">@QuizRows(demoQuizRows(scene))</template>
+     }
 </div>
 }
 }
