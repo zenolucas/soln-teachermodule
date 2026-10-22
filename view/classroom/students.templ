@@ -43,12 +43,16 @@ templ StudentsPage(p layout.Page, room types.Classroom, filter, sortKey, search 
 				     comment gives - htmx 1.x picks its fragment parser by sniffing the response's
 				     first tag, so a response mixing bare rows with an out-of-band element has no
 				     single tag that works for both. -->
-				<form id="students-query" hx-get="/students" hx-target="#getstudents" hx-trigger="load, input changed delay:300ms from:[name=q], change, submit"
+				<form id="students-query" hx-get="/students" hx-target="#getstudents" hx-trigger="load, input changed delay:300ms from:#students-q, change, submit"
 					class="flex items-center gap-2.5 flex-wrap">
 					<input type="hidden" name="classroomID" value={ room.ClassroomID } />
 					<label class="input input-bordered input-sm flex items-center gap-2 w-[280px]">
 						<i class="fa-solid fa-magnifying-glass text-xs opacity-60" aria-hidden="true"></i>
-						<input type="text" name="q" value={ search } placeholder="Search by name" class="grow" />
+						<!-- from:#students-q, not from:[name=q]: that selector also matched the Add
+					     students modal's own q box, and htmx 1.9 keeps one "changed" value per
+					     input, so this listener used to swallow every keystroke there - the
+					     modal's search never fired, and typing in it reloaded this table instead. -->
+					<input type="text" id="students-q" name="q" value={ search } placeholder="Search by name" class="grow" />
 					</label>
 					<div class="flex items-center gap-1.5 text-[13px] font-semibold">
 						@filterPill("all", "All", filter)
